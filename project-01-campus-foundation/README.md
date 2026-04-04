@@ -83,6 +83,86 @@ working correctly together.
 
 ---
 
+## Screenshots
+
+### Phase 1 — VLAN Configuration
+
+**show vlan brief — HQ-ASW1**
+![show vlan brief ASW1](verification/screenshots/p01-ph1-show-vlan-brief-ASW1.png)
+
+**show vlan brief — HQ-ASW2**
+![show vlan brief ASW2](verification/screenshots/p01-ph1-show-vlan-brief-ASW2.png)
+
+---
+
+### Phase 2 — Trunking
+
+**show cdp neighbors — HQ-DSW1**
+![show cdp neighbors DSW1](verification/screenshots/p01-ph2-show-cdp-neighbors-DSW1.png)
+
+**show interfaces trunk — HQ-DSW1**
+![show interfaces trunk DSW1](verification/screenshots/p01-ph2-show-interfaces-trunk-DSW1.png)
+
+**show interfaces trunk — HQ-DSW2**
+![show interfaces trunk DSW2](verification/screenshots/p01-ph2-show-interfaces-trunk-DSW2.png)
+
+---
+
+### Phase 3 — Inter-VLAN Routing
+
+**show ip interface brief — HQ-RTR1**
+![show ip interface brief RTR1](verification/screenshots/p01-ph3-show-ip-interface-brief-RTR1.png)
+
+**show ip route — HQ-RTR1**
+![show ip route RTR1](verification/screenshots/p01-ph3-show-ip-route-RTR1.png)
+
+**Cross-VLAN ping — PC-ENG1 to PC-SALES1**
+![cross vlan ping ENG1 to SALES1](verification/screenshots/p01-ph3-ping-cross-vlan-ENG1-to-SALES1.png)
+
+**Ping to all gateways — PC-MGMT1**
+![ping MGMT1 to gateways](verification/screenshots/p01-ph3-ping-MGMT1-to-gateways.png)
+
+---
+
+### Phase 4 — STP Hardening
+
+**show spanning-tree vlan 100 — HQ-DSW1 (root bridge)**
+![show spanning-tree vlan100 DSW1](verification/screenshots/p01-ph4-show-spanning-tree-vlan100-DSW1.png)
+
+**show spanning-tree root — HQ-ASW1**
+![show spanning-tree root ASW1](verification/screenshots/p01-ph4-show-spanning-tree-root-ASW1.png)
+
+---
+
+### Phase 5 — SSH Hardening
+
+**SSH login success — PC-MGMT1 (management VLAN allowed)**
+![ssh login success MGMT1](verification/screenshots/p01-ph5-ssh-login-success-MGMT1.png)
+
+**SSH denied — PC-ENG1 (wrong VLAN, ACL blocks)**
+![ssh denied ENG1](verification/screenshots/p01-ph5-ssh-denied-ENG1.png)
+
+---
+
+### Break/Fix Challenge — VLAN 100 Removed from Trunk
+
+**Before break — PC-ENG1 ping working**
+![ping working before break](verification/screenshots/p01-breakfix-ping-working-ENG1-before.png)
+
+**Trunk broken — VLAN 100 missing from allowed list**
+![trunk broken vlan100 missing](verification/screenshots/p01-breakfix-trunk-broken-vlan100-missing.png)
+
+**PC-ENG1 ping failing — no path to router**
+![ping failing ENG1](verification/screenshots/p01-breakfix-ping-failing-ENG1.png)
+
+**Trunk fixed — VLAN 100 restored to allowed list**
+![trunk fixed vlan100 restored](verification/screenshots/p01-breakfix-trunk-fixed-vlan100-restored.png)
+
+**PC-ENG1 ping restored — connectivity confirmed**
+![ping restored ENG1](verification/screenshots/p01-breakfix-ping-restored-ENG1.png)
+
+---
+
 ## Files
 
 - `configs/` — Running configurations for all devices
