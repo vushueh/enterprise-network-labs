@@ -1,0 +1,36 @@
+=== HQ-DSW1 ===
+HQ-DSW1#show cdp neighbors
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+HQ-ASW1          Eth 0/1           174             R S I  Linux Uni Eth 0/0
+HQ-ASW2          Eth 0/2           168             R S I  Linux Uni Eth 0/0
+HQ-DSW2          Eth 0/3           134             R S I  Linux Uni Eth 0/3
+HQ-RTR1          Eth 0/0           163               R    Linux Uni Eth 0/0
+Total cdp entries displayed : 4
+
+=== HQ-DSW2 ===
+HQ-DSW2#show cdp neighbors
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+HQ-ASW1          Eth 0/1           156             R S I  Linux Uni Eth 0/1
+HQ-ASW2          Eth 0/2           164             R S I  Linux Uni Eth 0/1
+HQ-DSW1          Eth 0/3           128             R S I  Linux Uni Eth 0/3
+Total cdp entries displayed : 3
+
+=== HQ-ASW1 ===
+HQ-ASW1#show cdp neighbors
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+HQ-DSW1          Eth 0/0           176             R S I  Linux Uni Eth 0/1
+HQ-DSW2          Eth 0/1           131             R S I  Linux Uni Eth 0/1
+Total cdp entries displayed : 2
+
+=== HQ-ASW2 ===
+HQ-ASW2#show cdp neighbors
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+HQ-DSW1          Eth 0/0           158             R S I  Linux Uni Eth 0/2
+HQ-DSW2          Eth 0/1           139             R S I  Linux Uni Eth 0/2
+Total cdp entries displayed : 2
+
+=== HQ-RTR1 (after Phase 3 configured) ===
+HQ-RTR1#show cdp neighbors
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+HQ-DSW1          Eth 0/0           152             R S I  Linux Uni Eth 0/0
+Total cdp entries displayed : 1

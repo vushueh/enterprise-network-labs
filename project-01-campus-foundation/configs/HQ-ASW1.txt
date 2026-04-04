@@ -1,0 +1,116 @@
+! ============================================================
+! DEVICE: HQ-ASW1 | PROJECT: 01 — Campus Foundation
+! PLATFORM: CML 2.9 — IOL-L2 Switch
+! PHASES: 1 (VLANs/Access) + 2 (Trunking) + 4 (STP) + 5 (SSH)
+! NOTE: This node only has Ethernet0/0–0/3 (no slot 1)
+!       E0/0, E0/1 = uplink trunks | E0/2, E0/3 = access ports
+! ============================================================
+
+enable
+configure terminal
+
+hostname HQ-ASW1
+
+lldp run
+
+! --- Phase 1: VLAN Database ---
+vlan 100
+ name Engineering
+vlan 200
+ name Sales
+vlan 300
+ name Guest
+vlan 999
+ name Management
+vlan 1000
+ name NATIVE-UNUSED
+
+! --- Phase 1: Access port — PC-ENG1 (VLAN 100) ---
+! WHY: End device port — single VLAN only, not a trunk
+interface Ethernet0/2
+ description ACCESS-PC-ENG1-VLAN100
+ switchport mode access
+ switchport access vlan 100
+ no shutdown
+
+! --- Phase 1: Access port — PC-MGMT1 (VLAN 999) ---
+interface Ethernet0/3
+ description ACCESS-PC-MGMT1-VLAN999
+ switchport mode access
+ switchport access vlan 999
+ no shutdown
+
+! --- Phase 1: Management IP ---
+interface vlan 999
+ ip address 10.1.99.13 255.255.255.0
+ no shutdown
+
+ip default-gateway 10.1.99.1
+
+! --- Phase 2: Trunk to HQ-DSW1 (primary uplink) ---
+interface Ethernet0/0
+ description TRUNK-TO-HQ-DSW1-E0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,999
+ switchport nonegotiate
+ no shutdown
+
+! --- Phase 2: Trunk to HQ-DSW2 (redundant uplink) ---
+interface Ethernet0/1
+ description TRUNK-TO-HQ-DSW2-E0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,999
+ switchport nonegotiate
+ no shutdown
+
+! --- Phase 4: STP mode ---
+spanning-tree mode rapid-pvst
+
+! --- Phase 4: PortFast + BPDU Guard on access ports ---
+! WHY: Access ports connect to PCs, not switches. PortFast skips
+!      STP listening/learning. BPDU Guard shuts port if a switch plugs in.
+interface range Ethernet0/2 - 3
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+
+! --- Phase 5: SSH Hardening ---
+ip domain-name lab.local
+username admin privilege 15 secret CMLlab2025!
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+
+line vty 0 4
+ transport input ssh
+ login local
+ exec-timeout 10 0
+ logging synchronous
+ access-class 10 in
+
+line console 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+
+access-list 10 permit 10.1.99.0 0.0.0.255
+access-list 10 deny any log
+
+no ip http server
+no ip http secure-server
+
+banner motd ^
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^
+
+service password-encryption
+enable secret CMLenableP@ss!
+
+end
+write memory

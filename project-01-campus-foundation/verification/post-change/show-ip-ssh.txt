@@ -1,0 +1,34 @@
+=== SSH Verification (after RSA key generation) ===
+
+HQ-DSW1#show ip ssh
+SSH Enabled - version 2.0
+Authentication timeout: 60 secs; Authentication retries: 3
+
+=== SSH Login Test from PC-MGMT1 (10.1.99.100) — SHOULD SUCCEED ===
+PC-MGMT1:~# ssh admin@10.1.99.11
+The authenticity of host '10.1.99.11 (10.1.99.11)' can't be established.
+RSA key fingerprint is SHA256:eD6pj9fA7YIiezfdth35wqrf4WYM0Z4B39jvtukl4cs.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '10.1.99.11' (RSA) to the list of known hosts.
+(admin@10.1.99.11) Password:
+
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+
+HQ-DSW1#
+RESULT: SSH SUCCESS — Banner displayed, authenticated, got device prompt
+
+=== SSH Denial Test from PC-ENG1 (10.1.100.10) — SHOULD FAIL ===
+PC-ENG1:~# ssh admin@10.1.99.11
+ssh: connect to host 10.1.99.11 port 22: Connection refused
+(OR: connection timed out — blocked by VTY ACL access-class 10)
+RESULT: SSH DENIED — PC-ENG1 is in VLAN 100, blocked by ACL permitting only 10.1.99.0/24
+
+=== SSH tested and confirmed working to all devices ===
+10.1.99.1  (HQ-RTR1)  — SUCCESS
+10.1.99.11 (HQ-DSW1)  — SUCCESS
+10.1.99.12 (HQ-DSW2)  — SUCCESS
+10.1.99.13 (HQ-ASW1)  — SUCCESS
+10.1.99.14 (HQ-ASW2)  — SUCCESS

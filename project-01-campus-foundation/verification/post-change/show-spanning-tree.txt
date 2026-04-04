@@ -1,0 +1,53 @@
+=== HQ-ASW1: show spanning-tree root ===
+                                        Root    Hello Max Fwd
+Vlan                   Root ID          Cost    Time  Age Dly  Root Port
+VLAN0100          4196 aabb.cc00.0a00       100    2   20  15  Et0/0
+VLAN0200          4296 aabb.cc00.0c00       100    2   20  15  Et0/1
+VLAN0300          4396 aabb.cc00.0c00       100    2   20  15  Et0/1
+VLAN0999          5095 aabb.cc00.0a00       100    2   20  15  Et0/0
+
+RESULT:
+- VLAN 100: Root is HQ-DSW1 (aabb.cc00.0a00) via Et0/0 — CORRECT
+- VLAN 200: Root is HQ-DSW2 (aabb.cc00.0c00) via Et0/1 — CORRECT
+- VLAN 300: Root is HQ-DSW2 (aabb.cc00.0c00) via Et0/1 — CORRECT
+- VLAN 999: Root is HQ-DSW1 (aabb.cc00.0a00) via Et0/0 — CORRECT
+
+=== HQ-ASW1: show spanning-tree vlan 100 ===
+VLAN0100
+  Spanning tree enabled protocol rstp
+  Root ID    Priority    4196
+             Address     aabb.cc00.0a00
+             Cost        100
+             Port        1 (Ethernet0/0)
+
+  Bridge ID  Priority    32868  (priority 32768 sys-id-ext 100)
+             Address     aabb.cc00.0b00
+
+Interface           Role Sts Cost      Prio.Nbr Type
+Et0/0               Root FWD 100       128.1    P2p
+Et0/1               Altn BLK 100       128.2    P2p
+Et0/2               Desg FWD 100       128.3    P2p Edge
+
+=== HQ-ASW1: show spanning-tree vlan 200 ===
+VLAN0200
+  Root ID    Priority    4296 / Address aabb.cc00.0c00 (HQ-DSW2)
+Interface           Role Sts
+Et0/0               Altn BLK   (toward DSW1 — blocked)
+Et0/1               Root FWD   (toward DSW2 — forwarding)
+
+=== HQ-ASW1: show spanning-tree vlan 300 ===
+Same pattern as VLAN 200 — DSW2 is root, Et0/1 is root port
+
+=== HQ-ASW1: show spanning-tree vlan 999 ===
+VLAN0999
+  Root ID    Priority    5095 / Address aabb.cc00.0a00 (HQ-DSW1)
+Interface           Role Sts
+Et0/0               Root FWD
+Et0/1               Altn BLK
+Et0/3               Desg FWD   (PC-MGMT1 access port — Edge)
+
+=== HQ-ASW1: show spanning-tree summary ===
+Switch is in rapid-pvst mode
+Root bridge for: none
+Extended system ID: enabled
+PortFast Default: disabled (PortFast enabled per-port on access ports)

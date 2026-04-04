@@ -1,0 +1,26 @@
+HQ-RTR1#show ip interface brief
+Interface              IP-Address      OK? Method Status                Protocol
+Ethernet0/0            unassigned      YES TFTP   up                    up
+Ethernet0/0.100        10.1.100.1      YES manual up                    up
+Ethernet0/0.200        10.1.200.1      YES manual up                    up
+Ethernet0/0.300        10.1.44.1       YES manual up                    up
+Ethernet0/0.999        10.1.99.1       YES manual up                    up
+Ethernet0/1            unassigned      YES TFTP   administratively down down
+Ethernet0/2            unassigned      YES TFTP   administratively down down
+Ethernet0/3            unassigned      YES TFTP   administratively down down
+Loopback0              10.0.255.1      YES manual up                    up
+
+HQ-RTR1#show ip route
+      10.0.0.0/8 is variably subnetted, 9 subnets, 2 masks
+C        10.0.255.1/32 is directly connected, Loopback0
+C        10.1.44.0/24 is directly connected, Ethernet0/0.300
+L        10.1.44.1/32 is directly connected, Ethernet0/0.300
+C        10.1.99.0/24 is directly connected, Ethernet0/0.999
+L        10.1.99.1/32 is directly connected, Ethernet0/0.999
+C        10.1.100.0/24 is directly connected, Ethernet0/0.100
+L        10.1.100.1/32 is directly connected, Ethernet0/0.100
+C        10.1.200.0/24 is directly connected, Ethernet0/0.200
+L        10.1.200.1/32 is directly connected, Ethernet0/0.200
+
+RESULT: All four VLAN subnets connected. Inter-VLAN routing operational.
+Cross-VLAN ping confirmed: PC-ENG1 (10.1.100.10) -> PC-SALES1 (10.1.200.10) SUCCESS

@@ -1,0 +1,108 @@
+! ============================================================
+! DEVICE: HQ-DSW2 | PROJECT: 01 — Campus Foundation
+! PLATFORM: CML 2.9 — IOL-L2 Switch
+! PHASES: 1 (VLANs) + 2 (Trunking) + 4 (STP) + 5 (SSH)
+! ============================================================
+
+enable
+configure terminal
+
+hostname HQ-DSW2
+
+lldp run
+
+! --- Phase 1: VLAN Database ---
+vlan 100
+ name Engineering
+vlan 200
+ name Sales
+vlan 300
+ name Guest
+vlan 999
+ name Management
+vlan 1000
+ name NATIVE-UNUSED
+
+! --- Phase 1: Management IP ---
+interface vlan 999
+ ip address 10.1.99.12 255.255.255.0
+ no shutdown
+
+ip default-gateway 10.1.99.1
+
+! --- Phase 2: Trunk to HQ-ASW1 (redundant path) ---
+interface Ethernet0/1
+ description TRUNK-TO-HQ-ASW1-E0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,999
+ switchport nonegotiate
+ no shutdown
+
+! --- Phase 2: Trunk to HQ-ASW2 (redundant path) ---
+interface Ethernet0/2
+ description TRUNK-TO-HQ-ASW2-E0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,999
+ switchport nonegotiate
+ no shutdown
+
+! --- Phase 2: Trunk to HQ-DSW1 (inter-distribution) ---
+interface Ethernet0/3
+ description TRUNK-TO-HQ-DSW1-E0/3
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,999
+ switchport nonegotiate
+ no shutdown
+
+! --- Phase 4: STP — Root for VLANs 200 and 300 ---
+spanning-tree mode rapid-pvst
+spanning-tree vlan 200 priority 4096
+spanning-tree vlan 300 priority 4096
+
+! --- Phase 4: STP — Backup root for VLANs 100 and 999 ---
+spanning-tree vlan 100 priority 8192
+spanning-tree vlan 999 priority 8192
+
+! --- Phase 5: SSH Hardening ---
+ip domain-name lab.local
+username admin privilege 15 secret CMLlab2025!
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+
+line vty 0 4
+ transport input ssh
+ login local
+ exec-timeout 10 0
+ logging synchronous
+ access-class 10 in
+
+line console 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+
+access-list 10 permit 10.1.99.0 0.0.0.255
+access-list 10 deny any log
+
+no ip http server
+no ip http secure-server
+
+banner motd ^
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^
+
+service password-encryption
+enable secret CMLenableP@ss!
+
+end
+write memory

@@ -1,0 +1,25 @@
+HQ-DSW1#show interfaces trunk
+
+Port           Mode             Encapsulation  Status        Native vlan
+Et0/0          on               802.1q         trunking      1000
+Et0/1          on               802.1q         trunking      1000
+Et0/2          on               802.1q         trunking      1000
+Et0/3          on               802.1q         trunking      1000
+
+Port           Vlans allowed on trunk
+Et0/0          100,200,300,999
+Et0/1          100,200,300,999
+Et0/2          100,200,300,999
+Et0/3          100,200,300,999
+
+Port           Vlans allowed and active in management domain
+Et0/0          100,200,300,999
+Et0/1          100,200,300,999
+Et0/2          100,200,300,999
+Et0/3          100,200,300,999
+
+Port           Vlans in spanning tree forwarding state and not pruned
+Et0/0          100,200,300,999
+Et0/1          100,200,300,999
+Et0/2          100,200,300,999
+Et0/3          100,200,300,999
