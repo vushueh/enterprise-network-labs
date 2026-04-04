@@ -26,10 +26,13 @@ working correctly together.
 
 ## Topology
 
-### Physical
+### CML Lab Topology
+![CML Topology](diagrams/cml-topology.png)
+
+### Physical (draw.io)
 ![Physical Topology](diagrams/physical-topology.png)
 
-### Logical
+### Logical (draw.io)
 ![Logical Topology](diagrams/logical-topology.png)
 
 ---
