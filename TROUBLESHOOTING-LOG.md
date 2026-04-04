@@ -105,26 +105,72 @@ IOS confirmed: %SSH-5-ENABLED: SSH 2.0 has been enabled
 
 **Date:** 2026-04-03
 
+---
+
+#### Attempt 1 - Single Trunk Break (Unexpected Result)
+
 **Break introduced on HQ-DSW1 Ethernet0/1:**
   interface Ethernet0/1
    switchport trunk allowed vlan 200,300,999
-VLAN 100 was deliberately removed from the allowed list on the trunk toward HQ-ASW1.
+VLAN 100 removed from the trunk between HQ-DSW1 and HQ-ASW1.
+
+**Expected symptom:** PC-ENG1 loses connectivity.
+
+**Actual result:** PC-ENG1 ping STILL WORKED. No loss of connectivity.
+
+**Why it still worked — Redundant Design Proof:**
+The dual distribution switch design automatically protected against this single trunk failure.
+When VLAN 100 was removed from HQ-DSW1 E0/1, STP and the redundant topology rerouted traffic:
+
+  PC-ENG1 → HQ-ASW1 E0/1 → HQ-DSW2 E0/1 (VLAN 100 still allowed here)
+           → HQ-DSW2 E0/3 → HQ-DSW1 E0/3 (inter-distribution trunk)
+           → HQ-DSW1 E0/0 → HQ-RTR1 (router-on-a-stick)
+
+The redundant uplink from HQ-ASW1 to HQ-DSW2 took over automatically.
+This is EXACTLY what dual distribution switches are designed to do in production.
+
+**Key engineering insight:** Removing one trunk link from a redundant L2 design does NOT
+cause an outage — it causes a path shift. This is why enterprises use dual distribution
+switches. A single link failure is survivable. Only removing ALL paths causes an outage.
+
+---
+
+#### Attempt 2 - Both ASW1 Uplinks Broken (Correct Break)
+
+**Break introduced on HQ-ASW1 — both uplinks:**
+  interface Ethernet0/0
+   switchport trunk allowed vlan 200,300,999
+  interface Ethernet0/1
+   switchport trunk allowed vlan 200,300,999
+VLAN 100 removed from BOTH uplinks on HQ-ASW1, eliminating all paths for PC-ENG1.
 
 **Symptom observed:**
-PC-ENG1 (10.1.100.10) lost all network connectivity immediately. PC-SALES1 and PC-MGMT1 continued working normally. The trunk on E0/1 remained UP with no interface errors and no CDP neighbor loss.
+PC-ENG1 (10.1.100.10) lost all connectivity. PC-SALES1 and PC-MGMT1 continued working.
+Both trunk links on ASW1 remained UP — no physical indication of failure.
 
-**Diagnosis using show interfaces trunk on HQ-DSW1:**
-  Et0/1  Vlans allowed on trunk: 200,300,999
-VLAN 100 was missing from the allowed list. The trunk link was still up.
-
-**Key observation:** This is a subtle failure. One VLAN silently dropped from one trunk while everything else continued working. No physical indication of failure.
+**Diagnosis using show interfaces trunk on HQ-ASW1:**
+  Et0/0  Vlans allowed on trunk: 200,300,999  (VLAN 100 missing)
+  Et0/1  Vlans allowed on trunk: 200,300,999  (VLAN 100 missing)
+VLAN 100 blocked on both uplinks. PC-ENG1 had no path to the router.
 
 **Fix:**
   configure terminal
+  interface Ethernet0/0
+   switchport trunk allowed vlan 100,200,300,999
   interface Ethernet0/1
    switchport trunk allowed vlan 100,200,300,999
   end
   write memory
-PC-ENG1 connectivity restored immediately after fix.
+PC-ENG1 connectivity restored immediately.
 
-**Lesson:** Wrong allowed VLAN is one of the most common and subtle trunking failures. Characteristics: one VLAN loses connectivity while others work, trunk link stays up with no physical errors. The show interfaces trunk command is the key diagnostic. Always verify the allowed VLAN list on BOTH ends of every trunk.
+**Lesson 1 - Redundancy works:** Removing VLAN 100 from ONE trunk in a redundant design
+does NOT cause an outage. The standby path takes over automatically. This is the value
+of dual distribution switches — single link failures are survivable.
+
+**Lesson 2 - Subtle trunking failure:** A wrong allowed VLAN list is one of the most
+common trunking failures. The trunk stays UP with no physical errors. The only way to
+catch it is show interfaces trunk — check the Vlans allowed column carefully on both ends.
+
+**Lesson 3 - In production:** If only ONE of the two ASW1 uplinks had VLAN 100 removed,
+it would look fine from the switch perspective but traffic would be asymmetric. This is
+why allowed VLAN lists must be consistent across all redundant trunk pairs.
