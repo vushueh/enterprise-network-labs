@@ -1,0 +1,59 @@
+BR-RTR1#show ipv6 interface brief
+Ethernet0/0            [up/up]
+    unassigned
+Ethernet0/0.100        [up/up]
+    FE80::A8BB:CCFF:FE00:1000
+    2001:DB8:2:100::1
+Ethernet0/0.200        [up/up]
+    unassigned
+Ethernet0/0.300        [up/up]
+    unassigned
+Ethernet0/0.500        [up/up]
+    unassigned
+Ethernet0/0.999        [up/up]
+    unassigned
+Ethernet0/0.1000       [up/up]
+    unassigned
+Ethernet0/1            [up/up]
+    FE80::A8BB:CCFF:FE00:1010
+    2001:DB8:0:1::2
+Ethernet0/2            [administratively down/down]
+    unassigned
+Ethernet0/3            [administratively down/down]
+    unassigned
+BR-RTR1#show ipv6 route
+IPv6 Routing Table - default - 6 entries
+Codes: C - Connected, L - Local, S - Static, U - Per-user Static route
+       B - BGP, R - RIP, H - NHRP, HG - NHRP registered
+       Hg - NHRP registration summary, HE - NHRP External, I1 - ISIS L1
+       I2 - ISIS L2, IA - ISIS interarea, IS - ISIS summary, D - EIGRP
+       EX - EIGRP external, ND - ND Default, NDp - ND Prefix, DCE - Destination
+       NDr - Redirect, RL - RPL, O - OSPF Intra, OI - OSPF Inter
+       OE1 - OSPF ext 1, OE2 - OSPF ext 2, ON1 - OSPF NSSA ext 1
+       ON2 - OSPF NSSA ext 2, la - LISP alt, lr - LISP site-registrations
+       ld - LISP dyn-eid, lA - LISP away, le - LISP extranet-policy
+       lp - LISP publications, ls - LISP destinations-summary, a - Application
+       m - OMP
+C   2001:DB8:0:1::/126 [0/0]
+     via Ethernet0/1, directly connected
+L   2001:DB8:0:1::2/128 [0/0]
+     via Ethernet0/1, receive
+S   2001:DB8:1:100::/64 [1/0]
+     via 2001:DB8:0:1::1
+C   2001:DB8:2:100::/64 [0/0]
+     via Ethernet0/0.100, directly connected
+L   2001:DB8:2:100::1/128 [0/0]
+     via Ethernet0/0.100, receive
+L   FF00::/8 [0/0]
+     via Null0, receive
+BR-RTR1#   ping ipv6 2001:db8:0:1::1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 2001:DB8:0:1::1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 1/1/1 ms
+BR-RTR1#ping ipv6 2001:db8:1:100::1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 2001:DB8:1:100::1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 1/1/2 ms
+BR-RTR1#

@@ -1,0 +1,9 @@
+! HQ-RTR1 | Project 02 Phase 4 additions — IPv6 dual-stack
+ipv6 unicast-routing
+interface Ethernet0/1
+ ipv6 address 2001:db8:0:1::1/126
+ ipv6 enable
+interface Ethernet0/0.100
+ ipv6 address 2001:db8:1:100::1/64
+ ipv6 enable
+ipv6 route 2001:db8:2:100::/64 2001:db8:0:1::2

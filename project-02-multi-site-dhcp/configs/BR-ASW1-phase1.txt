@@ -1,0 +1,72 @@
+! BR-ASW1 | Project 02 — Final Running Config
+! ip routing enabled (changed from ip default-gateway — see troubleshooting log)
+hostname BR-ASW1
+service password-encryption
+no service config
+no ip domain-lookup
+ip domain-name lab.local
+ip routing
+username cisco privilege 15 secret ccna
+enable secret jeremysitlab
+crypto key generate rsa modulus 2048
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+lldp run
+logging buffered 8192
+spanning-tree mode rapid-pvst
+vlan 100
+ name ENGINEERING
+vlan 200
+ name SALES
+vlan 300
+ name GUEST
+vlan 500
+ name VOICE
+vlan 999
+ name MANAGEMENT
+vlan 1000
+ name NATIVE-UNUSED
+interface Vlan999
+ description MGMT-SVI-BR-ASW1
+ ip address 10.2.99.3 255.255.255.0
+ no shutdown
+ip route 0.0.0.0 0.0.0.0 10.2.99.1
+interface Ethernet0/0
+ description TRUNK-TO-BR-DSW1-E0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,500,999,1000
+ no shutdown
+interface Ethernet1/0
+ description ACCESS-PC-BR1-VLAN100
+ switchport mode access
+ switchport access vlan 100
+ switchport nonegotiate
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+interface Ethernet1/1
+ description ACCESS-PC-BR2-VLAN200
+ switchport mode access
+ switchport access vlan 200
+ switchport nonegotiate
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+line vty 0 15
+ login local
+ transport input ssh
+ exec-timeout 10 0
+ logging synchronous
+line con 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+banner motd ^
+==========================================================
+ BR-ASW1 | Branch Access Switch | Authorized Access Only
+==========================================================
+^
+end

@@ -1,0 +1,3 @@
+! HQ-RTR1 | Project 02 Phase 5 additions — DNS resolution
+ip domain lookup
+ip name-server 10.1.99.50

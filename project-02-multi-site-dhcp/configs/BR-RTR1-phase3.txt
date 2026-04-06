@@ -1,0 +1,9 @@
+! BR-RTR1 | Project 02 Phase 3 additions — DHCP relay helper-address
+interface Ethernet0/0.100
+ ip helper-address 10.1.99.50
+interface Ethernet0/0.200
+ ip helper-address 10.1.99.50
+interface Ethernet0/0.300
+ ip helper-address 10.1.99.50
+interface Ethernet0/0.500
+ ip helper-address 10.1.99.50

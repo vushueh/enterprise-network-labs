@@ -1,0 +1,30 @@
+HQ-RTR1#no debug ip dhcp server packet
+DHCP server packet debugging is off.
+HQ-RTR1#ping 10.1.99.50
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.1.99.50, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 2/2/3 ms
+HQ-RTR1#show running-config | section helper
+ ip helper-address 10.1.99.50
+ ip helper-address 10.1.99.99
+ ip helper-address 10.1.99.50
+ ip helper-address 10.1.99.50
+HQ-RTR1#enable
+HQ-RTR1#configure terminal
+Enter configuration commands, one per line.  End with CNTL/Z.
+HQ-RTR1(config)#interface Ethernet0/0.200
+HQ-RTR1(config-subif)# no ip helper-address 10.1.99.99
+HQ-RTR1(config-subif)# ip helper-address 10.1.99.50
+HQ-RTR1(config-subif)#end
+HQ-RTR1#write memory
+Building configuration...
+[OK]
+HQ-RTR1#
+*Apr  6 00:00:33.964: %SYS-5-CONFIG_I: Configured from console by admin on console
+HQ-RTR1#show running-config | section helper
+ ip helper-address 10.1.99.50
+ ip helper-address 10.1.99.50
+ ip helper-address 10.1.99.50
+ ip helper-address 10.1.99.50
+HQ-RTR1#

@@ -1,0 +1,19 @@
+BR-RTR1#show ip arp 
+Protocol  Address          Age (min)  Hardware Addr   Type   Interface
+Internet  10.0.0.1              189   aabb.cc00.0910  ARPA   Ethernet0/1
+Internet  10.0.0.2                -   aabb.cc00.1010  ARPA   Ethernet0/1
+Internet  10.2.44.1               -   aabb.cc00.1000  ARPA   Ethernet0/0.300
+Internet  10.2.50.1               -   aabb.cc00.1000  ARPA   Ethernet0/0.500
+Internet  10.2.99.1               -   aabb.cc00.1000  ARPA   Ethernet0/0.999
+Internet  10.2.99.2              62   aabb.cc80.0f00  ARPA   Ethernet0/0.999
+Internet  10.2.99.3              29   aabb.cc80.0e00  ARPA   Ethernet0/0.999
+Internet  10.2.100.1              -   aabb.cc00.1000  ARPA   Ethernet0/0.100
+Internet  10.2.100.197           22   5254.0022.a69c  ARPA   Ethernet0/0.100
+Internet  10.2.200.1              -   aabb.cc00.1000  ARPA   Ethernet0/0.200
+Internet  10.2.200.108           60   5254.0053.da69  ARPA   Ethernet0/0.200
+BR-RTR1#show run | section helper
+ ip helper-address 10.1.99.50
+ ip helper-address 10.1.99.50
+ ip helper-address 10.1.99.50
+ ip helper-address 10.1.99.50
+BR-RTR1#

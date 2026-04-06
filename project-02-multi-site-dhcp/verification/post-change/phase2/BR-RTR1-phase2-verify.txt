@@ -1,0 +1,58 @@
+BR-RTR1#show ip interface brief
+Interface              IP-Address      OK? Method Status                Protocol
+Ethernet0/0            unassigned      YES TFTP   up                    up      
+Ethernet0/0.100        10.2.100.1      YES manual up                    up      
+Ethernet0/0.200        10.2.200.1      YES manual up                    up      
+Ethernet0/0.300        10.2.44.1       YES manual up                    up      
+Ethernet0/0.500        10.2.50.1       YES manual up                    up      
+Ethernet0/0.999        10.2.99.1       YES manual up                    up      
+Ethernet0/0.1000       unassigned      YES unset  up                    up      
+Ethernet0/1            10.0.0.2        YES manual up                    up      
+Ethernet0/2            unassigned      YES TFTP   administratively down down    
+Ethernet0/3            unassigned      YES TFTP   administratively down down    
+BR-RTR1#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, m - OMP
+       n - NAT, Ni - NAT inside, No - NAT outside, Nd - NAT DIA
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       H - NHRP, G - NHRP registered, g - NHRP registration summary
+       o - ODR, P - periodic downloaded static route, l - LISP
+       a - application route
+       + - replicated route, % - next hop override, p - overrides from PfR
+       & - replicated local route overrides by connected
+
+Gateway of last resort is not set
+
+      10.0.0.0/8 is variably subnetted, 18 subnets, 3 masks
+C        10.0.0.0/30 is directly connected, Ethernet0/1
+L        10.0.0.2/32 is directly connected, Ethernet0/1
+S        10.1.40.0/24 [1/0] via 10.0.0.1
+S        10.1.44.0/24 [1/0] via 10.0.0.1
+S        10.1.50.0/24 [1/0] via 10.0.0.1
+S        10.1.99.0/24 [1/0] via 10.0.0.1
+S        10.1.100.0/24 [1/0] via 10.0.0.1
+S        10.1.200.0/24 [1/0] via 10.0.0.1
+C        10.2.44.0/24 is directly connected, Ethernet0/0.300
+L        10.2.44.1/32 is directly connected, Ethernet0/0.300
+C        10.2.50.0/24 is directly connected, Ethernet0/0.500
+L        10.2.50.1/32 is directly connected, Ethernet0/0.500
+C        10.2.99.0/24 is directly connected, Ethernet0/0.999
+L        10.2.99.1/32 is directly connected, Ethernet0/0.999
+C        10.2.100.0/24 is directly connected, Ethernet0/0.100
+L        10.2.100.1/32 is directly connected, Ethernet0/0.100
+C        10.2.200.0/24 is directly connected, Ethernet0/0.200
+L        10.2.200.1/32 is directly connected, Ethernet0/0.200
+BR-RTR1#ping 10.0.0.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.0.0.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 1/1/2 ms
+BR-RTR1#ping 10.1.99.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.1.99.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 1/1/2 ms
+BR-RTR1#

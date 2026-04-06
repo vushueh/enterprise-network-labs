@@ -1,0 +1,94 @@
+=== BREAK/FIX DIAGNOSIS — Project 02 ===
+=== Three simultaneous faults applied ===
+
+Fault 1: BR-RTR1 E0/0.100 helper-address → 10.1.99.99 (wrong)
+Fault 2: HQ-RTR1 E0/0.200 helper-address → 10.1.99.99 (wrong)
+Fault 3: BR-RTR1 ip route 10.1.99.0 255.255.255.0 Null0 (black-hole)
+
+=== LAYER 1-2 — Physical and VLAN ===
+
+>>> BR-ASW1 show vlan brief
+100  ENGINEERING  active  Et1/0
+200  SALES        active  Et1/1
+999  MANAGEMENT   active
+1000 NATIVE-UNUSED active
+→ CLEAN — correct VLANs and port assignments
+
+>>> BR-DSW1 show interfaces trunk
+Et0/0  trunking  802.1q  native 1000  VLANs 100,200,300,500,999,1000 forwarding
+Et0/1  trunking  802.1q  native 1000  VLANs 100,200,300,500,999,1000 forwarding
+→ CLEAN — both trunks correct
+
+>>> BR-RTR1 show ip interface brief
+E0/0.100  10.2.100.1  up/up
+E0/0.200  10.2.200.1  up/up
+E0/0.999  10.2.99.1   up/up
+E0/1      10.0.0.2    up/up
+→ CLEAN — all subinterfaces up
+
+LAYER 1-2 VERDICT: No fault here. Move to Layer 3.
+
+=== LAYER 3 — Reachability ===
+
+>>> BR-RTR1 show ip route 10.1.99.0
+Routing entry for 10.1.99.0/24
+  Known via "static", distance 1, metric 0 (connected)
+  * directly connected, via Null0    ← BLACK-HOLE FOUND
+    10.0.0.1                         ← legitimate route also present
+
+FAULT 3 IDENTIFIED: Null0 black-hole route for 10.1.99.0/24
+IOS load-balancing between Null0 and 10.0.0.1
+Ping succeeds intermittently (false positive) — DHCP relay consistently hits Null0
+
+>>> BR-RTR1 ping 10.1.99.50
+Success rate is 100 percent (5/5)  ← MISLEADING — load-balanced, hides the Null0
+
+>>> HQ-RTR1 ping 10.1.99.50
+Success rate is 100 percent (5/5)  ← CLEAN
+
+=== FIX FAULT 3 FIRST (dependency order) ===
+
+BR-RTR1(config)# no ip route 10.1.99.0 255.255.255.0 Null0
+
+>>> BR-RTR1 show ip route 10.1.99.0 (after fix)
+S   10.1.99.0/24 [1/0] via 10.0.0.1  ← only correct path remains
+
+=== LAYER 3 — Relay config ===
+
+>>> BR-RTR1 show running-config | section helper
+ ip helper-address 10.1.99.99   ← E0/0.100 WRONG — FAULT 1
+ ip helper-address 10.1.99.50   ← E0/0.200 correct
+ ip helper-address 10.1.99.50   ← E0/0.300 correct
+ ip helper-address 10.1.99.50   ← E0/0.500 correct
+
+>>> HQ-RTR1 show running-config | section helper
+ ip helper-address 10.1.99.50   ← E0/0.100 correct
+ ip helper-address 10.1.99.99   ← E0/0.200 WRONG — FAULT 2
+ ip helper-address 10.1.99.50   ← E0/0.300 correct
+ ip helper-address 10.1.99.50   ← E0/0.500 correct
+
+=== FIX FAULTS 1 AND 2 ===
+
+BR-RTR1(config-subif)# interface Ethernet0/0.100
+BR-RTR1(config-subif)# no ip helper-address 10.1.99.99
+BR-RTR1(config-subif)# ip helper-address 10.1.99.50
+
+HQ-RTR1(config-subif)# interface Ethernet0/0.200
+HQ-RTR1(config-subif)# no ip helper-address 10.1.99.99
+HQ-RTR1(config-subif)# ip helper-address 10.1.99.50
+
+=== POST-FIX VERIFICATION ===
+
+>>> BR-RTR1 show running-config | section helper
+ ip helper-address 10.1.99.50   ← all four correct
+
+>>> HQ-RTR1 show running-config | section helper
+ ip helper-address 10.1.99.50   ← all four correct
+
+>>> PC-BR1 udhcpc -i eth0
+udhcpc: lease of 10.2.100.197 obtained from 10.1.99.50  ← RESTORED
+
+>>> PC-BR2 udhcpc -i eth0
+udhcpc: lease of 10.2.200.108 obtained from 10.1.99.50  ← RESTORED
+
+ALL THREE FAULTS IDENTIFIED AND RESOLVED. SCORE: 10/10

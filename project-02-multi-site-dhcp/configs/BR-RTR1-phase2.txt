@@ -1,0 +1,13 @@
+! BR-RTR1 | Project 02 Phase 2 additions — WAN + static routes to HQ
+interface Ethernet0/1
+ description WAN-TO-HQ-RTR1-E0/1
+ ip address 10.0.0.2 255.255.255.252
+ bandwidth 1000
+ delay 1000
+ no shutdown
+ip route 10.1.100.0 255.255.255.0 10.0.0.1
+ip route 10.1.200.0 255.255.255.0 10.0.0.1
+ip route 10.1.44.0 255.255.255.0 10.0.0.1
+ip route 10.1.40.0 255.255.255.0 10.0.0.1
+ip route 10.1.50.0 255.255.255.0 10.0.0.1
+ip route 10.1.99.0 255.255.255.0 10.0.0.1

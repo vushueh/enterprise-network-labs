@@ -1,0 +1,9 @@
+! HQ-ASW1 | Project 02 Phase 3 addition — DHCP-DNS server access port
+interface Ethernet1/2
+ description SERVER-HQ-DHCP-DNS-VLAN999
+ switchport mode access
+ switchport access vlan 999
+ switchport nonegotiate
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown

@@ -1,0 +1,179 @@
+BR-RTR1#sh run 
+Building configuration...
+
+Current configuration : 2697 bytes
+!
+! Last configuration change at 00:00:21 UTC Mon Apr 6 2026
+!
+version 17.16
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname BR-RTR1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 8192
+no aaa new-model
+!
+!
+!
+!
+!
+!         
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.1.99.50
+ip domain name lab.local
+ip cef
+login on-success log
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!         
+!
+!
+!
+memory free low-watermark processor 79983
+!
+!
+spanning-tree mode rapid-pvst
+!
+enable secret 9 $9$RcsBtunxTLZrz.$9Q166JUx/6QfNiF9w5NV6VEcMNBFCw9i6Lz9pQXtsF2
+!
+username admin privilege 15 secret 9 $9$CIxkph/cZI04Bk$QT7AMdTPv42UY2WA1zyl.3jRP1Pny.88Oeo0w4iaqzU
+!
+!
+!
+!
+!
+lldp run
+! 
+!
+!
+!
+!         
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Ethernet0/0
+ description TRUNK-TO-BR-DSW1-E0/0
+ no ip address
+!
+interface Ethernet0/0.100
+ description GATEWAY-VLAN100-ENGINEERING
+ encapsulation dot1Q 100
+ ip address 10.2.100.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ipv6 address 2001:DB8:2:100::1/64
+ ipv6 enable
+!         
+interface Ethernet0/0.200
+ description GATEWAY-VLAN200-SALES
+ encapsulation dot1Q 200
+ ip address 10.2.200.1 255.255.255.0
+ ip helper-address 10.1.99.50
+!
+interface Ethernet0/0.300
+ description GATEWAY-VLAN300-GUEST
+ encapsulation dot1Q 300
+ ip address 10.2.44.1 255.255.255.0
+ ip helper-address 10.1.99.50
+!
+interface Ethernet0/0.500
+ description GATEWAY-VLAN500-VOICE
+ encapsulation dot1Q 500
+ ip address 10.2.50.1 255.255.255.0
+ ip helper-address 10.1.99.50
+!
+interface Ethernet0/0.999
+ description GATEWAY-VLAN999-MGMT
+ encapsulation dot1Q 999
+ ip address 10.2.99.1 255.255.255.0
+!         
+interface Ethernet0/0.1000
+ description NATIVE-VLAN1000-UNUSED
+ encapsulation dot1Q 1000 native
+!
+interface Ethernet0/1
+ description WAN-TO-HQ-RTR1-E0/1
+ bandwidth 1000
+ ip address 10.0.0.2 255.255.255.252
+ delay 1000
+ ipv6 address 2001:DB8:0:1::2/126
+ ipv6 enable
+!
+interface Ethernet0/2
+ description UNUSED
+ no ip address
+ shutdown
+!
+interface Ethernet0/3
+ description UNUSED
+ no ip address
+ shutdown
+!
+ip forward-protocol nd
+ip forward-protocol udp
+!
+!
+ip http server
+ip http secure-server
+ip route 10.1.40.0 255.255.255.0 10.0.0.1
+ip route 10.1.44.0 255.255.255.0 10.0.0.1
+ip route 10.1.50.0 255.255.255.0 10.0.0.1
+ip route 10.1.99.0 255.255.255.0 10.0.0.1
+ip route 10.1.100.0 255.255.255.0 10.0.0.1
+ip route 10.1.200.0 255.255.255.0 10.0.0.1
+ip ssh bulk-mode 131072
+ip ssh time-out 60
+no logging btrace
+ipv6 route 2001:DB8:1:100::/64 2001:DB8:0:1::1
+!
+!
+!
+control-plane
+!
+!
+banner motd ^C
+ BR-RTR1 | Branch Gateway Router | Authorized Access Only
+^C
+!
+line con 0
+ logging synchronous
+line aux 0
+line vty 0 4
+ logging synchronous
+ login local
+ transport input ssh
+!
+!
+!
+!
+end
+
+BR-RTR1#

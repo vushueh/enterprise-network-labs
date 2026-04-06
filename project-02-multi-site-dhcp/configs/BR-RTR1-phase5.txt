@@ -1,0 +1,4 @@
+! BR-RTR1 | Project 02 Phase 5 additions — DNS resolution
+! NOTE: no ip domain lookup was removed — it was blocking DNS queries
+ip domain lookup
+ip name-server 10.1.99.50

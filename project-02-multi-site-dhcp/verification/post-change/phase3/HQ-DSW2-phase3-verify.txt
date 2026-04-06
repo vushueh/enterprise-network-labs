@@ -1,0 +1,36 @@
+HQ-DSW2#sh vlan br
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    
+100  Engineering                      active    
+200  Sales                            active    
+300  Guest                            active    
+999  Management                       active    Et0/0
+1000 NATIVE-UNUSED                    active    
+1002 fddi-default                     act/unsup 
+1003 token-ring-default               act/unsup 
+1004 fddinet-default                  act/unsup 
+1005 trnet-default                    act/unsup 
+HQ-DSW2#show interfaces trunk
+
+Port           Mode             Encapsulation  Status        Native vlan  
+Et0/1          on               802.1q         trunking      1000
+Et0/2          on               802.1q         trunking      1000
+Et0/3          on               802.1q         trunking      1000
+
+Port           Vlans allowed on trunk
+Et0/1          100,200,300,999
+Et0/2          100,200,300,999
+Et0/3          100,200,300,999
+
+Port           Vlans allowed and active in management domain
+Et0/1          100,200,300,999
+Et0/2          100,200,300,999
+Et0/3          100,200,300,999
+
+Port           Vlans in spanning tree forwarding state and not pruned
+Et0/1          100,200,300,999
+Et0/2          100,200,300,999
+Et0/3          100,200,300,999
+HQ-DSW2#

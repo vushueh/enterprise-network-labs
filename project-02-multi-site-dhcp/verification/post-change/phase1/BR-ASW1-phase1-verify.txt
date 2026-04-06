@@ -1,0 +1,58 @@
+BR-ASW1#show ip interface brief
+Interface              IP-Address      OK? Method Status                Protocol
+Ethernet0/0            unassigned      YES unset  up                    up      
+Ethernet0/1            unassigned      YES unset  administratively down down    
+Ethernet0/2            unassigned      YES unset  administratively down down    
+Ethernet0/3            unassigned      YES unset  administratively down down    
+Ethernet1/0            unassigned      YES unset  up                    up      
+Ethernet1/1            unassigned      YES unset  up                    up      
+Ethernet1/2            unassigned      YES unset  administratively down down    
+Ethernet1/3            unassigned      YES unset  administratively down down    
+Vlan999                10.2.99.3       YES manual up                    up      
+BR-ASW1#show vlan brief
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Et0/1, Et0/2, Et0/3, Et1/2
+                                                Et1/3
+100  ENGINEERING                      active    Et1/0
+200  SALES                            active    Et1/1
+300  GUEST                            active    
+500  VOICE                            active    
+999  MANAGEMENT                       active    
+1000 NATIVE-UNUSED                    active    
+1002 fddi-default                     act/unsup 
+1003 token-ring-default               act/unsup 
+1004 fddinet-default                  act/unsup 
+1005 trnet-default                    act/unsup 
+BR-ASW1#show interfaces trunk
+
+Port           Mode             Encapsulation  Status        Native vlan  
+Et0/0          on               802.1q         trunking      1000
+
+Port           Vlans allowed on trunk
+Et0/0          100,200,300,500,999-1000
+
+Port           Vlans allowed and active in management domain
+Et0/0          100,200,300,500,999-1000
+
+Port           Vlans in spanning tree forwarding state and not pruned
+Et0/0          100,200,300,500,999-1000
+
+
+BR-ASW1# show cdp neighbors
+Capability Codes: R - Router, T - Trans Bridge, B - Source Route Bridge
+                  S - Switch, H - Host, I - IGMP, r - Repeater, P - Phone, 
+                  D - Remote, C - CVTA, M - Two-port Mac Relay 
+
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+BR-DSW1.lab.local
+                 Eth 0/0           172             R S I  Linux Uni Eth 0/1
+
+Total cdp entries displayed : 1
+BR-ASW1#ping 10.2.99.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.2.99.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 2/2/4 ms
+BR-ASW1#

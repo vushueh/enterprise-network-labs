@@ -174,3 +174,204 @@ catch it is show interfaces trunk — check the Vlans allowed column carefully o
 **Lesson 3 - In production:** If only ONE of the two ASW1 uplinks had VLAN 100 removed,
 it would look fine from the switch perspective but traffic would be asymmetric. This is
 why allowed VLAN lists must be consistent across all redundant trunk pairs.
+
+---
+
+## Project 02 — Multi-Site Expansion + DHCP
+
+### Issue P02-01 — BR-ASW1 Access Port Configured on Wrong Interface (Phase 1)
+
+**Date:** 2026-04-05
+
+**Symptom:** PC-BR1 had no network connectivity. No DHCP, no ping to gateway. Port was configured but traffic not passing.
+
+**Investigation:** show vlan brief showed Ethernet1/0 listed under VLAN 100. Cross-referenced CML canvas — PC-BR1 cable was connected to Ethernet0/1, not Ethernet1/0.
+
+**Root cause:** Interface naming transposition during config entry. Ethernet1/0 and Ethernet0/1 are visually similar names — easy to swap. Config was applied to the wrong interface.
+
+**Fix:** Moved the PC-BR1 cable in CML from Ethernet0/1 to Ethernet1/0 to match the existing config. No IOS changes needed.
+
+**Lesson:** On IOL-L2, always cross-check interface names against the CML topology canvas. Run show cdp neighbors or show interfaces status immediately after cabling to confirm the correct interface is up before configuring.
+
+---
+
+### Issue P02-02 — BR-ASW1 ip default-gateway Insufficient for Remote-Subnet ICMP (Phase 2)
+
+**Date:** 2026-04-05
+
+**Symptom:** Ping from HQ-RTR1 (10.0.0.1) to BR-ASW1 (10.2.99.3) failed with 0% success. Pings to BR-RTR1 (10.2.99.1) and BR-DSW1 (10.2.99.2) on the same subnet succeeded.
+
+**Investigation:** Phase 1 ping from BR-RTR1 to 10.2.99.3 had worked (source was 10.2.99.1 — same subnet, no gateway needed for reply). HQ-RTR1 sources from 10.0.0.1 — a remote subnet — exposing the ip default-gateway limitation.
+
+**Root cause:** ip default-gateway on IOL-L2 does not properly forward ICMP replies destined to remote subnets. The reply from BR-ASW1 to 10.0.0.1 was dropped silently because the management-plane handler cannot route beyond directly connected subnets.
+
+**Fix:** Enabled ip routing on BR-ASW1. Added ip route 0.0.0.0 0.0.0.0 10.2.99.1. Removed ip default-gateway.
+
+**Lesson:** ip default-gateway is only safe for same-subnet management access. Any device that must respond to traffic from remote subnets needs ip routing + a default route.
+
+---
+
+### Issue P02-03 — Dnsmasq Container Failed to Start — bind-interfaces Crash (Phase 3)
+
+**Date:** 2026-04-05
+
+**Symptom:** CML error: "container failed to start" with code 30 when starting HQ-DHCP-DNS node.
+
+**Root cause:** bind-interfaces directive in dnsmasq.conf causes a race condition on some CML Dnsmasq node versions — dnsmasq starts before eth0 is fully ready.
+
+**Fix:** Removed bind-interfaces from dnsmasq.conf. Restored both config files using the RESTORE button in CML CONFIG tab.
+
+**Lesson:** Avoid bind-interfaces on CML Dnsmasq nodes. The default wildcard binding works correctly and does not have the timing dependency.
+
+---
+
+### Issue P02-04 — DHCP Relay Not Firing — Missing helper-address (Phase 3)
+
+**Date:** 2026-04-05
+
+**Symptom:** dnsmasq log showed "no address range available via eth0" continuously. debug ip dhcp server packet on BR-RTR1 showed no output — relay not firing at all.
+
+**Root cause:** ip helper-address had not been configured on either router. Without the relay agent, DHCP broadcasts never leave the local subnet — the server never sees them.
+
+**Fix:** Configured ip helper-address 10.1.99.50 on all data VLAN subinterfaces on both HQ-RTR1 and BR-RTR1.
+
+**Lesson:** Centralized DHCP requires ip helper-address on every router subinterface serving client subnets. Missing even one subinterface means that VLAN gets no DHCP service.
+
+---
+
+### Issue P02-05 — interface=eth0 in dnsmasq.conf Blocking Relay Packets (Phase 3)
+
+**Date:** 2026-04-05
+
+**Symptom:** Even after configuring helper-address, dnsmasq continued showing "no address range available via eth0" — never showing "via 10.x.x.x" which indicates relay.
+
+**Root cause:** interface=eth0 tells dnsmasq to only process requests arriving directly on eth0 as broadcasts. Relayed DHCP packets arrive as unicast UDP on port 67 — this line caused dnsmasq to reject them silently.
+
+**Fix:** Removed interface=eth0 from dnsmasq.conf.
+
+**Lesson:** Never use interface= restriction on a centralized DHCP server that serves relayed requests.
+
+---
+
+### Issue P02-06 — HQ-DHCP-DNS eth0 NO-CARRIER — Missing VLAN Config on HQ-DSW2 (Phase 3)
+
+**Date:** 2026-04-05
+
+**Symptom:** ip link show eth0 on HQ-DHCP-DNS showed NO-CARRIER, state DOWN. Node had no network connectivity despite cable existing in CML.
+
+**Root cause:** HQ-DSW2 E0/0 was physically connected but never configured as an access port in VLAN 999. Port was in VLAN 1 default state — HQ-DHCP-DNS had no valid Layer 2 path.
+
+**Fix:** Configured HQ-DSW2 E0/0 as access port VLAN 999 with PortFast and BPDU Guard.
+
+**Lesson:** Always configure the switchport before connecting a server. A cable without a VLAN assignment is the same as no cable from the server's perspective.
+
+---
+
+### Issue P02-07 — Wrong Console Open — udhcpc Run on HQ-DHCP-DNS (Phase 3)
+
+**Date:** 2026-04-05
+
+**Symptom:** udhcpc run on what appeared to be PC-BR1 failed. IOS debug commands typed on same device returned "not found".
+
+**Root cause:** Multiple CML console tabs open. inserthostname-here hostname was the HQ-DHCP-DNS node (default hostname on CML Alpine/Dnsmasq nodes), not PC-BR1. Running udhcpc on the DHCP server asked the server to give itself an address.
+
+**Fix:** Opened correct PC-BR1 console. Set hostnames on all nodes.
+
+**Lesson:** Always verify hostname in the shell prompt before running any command. Run hostname on Alpine nodes to confirm which node you are on.
+
+---
+
+### Issue P02-08 — HQ-DHCP-DNS Loses IP on Every Restart (Phase 3/5)
+
+**Date:** 2026-04-05
+
+**Symptom:** After stopping and starting HQ-DHCP-DNS, ping to 10.1.99.50 from HQ-RTR1 failed immediately after node showed BOOTED in CML.
+
+**Root cause:** CML shows node as BOOTED before the startup script finishes executing. The startup script sets the IP and default route — but pinging immediately catches the node before script completion.
+
+**Fix:** Wait 15-20 seconds after BOOTED state appears before testing connectivity. Added ip addr show and ip route show to startup script output for visual confirmation on every boot.
+
+**Lesson:** CML container BOOTED state does not equal startup script completed. Always wait before testing.
+
+---
+
+### Issue P02-09 — dnsmasq NXDOMAIN — domain= Without Address Records (Phase 5)
+
+**Date:** 2026-04-05
+
+**Symptom:** nslookup returning NXDOMAIN for all lab.local names even though dnsmasq was reachable and domain=lab.local + local=/lab.local/ were configured.
+
+**Root cause:** domain= and local= are routing directives that tell dnsmasq where to look — they do not create any DNS records. Without address= entries or a populated hosts file, dnsmasq has nothing to return.
+
+**Fix:** Added address= directives for all infrastructure hosts directly in dnsmasq.conf.
+
+**Lesson:** Always pair domain= and local= with actual host records using address= directives.
+
+---
+
+### Issue P02-10 — pc-br1.lab.local NXDOMAIN — Dynamic IP in Static DNS Record (Phase 5)
+
+**Date:** 2026-04-05
+
+**Symptom:** nslookup pc-br1.lab.local returned NXDOMAIN even though address= entry existed in dnsmasq.conf.
+
+**Root cause:** DHCP leases can change between restarts. The hardcoded IP in address= did not always match the current lease. Without a static reservation, the endpoint could get a different IP on each boot.
+
+**Fix:** Added dhcp-host= static reservations using MAC addresses for both PC-BR1 and PC-BR2. This locks endpoints to permanent IPs regardless of restart order.
+
+**Lesson:** Never hardcode dynamic DHCP IPs in DNS records. Always use static DHCP reservations for any device that needs a predictable DNS entry.
+
+---
+
+### Issue P02-11 — no ip domain lookup Blocking DNS on BR-RTR1 (Phase 5)
+
+**Date:** 2026-04-05
+
+**Symptom:** BR-RTR1 could ping 10.1.99.50 directly but ping hq-rtr1.lab.local returned "Unrecognized host or address". ip name-server 10.1.99.50 was configured.
+
+**Root cause:** no ip domain lookup was configured in Phase 1 hardening to prevent the 30-second DNS timeout when mistyping IOS commands. This same setting blocks all DNS resolution from the router itself.
+
+**Fix:** ip domain lookup re-enabled. ip name-server 10.1.99.50 confirmed. DNS resolution worked immediately.
+
+**Lesson:** no ip domain lookup is double-edged — prevents mistyped command timeouts but also blocks legitimate DNS queries. The better approach is ip domain lookup with a valid name-server configured.
+
+---
+
+### Issue P02-12 — Alpine PC Nodes Showing inserthostname-here (Phase 3/5)
+
+**Date:** 2026-04-05
+
+**Symptom:** Both PC-BR1 and PC-BR2 showed inserthostname-here as hostname. dnsmasq log showed "client provides name: localhost" for all DHCP leases.
+
+**Root cause:** CML Alpine Linux nodes do not set a hostname by default. Every node boots with the placeholder inserthostname-here.
+
+**Fix:** Ran hostname pc-br1 and hostname pc-br2 in each session. Added hostname command to each node's startup script in CML CONFIG tab for persistence.
+
+**Lesson:** Set hostnames on all Alpine nodes immediately after adding them to the topology. Add the hostname command to the startup script so it survives every reboot.
+
+---
+
+## Project 02 — Break/Fix Challenge
+
+### Three Simultaneous DHCP Faults
+
+**Date:** 2026-04-05
+
+**Symptom:** Two helpdesk tickets simultaneously: Branch Engineering VLAN 100 — no DHCP. HQ Sales VLAN 200 — no DHCP. DNS and management connectivity unaffected.
+
+**Faults introduced:**
+1. BR-RTR1 E0/0.100 helper-address changed to 10.1.99.99
+2. HQ-RTR1 E0/0.200 helper-address changed to 10.1.99.99
+3. BR-RTR1 ip route 10.1.99.0 255.255.255.0 Null0 added (black-hole)
+
+**Investigation:**
+Layer 1-2: show vlan brief and show interfaces trunk — clean, no issues.
+Layer 3: show ip route 10.1.99.0 on BR-RTR1 revealed TWO routing entries — one via 10.0.0.1 (correct) and one via Null0 (black-hole). Ping succeeded intermittently due to IOS load-balancing between both paths — false positive. DHCP relay consistently hit the Null0 path causing silent drops.
+Layer 3 relay: show running-config | section helper revealed wrong helper-address on BR-RTR1 E0/0.100 and HQ-RTR1 E0/0.200.
+
+**Fix order (dependency critical):**
+1. Removed Null0 route first — fixing helper-address without this would still fail
+2. Corrected helper-address on BR-RTR1 E0/0.100 to 10.1.99.50
+3. Corrected helper-address on HQ-RTR1 E0/0.200 to 10.1.99.50
+
+**Lesson:** A successful ping does not prove a clean routing path. Always check show ip route for the specific destination. A Null0 black-hole with a competing legitimate route causes intermittent success that hides the real fault. Fix routing before fixing application-layer config — dependency order determines whether fixes actually take effect.
