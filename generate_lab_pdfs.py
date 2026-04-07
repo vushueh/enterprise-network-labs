@@ -22,7 +22,7 @@ from PIL import Image as PILImage
 # ─── Colors ───────────────────────────────────────────────────────────────────
 NAVY        = colors.HexColor("#005073")   # primary brand blue
 WHITE       = colors.white
-BLACK       = colors.HexColor("#000000")
+BLACK       = colors.black
 CODE_BG     = colors.HexColor("#F0F0F0")
 WHY_BG      = colors.HexColor("#EBF5FB")
 WHY_BORDER  = colors.HexColor("#0070AD")
@@ -50,29 +50,29 @@ STYLES = {
     "cover_subtitle": S("cover_subtitle", fontName="Helvetica", fontSize=14,
                         leading=20, textColor=WHITE, alignment=TA_CENTER, spaceAfter=6),
     "cover_meta": S("cover_meta", fontName="Helvetica", fontSize=11,
-                    leading=16, textColor=BLACK, alignment=TA_CENTER, spaceAfter=4),
+                    leading=16, textColor=colors.black, alignment=TA_CENTER, spaceAfter=4),
     "body": S("body", fontName="Helvetica", fontSize=10, leading=14,
-              textColor=BLACK, spaceAfter=4),
+              textColor=colors.black, spaceAfter=4),
     "body_bold": S("body_bold", fontName="Helvetica-Bold", fontSize=10, leading=14,
-                   textColor=BLACK, spaceAfter=4),
+                   textColor=colors.black, spaceAfter=4),
     "step": S("step", fontName="Helvetica-Bold", fontSize=10, leading=14,
-              textColor=BLACK, spaceAfter=3, spaceBefore=8),
+              textColor=colors.black, spaceAfter=3, spaceBefore=8),
     "subsec": S("subsec", fontName="Helvetica-Bold", fontSize=12, leading=16,
                 textColor=SUBSEC_TEXT, spaceAfter=4, spaceBefore=10),
     "caption": S("caption", fontName="Helvetica-Oblique", fontSize=8, leading=11,
                  textColor=colors.HexColor("#555555"), alignment=TA_CENTER, spaceAfter=8),
     "bullet": S("bullet", fontName="Helvetica", fontSize=10, leading=14,
-                textColor=BLACK, leftIndent=16, bulletIndent=6, spaceAfter=3),
+                textColor=colors.black, leftIndent=16, bulletIndent=6, spaceAfter=3),
     "tbl_hdr": S("tbl_hdr", fontName="Helvetica-Bold", fontSize=9, leading=12,
                  textColor=WHITE, alignment=TA_CENTER),
     "tbl_body": S("tbl_body", fontName="Helvetica", fontSize=9, leading=12,
-                  textColor=BLACK),
+                  textColor=colors.black),
     "tbl_body_c": S("tbl_body_c", fontName="Helvetica", fontSize=9, leading=12,
-                    textColor=BLACK, alignment=TA_CENTER),
+                    textColor=colors.black, alignment=TA_CENTER),
     "why": S("why", fontName="Helvetica-Oblique", fontSize=9, leading=13,
-             textColor=BLACK, spaceAfter=8, spaceBefore=4),
+             textColor=colors.black, spaceAfter=8, spaceBefore=4),
     "note": S("note", fontName="Helvetica", fontSize=9, leading=13,
-              textColor=BLACK, spaceAfter=8, spaceBefore=4),
+              textColor=colors.black, spaceAfter=8, spaceBefore=4),
     "verify_label": S("verify_label", fontName="Helvetica-Bold", fontSize=10,
                       leading=14, textColor=NAVY, spaceAfter=3, spaceBefore=8),
 }
@@ -139,7 +139,7 @@ def code_block(text):
     Uses one table row per line so the block can split across pages.
     Returns a LIST of flowables (no outer wrapper) to allow page splitting."""
     line_style = ParagraphStyle("cb", fontName="Courier-Bold", fontSize=8.5, leading=12,
-                                textColor=BLACK, leftIndent=10)
+                                textColor=colors.black, leftIndent=10)
     lines = text.strip("\n").split("\n")
     data = []
     for line in lines:
@@ -169,7 +169,7 @@ def why_box(text):
     bold_prefix = '<font name="Helvetica-Bold">WHY: </font>'
     content = Paragraph(bold_prefix + text,
                         ParagraphStyle("wh", fontName="Helvetica-Oblique", fontSize=9,
-                                       leading=13, textColor=BLACK))
+                                       leading=13, textColor=colors.black))
     data = [[content]]
     t = Table(data, colWidths=[USABLE_W - 20])
     t.setStyle(TableStyle([
@@ -195,7 +195,7 @@ def note_box(text):
     bold_prefix = '<font name="Helvetica-Bold">NOTE: </font>'
     content = Paragraph(bold_prefix + text,
                         ParagraphStyle("nb", fontName="Helvetica", fontSize=9,
-                                       leading=13, textColor=BLACK))
+                                       leading=13, textColor=colors.black))
     data = [[content]]
     t = Table(data, colWidths=[USABLE_W - 20])
     t.setStyle(TableStyle([
