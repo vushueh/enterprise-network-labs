@@ -1,0 +1,92 @@
+! ============================================================
+! ABR2 - Area Border Router
+! Router ID: 4.4.4.4
+! Role: ABR between Area 0, Area 1 (Standard), Area 3 (NSSA)
+! Summarizes: 10.1.0.0/16 and 10.3.0.0/16 toward Area 0
+! Translates: Type 7 LSAs (NSSA) -> Type 5 LSAs (flooding to Area 0)
+! ============================================================
+
+hostname ABR2
+no ip domain-lookup
+ip routing
+
+! --- Loopback (stable Router ID) ---
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 4.4.4.4 255.255.255.255
+ ip ospf 1 area 0
+ no shutdown
+
+! --- Link to R-CORE1 (Area 0) ---
+interface Ethernet0/0
+ description TO-R-CORE1-E0/2-AREA0
+ ip address 10.0.2.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to R-CORE2 (Area 0) ---
+interface Ethernet0/1
+ description TO-R-CORE2-E0/2-AREA0
+ ip address 10.0.4.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to R-CAMPUS1 (Area 1 - Standard) ---
+interface Ethernet0/2
+ description TO-R-CAMPUS1-E0/1-AREA1
+ ip address 10.1.0.5 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to R-DC1 (Area 3 - NSSA) ---
+interface Ethernet0/3
+ description TO-R-DC1-E0/0-AREA3-NSSA
+ ip address 10.3.0.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 3
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- OSPF Process ---
+router ospf 1
+ router-id 4.4.4.4
+ !
+ ! Authentication per area
+ area 0 authentication message-digest
+ area 1 authentication message-digest
+ area 3 authentication message-digest
+ !
+ ! Area 3 = NSSA with no-summary (Totally NSSA)
+ ! Allows R-DC1 to redistribute external routes (Type 7)
+ ! ABR2 translates Type 7 -> Type 5 for Area 0
+ ! no-summary means ABR2 injects a default into Area 3 instead of Type 3s
+ area 3 nssa no-summary
+ !
+ ! Summarization toward Area 0
+ area 1 range 10.1.0.0 255.255.0.0
+ area 3 range 10.3.0.0 255.255.0.0
+ !
+ passive-interface Loopback0
+ timers throttle spf 50 200 5000
+ timers throttle lsa all 50 200 5000
+
+! --- WHY: area 3 nssa no-summary ---
+! NSSA allows R-DC1 (ASBR inside Area 3) to redistribute external routes.
+! Those external routes become Type 7 LSAs, flooded only within Area 3.
+! ABR2 (highest Router ID among Area 3 ABRs) translates Type 7 -> Type 5
+! and floods them to Area 0 and all other areas.
+! "no-summary" adds Totally NSSA behavior - ABR2 also injects a default
+! route into Area 3, so R-DC1 doesn't need all Type 3 inter-area LSAs.
+
+! --- Verification Commands ---
+! show ip ospf neighbor
+! show ip ospf border-routers
+! show ip ospf database nssa-external  <- Type 7 LSAs in Area 3
+! show ip ospf database external       <- Type 5 LSAs after translation
+! show ip route ospf

@@ -1,0 +1,75 @@
+! ============================================================
+! R-CAMPUS1 - Area 1 (Standard Area) Internal Router
+! Router ID: 5.5.5.5
+! Role: Campus distribution router, dual-homed to ABR1 and ABR2
+! Area type: STANDARD - receives all LSA types (1,2,3,4,5)
+! ============================================================
+
+hostname R-CAMPUS1
+no ip domain-lookup
+ip routing
+
+! --- Loopback (stable Router ID) ---
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 5.5.5.5 255.255.255.255
+ ip ospf 1 area 1
+ no shutdown
+
+! --- Link to ABR1 (Area 1) ---
+interface Ethernet0/0
+ description TO-ABR1-E0/2-AREA1
+ ip address 10.1.0.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to ABR2 (Area 1) - Redundant path ---
+interface Ethernet0/1
+ description TO-ABR2-E0/2-AREA1-REDUNDANT
+ ip address 10.1.0.6 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Campus LAN (end hosts) ---
+interface Ethernet0/2
+ description CAMPUS-LAN-PC-CAMPUS
+ ip address 10.1.10.1 255.255.255.0
+ ip ospf 1 area 1
+ no shutdown
+
+! --- OSPF Process ---
+router ospf 1
+ router-id 5.5.5.5
+ area 1 authentication message-digest
+ passive-interface Loopback0
+ passive-interface Ethernet0/2
+ timers throttle spf 50 200 5000
+ timers throttle lsa all 50 200 5000
+
+! --- WHY: Two uplinks to ABR1 and ABR2 ---
+! This is dual ABR redundancy in practice.
+! If ABR1 fails, R-CAMPUS1 still has full connectivity via ABR2.
+! OSPF automatically recalculates the path - no manual intervention needed.
+! Both paths exist simultaneously - OSPF may load-balance if costs are equal.
+
+! --- WHY: passive-interface on LAN ---
+! Ethernet0/2 connects to end hosts (PC-CAMPUS).
+! We don't want OSPF hellos sent to end hosts - they can't respond.
+! Passive interface: the subnet IS advertised into OSPF, but no hellos are sent.
+! This also prevents rogue devices from forming OSPF adjacencies on the LAN.
+
+! --- PC-CAMPUS Configuration ---
+! ip addr add 10.1.10.10/24 dev eth0
+! ip route add default via 10.1.10.1
+
+! --- Verification Commands ---
+! show ip ospf neighbor          <- Should see ABR1 and ABR2
+! show ip ospf database          <- Full LSDB (standard area gets everything)
+! show ip route ospf             <- Should see O IA routes from other areas
+! ping 10.2.10.10                <- Ping PC-BRANCH (through Area 2)
+! ping 10.3.10.10                <- Ping PC-DC (through Area 3)
+! ping 192.168.100.1             <- Ping external network (redistributed by R-DC1)

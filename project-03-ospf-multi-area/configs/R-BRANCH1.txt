@@ -1,0 +1,71 @@
+! ============================================================
+! R-BRANCH1 - Area 2 (Totally Stubby Area) Branch Router
+! Router ID: 6.6.6.6
+! Role: Single-homed branch office router
+! Area type: TOTALLY STUBBY - only default route from ABR1
+! Smallest possible LSDB - ideal for low-resource routers
+! ============================================================
+
+hostname R-BRANCH1
+no ip domain-lookup
+ip routing
+
+! --- Loopback (stable Router ID) ---
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 6.6.6.6 255.255.255.255
+ ip ospf 1 area 2
+ no shutdown
+
+! --- Link to ABR1 (Area 2 - Totally Stubby) ---
+interface Ethernet0/0
+ description TO-ABR1-E0/3-AREA2-TOTALLY-STUBBY
+ ip address 10.2.0.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 2
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Branch LAN (end hosts) ---
+interface Ethernet0/1
+ description BRANCH-LAN-PC-BRANCH
+ ip address 10.2.10.1 255.255.255.0
+ ip ospf 1 area 2
+ no shutdown
+
+! --- OSPF Process ---
+router ospf 1
+ router-id 6.6.6.6
+ area 2 authentication message-digest
+ area 2 stub
+ passive-interface Loopback0
+ passive-interface Ethernet0/1
+ timers throttle spf 50 200 5000
+ timers throttle lsa all 50 200 5000
+
+! --- WHY: area 2 stub ---
+! On the branch router (internal router), "stub" is enough.
+! The ABR (ABR1) uses "stub no-summary" to make it totally stubby.
+! The stub flag here just tells R-BRANCH1 it's in a stub area.
+! This is required on ALL routers in the area, not just the ABR.
+
+! --- WHAT R-BRANCH1 sees in its routing table ---
+! O*IA  0.0.0.0/0 via 10.2.0.1   <- Default route from ABR1 (ONLY inter-area route)
+! O     10.2.0.0/30               <- Link to ABR1
+! O     10.2.10.0/24              <- Local branch LAN
+! C     (connected interfaces)
+!
+! Notice: NO routes from Area 1, Area 3, or external (192.168.100.x)
+! R-BRANCH1 just sends everything to ABR1 via the default route.
+! This is exactly what you want for a simple branch office.
+
+! --- PC-BRANCH Configuration ---
+! ip addr add 10.2.10.10/24 dev eth0
+! ip route add default via 10.2.10.1
+
+! --- Verification Commands ---
+! show ip ospf neighbor          <- Should only see ABR1
+! show ip ospf database          <- Tiny LSDB! Only local Type 1/2 + default
+! show ip route ospf             <- Should ONLY show O*IA 0.0.0.0/0
+! show ip route                  <- Confirm default route present
+! ping 10.1.10.10                <- Ping PC-CAMPUS (via default -> ABR1 -> Area 0 -> Area 1)

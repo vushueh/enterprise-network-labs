@@ -1,0 +1,95 @@
+! ============================================================
+! R-DC1 - Area 3 (NSSA) Data Center Router + ASBR
+! Router ID: 7.7.7.7
+! Role: ASBR redistributing external routes into OSPF via Type 7 LSAs
+! Area type: NSSA (Not-So-Stubby Area)
+! External network: 192.168.100.0/24 (simulated via Loopback1)
+! ============================================================
+
+hostname R-DC1
+no ip domain-lookup
+ip routing
+
+! --- Loopback0 (stable Router ID) ---
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 7.7.7.7 255.255.255.255
+ ip ospf 1 area 3
+ no shutdown
+
+! --- Loopback1 (simulates external/non-OSPF network) ---
+interface Loopback1
+ description SIMULATED-EXTERNAL-NETWORK
+ ip address 192.168.100.1 255.255.255.0
+ no shutdown
+
+! --- Link to ABR2 (Area 3 - NSSA) ---
+interface Ethernet0/0
+ description TO-ABR2-E0/3-AREA3-NSSA
+ ip address 10.3.0.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 3
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Data Center LAN (end hosts) ---
+interface Ethernet0/1
+ description DC-LAN-PC-DC
+ ip address 10.3.10.1 255.255.255.0
+ ip ospf 1 area 3
+ no shutdown
+
+! --- Route Map for redistribution control ---
+route-map REDIST-CONNECTED-TO-OSPF permit 10
+ description Allow-only-Loopback1-into-OSPF
+ match interface Loopback1
+
+! --- OSPF Process ---
+router ospf 1
+ router-id 7.7.7.7
+ area 3 authentication message-digest
+ area 3 nssa
+ !
+ ! Redistribute Loopback1 (192.168.100.0/24) into OSPF as Type 7 LSA
+ redistribute connected subnets route-map REDIST-CONNECTED-TO-OSPF
+ !
+ passive-interface Loopback0
+ passive-interface Ethernet0/1
+ timers throttle spf 50 200 5000
+ timers throttle lsa all 50 200 5000
+
+! --- WHY: area 3 nssa ---
+! NSSA allows this router (R-DC1) to act as an ASBR inside a stub-like area.
+! Normal stub areas CANNOT have ASBRs.
+! NSSA solves this: external routes become Type 7 LSAs (not Type 5).
+! Type 7 LSAs only flood within Area 3 - they don't cross into Area 0 directly.
+! ABR2 translates Type 7 -> Type 5 and floods 192.168.100.0/24 everywhere.
+
+! --- WHY: route-map on redistribute ---
+! Without a route-map, ALL connected interfaces would be redistributed.
+! That includes Loopback0 (7.7.7.7/32) which is already in OSPF natively.
+! The route-map limits redistribution to ONLY Loopback1 (the external network).
+! Best practice: ALWAYS filter what you redistribute.
+
+! --- WHAT OTHER ROUTERS SEE ---
+! Area 3 routers: Type 7 LSA for 192.168.100.0/24
+! Area 0 / Area 1: Type 5 LSA for 192.168.100.0/24 (translated by ABR2)
+! Area 2 (Totally Stubby): NOTHING - Type 5 is blocked, uses default route
+!
+! R-BRANCH1 can still REACH 192.168.100.1 via its default route!
+! It just doesn't have a SPECIFIC route for it.
+
+! --- PC-DC Configuration ---
+! ip addr add 10.3.10.10/24 dev eth0
+! ip route add default via 10.3.10.1
+
+! --- Verification Commands ---
+! show ip ospf neighbor          <- Should see ABR2
+! show ip ospf database nssa-external   <- Type 7 LSA for 192.168.100.0/24
+! show ip route ospf             <- O*IA default from ABR2 + local routes
+!
+! On ABR2:
+! show ip ospf database external <- Type 5 LSA (after translation from Type 7)
+!
+! On R-CORE1:
+! show ip route 192.168.100.0    <- Should see O E2 192.168.100.0/24

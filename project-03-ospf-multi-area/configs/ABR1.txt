@@ -1,0 +1,91 @@
+! ============================================================
+! ABR1 - Area Border Router
+! Router ID: 3.3.3.3
+! Role: ABR between Area 0, Area 1 (Standard), Area 2 (Totally Stubby)
+! Summarizes: 10.1.0.0/16 and 10.2.0.0/16 toward Area 0
+! ============================================================
+
+hostname ABR1
+no ip domain-lookup
+ip routing
+
+! --- Loopback (stable Router ID) ---
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 3.3.3.3 255.255.255.255
+ ip ospf 1 area 0
+ no shutdown
+
+! --- Link to R-CORE1 (Area 0) ---
+interface Ethernet0/0
+ description TO-R-CORE1-E0/1-AREA0
+ ip address 10.0.1.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to R-CORE2 (Area 0) ---
+interface Ethernet0/1
+ description TO-R-CORE2-E0/1-AREA0
+ ip address 10.0.3.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to R-CAMPUS1 (Area 1 - Standard) ---
+interface Ethernet0/2
+ description TO-R-CAMPUS1-E0/0-AREA1
+ ip address 10.1.0.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 1
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to R-BRANCH1 (Area 2 - Totally Stubby) ---
+interface Ethernet0/3
+ description TO-R-BRANCH1-E0/0-AREA2-TOTALLY-STUBBY
+ ip address 10.2.0.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 2
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- OSPF Process ---
+router ospf 1
+ router-id 3.3.3.3
+ !
+ ! Authentication per area
+ area 0 authentication message-digest
+ area 1 authentication message-digest
+ area 2 authentication message-digest
+ !
+ ! Area 2 = Totally Stubby (no-summary blocks Type 3/4/5, ABR injects default)
+ area 2 stub no-summary
+ !
+ ! Summarization toward Area 0 (hides internal /24s)
+ area 1 range 10.1.0.0 255.255.0.0
+ area 2 range 10.2.0.0 255.255.0.0
+ !
+ passive-interface Loopback0
+ timers throttle spf 50 200 5000
+ timers throttle lsa all 50 200 5000
+
+! --- WHY: area 2 stub no-summary ---
+! "no-summary" makes this a TOTALLY STUBBY area.
+! ABR1 blocks ALL Type 3/4/5 LSAs from entering Area 2.
+! It only injects a single default route (0.0.0.0/0).
+! R-BRANCH1 has the smallest possible LSDB - perfect for low-resource routers.
+
+! --- WHY: area X range ---
+! Instead of advertising individual /24 subnets into Area 0,
+! ABR1 advertises a single summary. If a /24 flaps inside Area 1,
+! Area 0 and Area 3 never see the change - no SPF triggered there.
+
+! --- Verification Commands ---
+! show ip ospf neighbor
+! show ip ospf border-routers
+! show ip ospf database summary        <- Type 3 LSAs
+! show ip route ospf
+! show ip ospf interface brief

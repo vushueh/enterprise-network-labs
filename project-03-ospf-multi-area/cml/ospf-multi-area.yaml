@@ -1,0 +1,463 @@
+annotations: []
+smart_annotations: []
+nodes:
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n0
+    image_definition: null
+    label: R-CORE1
+    node_definition: iol-xe
+    parameters: {}
+    ram: null
+    tags: []
+    x: -200
+    y: 0
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: Ethernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: Ethernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: Ethernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: Ethernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n1
+    image_definition: null
+    label: R-CORE2
+    node_definition: iol-xe
+    parameters: {}
+    ram: null
+    tags: []
+    x: 200
+    y: 0
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: Ethernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: Ethernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: Ethernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: Ethernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n2
+    image_definition: null
+    label: ABR1
+    node_definition: iol-xe
+    parameters: {}
+    ram: null
+    tags: []
+    x: -400
+    y: 200
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: Ethernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: Ethernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: Ethernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: Ethernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n3
+    image_definition: null
+    label: ABR2
+    node_definition: iol-xe
+    parameters: {}
+    ram: null
+    tags: []
+    x: 400
+    y: 200
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: Ethernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: Ethernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: Ethernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: Ethernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n4
+    image_definition: null
+    label: R-CAMPUS1
+    node_definition: iol-xe
+    parameters: {}
+    ram: null
+    tags: []
+    x: 0
+    y: 400
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: Ethernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: Ethernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: Ethernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: Ethernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n5
+    image_definition: null
+    label: R-BRANCH1
+    node_definition: iol-xe
+    parameters: {}
+    ram: null
+    tags: []
+    x: -600
+    y: 400
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: Ethernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: Ethernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: Ethernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: Ethernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n6
+    image_definition: null
+    label: R-DC1
+    node_definition: iol-xe
+    parameters: {}
+    ram: null
+    tags: []
+    x: 600
+    y: 400
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: Ethernet0/0
+        mac_address: null
+        type: physical
+        slot: 0
+      - id: i2
+        label: Ethernet0/1
+        mac_address: null
+        type: physical
+        slot: 1
+      - id: i3
+        label: Ethernet0/2
+        mac_address: null
+        type: physical
+        slot: 2
+      - id: i4
+        label: Ethernet0/3
+        mac_address: null
+        type: physical
+        slot: 3
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n7
+    image_definition: null
+    label: PC-CAMPUS
+    node_definition: alpine
+    parameters: {}
+    ram: null
+    tags: []
+    x: 0
+    y: 600
+    interfaces:
+      - id: i0
+        label: eth0
+        mac_address: null
+        type: physical
+        slot: 0
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n8
+    image_definition: null
+    label: PC-BRANCH
+    node_definition: alpine
+    parameters: {}
+    ram: null
+    tags: []
+    x: -600
+    y: 600
+    interfaces:
+      - id: i0
+        label: eth0
+        mac_address: null
+        type: physical
+        slot: 0
+
+  - boot_disk_size: null
+    configuration: []
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n9
+    image_definition: null
+    label: PC-DC
+    node_definition: alpine
+    parameters: {}
+    ram: null
+    tags: []
+    x: 600
+    y: 600
+    interfaces:
+      - id: i0
+        label: eth0
+        mac_address: null
+        type: physical
+        slot: 0
+
+links:
+  # Area 0 - Backbone links
+  - id: l0
+    n1: n0
+    n2: n1
+    i1: i1
+    i2: i1
+    conditioning: {}
+    label: R-CORE1-Ethernet0/0<->R-CORE2-Ethernet0/0
+
+  - id: l1
+    n1: n0
+    n2: n2
+    i1: i2
+    i2: i1
+    conditioning: {}
+    label: R-CORE1-Ethernet0/1<->ABR1-Ethernet0/0
+
+  - id: l2
+    n1: n0
+    n2: n3
+    i1: i3
+    i2: i1
+    conditioning: {}
+    label: R-CORE1-Ethernet0/2<->ABR2-Ethernet0/0
+
+  - id: l3
+    n1: n1
+    n2: n2
+    i1: i2
+    i2: i2
+    conditioning: {}
+    label: R-CORE2-Ethernet0/1<->ABR1-Ethernet0/1
+
+  - id: l4
+    n1: n1
+    n2: n3
+    i1: i3
+    i2: i2
+    conditioning: {}
+    label: R-CORE2-Ethernet0/2<->ABR2-Ethernet0/1
+
+  # Area 1 - Standard Area links
+  - id: l5
+    n1: n2
+    n2: n4
+    i1: i3
+    i2: i1
+    conditioning: {}
+    label: ABR1-Ethernet0/2<->R-CAMPUS1-Ethernet0/0
+
+  - id: l6
+    n1: n3
+    n2: n4
+    i1: i3
+    i2: i2
+    conditioning: {}
+    label: ABR2-Ethernet0/2<->R-CAMPUS1-Ethernet0/1
+
+  # Area 2 - Totally Stubby link
+  - id: l7
+    n1: n2
+    n2: n5
+    i1: i4
+    i2: i1
+    conditioning: {}
+    label: ABR1-Ethernet0/3<->R-BRANCH1-Ethernet0/0
+
+  # Area 3 - NSSA link
+  - id: l8
+    n1: n3
+    n2: n6
+    i1: i4
+    i2: i1
+    conditioning: {}
+    label: ABR2-Ethernet0/3<->R-DC1-Ethernet0/0
+
+  # End host links
+  - id: l9
+    n1: n4
+    n2: n7
+    i1: i3
+    i2: i0
+    conditioning: {}
+    label: R-CAMPUS1-Ethernet0/2<->PC-CAMPUS-eth0
+
+  - id: l10
+    n1: n5
+    n2: n8
+    i1: i2
+    i2: i0
+    conditioning: {}
+    label: R-BRANCH1-Ethernet0/1<->PC-BRANCH-eth0
+
+  - id: l11
+    n1: n6
+    n2: n9
+    i1: i2
+    i2: i0
+    conditioning: {}
+    label: R-DC1-Ethernet0/1<->PC-DC-eth0
+
+lab:
+  description: OSPF Multi-Area Enterprise Network Lab - CCNP ENCOR Level
+  notes: 'Area 0: Backbone | Area 1: Standard | Area 2: Totally Stubby | Area 3: NSSA'
+  title: OSPF-Multi-Area-Lab
+  version: 0.3.0

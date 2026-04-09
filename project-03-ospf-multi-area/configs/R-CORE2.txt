@@ -1,0 +1,57 @@
+! ============================================================
+! R-CORE2 - OSPF Area 0 (Backbone) Core Router
+! Router ID: 2.2.2.2
+! Role: Backbone router, connects to R-CORE1, ABR1, ABR2
+! ============================================================
+
+hostname R-CORE2
+no ip domain-lookup
+ip routing
+
+! --- Loopback (stable Router ID) ---
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 2.2.2.2 255.255.255.255
+ ip ospf 1 area 0
+ no shutdown
+
+! --- Link to R-CORE1 (Area 0) ---
+interface Ethernet0/0
+ description TO-R-CORE1-E0/0-AREA0
+ ip address 10.0.0.2 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to ABR1 (Area 0) ---
+interface Ethernet0/1
+ description TO-ABR1-E0/1-AREA0
+ ip address 10.0.3.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- Link to ABR2 (Area 0) ---
+interface Ethernet0/2
+ description TO-ABR2-E0/1-AREA0
+ ip address 10.0.4.1 255.255.255.252
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf message-digest-key 1 md5 OSPF-SECRET
+ no shutdown
+
+! --- OSPF Process ---
+router ospf 1
+ router-id 2.2.2.2
+ area 0 authentication message-digest
+ passive-interface Loopback0
+ timers throttle spf 50 200 5000
+ timers throttle lsa all 50 200 5000
+
+! --- Verification Commands ---
+! show ip ospf neighbor
+! show ip ospf database
+! show ip route ospf
+! show ip ospf interface brief
