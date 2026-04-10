@@ -21,7 +21,7 @@ Each project follows the **Build → Verify → Break → Fix** method — every
 |---|---------|-----------------|--------|
 | 01 | [Campus Foundation](project-01-campus-foundation/) | VLANs, trunking, inter-VLAN routing, STP, SSH, CDP | ✅ |
 | 02 | [Multi-Site + DHCP](project-02-multi-site-dhcp/) | DHCP relay, Dnsmasq, static routing, IPv6 | ✅ |
-| 03 | [OSPF Multi-Area](project-03-ospf-multi-area/) | Multi-area OSPF, Stub/NSSA/Totally Stubby, dual ABRs, summarization, MD5 auth | 🔜 |
+| 03 | OSPF Dynamic Routing | Single-area OSPF, OSPF auth, IP SLA, BFD, OSPFv3 | ⬜ |
 | 04 | Switching Stability | LACP EtherChannel, STP advanced, VTP v3, errdisable | ⬜ |
 | 05 | Internet + NAT | PAT, static NAT, extended ACLs, object groups | ⬜ |
 | 06 | Security Hardening | Port security, DHCP snooping, DAI, IP Source Guard | ⬜ |
@@ -49,6 +49,17 @@ Every project follows the **Build → Verify → Break → Fix** cycle:
 3. Introduce a deliberate fault
 4. Diagnose and fix using show commands only
 5. Document in TROUBLESHOOTING-LOG.md
+
+## Future Projects (CCNP Level)
+
+Labs designed and ready to build — held back until after CCNA certification.
+These go beyond the 13-project CCNA series into CCNP ENCOR territory.
+
+| Project | Key Technologies | Level | Prereq |
+|---------|-----------------|-------|--------|
+| [OSPF Multi-Area](future-ospf-multi-area/) | Multi-area OSPF, Stub/Totally Stubby/NSSA, dual ABRs, route summarization, Type 7→5 LSA translation, MD5 auth | CCNP ENCOR | Pass CCNA first |
+
+---
 
 ## Troubleshooting Log
 
