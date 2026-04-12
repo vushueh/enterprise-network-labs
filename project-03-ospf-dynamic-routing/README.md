@@ -912,25 +912,6 @@ ping 2001:DB8:1:100::1 source 2001:DB8:2:100::1  ! Branch → HQ IPv6: !!!!!
 
 ---
 
-## Screenshots Required
-
-| Filename | Router | Command | What to Show |
-|----------|--------|---------|--------------|
-| `P03-Ph1-cdp-neighbors-wan-rtr1.png` | WAN-RTR1 | `show cdp neighbors` | Both HQ-RTR1 and BR-RTR1 visible |
-| `P03-Ph1-ospf-neighbors-full.png` | HQ-RTR1 | `show ip ospf neighbor` | FULL/ - with Pri=0 on both neighbors |
-| `P03-Ph1-route-table-ospf.png` | HQ-RTR1 | `show ip route ospf` | O routes, no S routes |
-| `P03-Ph2-wan-rtr1-ospf-routes.png` | WAN-RTR1 | `show ip route ospf` | O IA 10.1.0.0/16 and O IA 10.2.0.0/16 |
-| `P03-Ph4-traceroute-preferred-path.png` | HQ-RTR1 | `traceroute 10.2.100.1 source 10.1.100.1` | Hops via WAN-RTR1 (10.0.0.6 then 10.0.0.10) |
-| `P03-Ph5-failover-route-change.png` | HQ-RTR1 | `show ip route 10.2.100.1` after E0/2 shutdown | Route via 10.0.0.2 on E0/1 (backup path) |
-| `P03-Ph5-route-restored.png` | HQ-RTR1 | `show ip route 10.2.100.1` after E0/2 restored | Route back via 10.0.0.6 on E0/2 |
-| `P03-Ph6-bfd-neighbors-up.png` | HQ-RTR1 | `show bfd neighbors` | All sessions Up/Up |
-| `P03-Ph7-track-up-sla-running.png` | HQ-RTR1 | `show track` + `show ip sla statistics` | Reachability Up, return code OK |
-| `P03-Ph7-floating-static-active.png` | BR-RTR1 | `show ip route static` (OSPF shut down) | S 10.1.0.0/16 [250/0] visible |
-| `P03-Ph8-ospfv3-neighbor-full.png` | HQ-RTR1 | `show ospfv3 neighbor` | FULL/ - with Pri=0 |
-| `P03-Ph8-ipv6-ping-success.png` | HQ-RTR1 | `ping 2001:DB8:2:100::1 source 2001:DB8:1:100::1` | !!!!! 100% |
-
----
-
 ## Key Lessons From This Build
 
 1. **Always run `show cdp neighbors` before assigning IPs.** Cables in CML are often
