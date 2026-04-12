@@ -59,60 +59,37 @@ provides a last-resort failsafe even if the routing protocol itself fails.
 
 ![CML Topology — Project 03 OSPF Dynamic Routing](diagrams/cml-topology.png)
 
-### Physical Layout (15 Nodes)
+> CML lab topology — 15 nodes running in Cisco CML 2.9 with IOL routers and IOL-L2 switches.
 
-```
-                    ┌─────────────────────────────────────────────┐
-                    │              HQ CAMPUS                       │
-                    │                                              │
-          ┌─────────┤  HQ-RTR1 (10.0.255.1)                       │
-          │         │     │ E0/0                                   │
-          │         │  HQ-DSW1 ──── HQ-DSW2                       │
-          │         │     │              │                         │
-          │         │  HQ-ASW1       HQ-ASW2                       │
-          │         │     │              │                         │
-          │         │  PC-ENG1       PC-SALES1 / ATTACKER1         │
-          │         └─────────────────────────────────────────────┘
-          │
-    E0/1 (10.0.0.1/30) ←── PRIMARY WAN ──→ E0/1 (10.0.0.2/30)
-          │                                        │
-    E0/2 (10.0.0.5/30)                      E0/2 (10.0.0.10/30)
-          │                                        │
-          └──────── WAN-RTR1 (10.0.255.3) ─────────┘
-                    E0/1 (10.0.0.6/30)
-                    E0/0 (10.0.0.9/30)
-          │                                        │
-          │         ┌─────────────────────────────────────────────┐
-          │         │              BRANCH CAMPUS                   │
-          └─────────┤  BR-RTR1 (10.0.255.2)                       │
-                    │     │ E0/0                                   │
-                    │  BR-DSW1                                     │
-                    │     │                                        │
-                    │  BR-ASW1                                     │
-                    │     │                                        │
-                    │  PC-BR-ENG1 / PC-BR-SALES1                   │
-                    └─────────────────────────────────────────────┘
-```
+---
 
 ### OSPF Area Design
 
-```
-┌─────────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
-│     AREA 1          │    │     AREA 0        │    │     AREA 2          │
-│   HQ Campus         │    │    Backbone       │    │   Branch Campus     │
-│                     │    │                  │    │                     │
-│  10.1.100.0/24      │    │  10.0.0.0/30     │    │  10.2.100.0/24      │
-│  10.1.200.0/24      │    │  10.0.0.4/30     │    │  10.2.200.0/24      │
-│  10.1.44.0/24       │    │  10.0.0.8/30     │    │  10.2.44.0/24       │
-│  10.1.40.0/24       │    │  Loopbacks       │    │  10.2.50.0/24       │
-│  10.1.99.0/24       │    │                  │    │  10.2.99.0/24       │
-│                     │    │                  │    │                     │
-│  Summarized to:     │    │                  │    │  Summarized to:     │
-│  10.1.0.0/16 ───────┼────┼── HQ-RTR1 (ABR) │    │  10.2.0.0/16        │
-│                     │    │  WAN-RTR1        │    │       ──────────────┼──
-│                     │    │  BR-RTR1 (ABR) ──┼────┼──                   │
-└─────────────────────┘    └──────────────────┘    └─────────────────────┘
-```
+![OSPF Area Design](diagrams/ospf-area-design.png)
+
+This diagram shows how the network is carved into three OSPF areas. The key concept is that not every router needs to know about every subnet — areas contain the flooding and ABRs summarize across boundaries.
+
+**Area 1** on the left is the HQ campus. Every VLAN subnet at HQ (Engineering, Sales, Guest, Servers, Management) lives here. Instead of advertising all five /24s into the backbone, HQ-RTR1 summarizes them into a single `10.1.0.0/16` — one route instead of five.
+
+**Area 0** in the center is the backbone. All WAN point-to-point links and router loopbacks live here. This is the only area that all inter-area traffic must cross. WAN-RTR1 lives exclusively in Area 0 — it's not an ABR, just a backbone router providing the second path.
+
+**Area 2** on the right mirrors Area 1 but for the Branch campus. All Branch VLANs live here, summarized by BR-RTR1 into `10.2.0.0/16` before being injected into the backbone.
+
+HQ-RTR1 and BR-RTR1 are the ABRs — they each have one foot in Area 0 and one foot in their campus area, maintaining two separate LSDB tables and translating between them.
+
+---
+
+### Physical Layout (15 Nodes)
+
+![Physical Layout — 15 Nodes](diagrams/physical-layout.png)
+
+This diagram shows how the 15 actual nodes connect and where every interface IP lands.
+
+At the top, **HQ campus** has HQ-RTR1 as the gateway, with HQ-DSW1 and HQ-DSW2 hanging off it downward into the access layer. HQ-RTR1 has three WAN-facing interfaces: E0/0 faces the campus, E0/1 is the direct WAN link to BR-RTR1 (`10.0.0.1/30 ↔ 10.0.0.2/30`), and E0/2 is the new link down to WAN-RTR1 (`10.0.0.5/30`).
+
+**WAN-RTR1** in the middle is the new node added in Project 3. It connects to HQ-RTR1 on E0/0 (`10.0.0.6/30`) and to BR-RTR1 on E0/1 (`10.0.0.9/30`). It creates the second WAN path — traffic can now reach Branch either directly (the dashed green line) or via WAN-RTR1 (the amber lines). OSPF cost tuning in Phase 4 decides which path wins.
+
+At the bottom, **Branch campus** mirrors HQ — BR-RTR1 as the gateway, BR-DSW1 and BR-ASW1 below it, endpoints at the bottom. BR-RTR1's E0/2 connects up to WAN-RTR1 to complete the triangle.
 
 ### New Connections Added in Project 03
 
