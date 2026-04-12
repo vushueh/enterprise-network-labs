@@ -1,0 +1,47 @@
+! ============================================================
+! DEVICE: HQ-RTR1
+! PROJECT: 03 — OSPF Dynamic Routing
+! FILE TYPE: Current live-lab validated state
+! VERIFIED: 2026-04-12
+! ============================================================
+
+hostname HQ-RTR1
+
+interface Ethernet0/0
+ description TRUNK-TO-HQ-DSW1-E0/0
+ no ip address
+ no shutdown
+
+interface Ethernet0/0.100
+ description GATEWAY-VLAN100-ENGINEERING
+ encapsulation dot1Q 100
+ ip address 10.1.100.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ipv6 address 2001:DB8:1:100::1/64
+ ipv6 enable
+ ipv6 ospf 10 area 1
+
+interface Ethernet0/0.200
+ description GATEWAY-VLAN200-SALES
+ encapsulation dot1Q 200
+ ip address 10.1.200.1 255.255.255.0
+ ip helper-address 10.1.99.50
+
+interface Ethernet0/0.300
+ description GATEWAY-VLAN300-GUEST
+ encapsulation dot1Q 300
+ ip address 10.1.44.1 255.255.255.0
+ ip helper-address 10.1.99.50
+
+interface Ethernet0/0.400
+ description GATEWAY-VLAN400-SERVERS
+ encapsulation dot1Q 400
+ ip address 10.1.40.1 255.255.255.0
+
+interface Ethernet0/0.999
+ description GATEWAY-VLAN999-MANAGEMENT
+ encapsulation dot1Q 999
+ ip address 10.1.99.1 255.255.255.0
+
+! Note: HQ does not use Ethernet0/0.500 in the current live design.
+! VLAN 400 is the routed HQ servers subnet. VLAN 400 currently has no helper-address.
