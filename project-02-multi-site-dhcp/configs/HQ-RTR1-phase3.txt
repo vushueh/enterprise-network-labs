@@ -1,14 +1,14 @@
 ! HQ-RTR1 | Project 02 Phase 3 additions — DHCP relay helper-address
-! Current repo alignment: HQ uses VLAN 400 as a routed Servers subnet.
-! HQ no longer uses VLAN 500 in the live design, and VLAN 400 does not use DHCP relay.
-
+! Also adding VLAN 500 Voice subinterface (was missing from Project 01)
+interface Ethernet0/0.500
+ description GATEWAY-VLAN500-VOICE
+ encapsulation dot1Q 500
+ ip address 10.1.50.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ no shutdown
 interface Ethernet0/0.100
  ip helper-address 10.1.99.50
-
 interface Ethernet0/0.200
  ip helper-address 10.1.99.50
-
 interface Ethernet0/0.300
  ip helper-address 10.1.99.50
-
-! No helper-address on Ethernet0/0.400 in the current design.
