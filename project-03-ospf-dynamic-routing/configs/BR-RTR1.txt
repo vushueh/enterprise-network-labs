@@ -1,0 +1,123 @@
+! ============================================================
+! DEVICE: BR-RTR1
+! PROJECT: 03 — OSPF Dynamic Routing
+! ROLE: ABR between Area 0 (WAN backbone) and Area 2 (Branch campus)
+! ROUTER ID: 10.0.255.2
+! BUILD DATE: 2026-04-12
+! ============================================================
+
+hostname BR-RTR1
+
+! --- Loopback (stable router ID anchor) ---
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 10.0.255.2 255.255.255.255
+
+! --- LAN interface (trunk to BR-DSW1) ---
+interface Ethernet0/0
+ description TRUNK-TO-BR-DSW1-E0/0
+ no ip address
+ no shutdown
+
+interface Ethernet0/0.100
+ description VLAN100-ENGINEERING
+ encapsulation dot1Q 100
+ ip address 10.2.100.1 255.255.255.0
+ ipv6 address 2001:DB8:2:100::1/64
+ ipv6 enable
+ ipv6 ospf 10 area 2
+
+interface Ethernet0/0.200
+ description VLAN200-SALES
+ encapsulation dot1Q 200
+ ip address 10.2.200.1 255.255.255.0
+
+interface Ethernet0/0.300
+ description VLAN300-GUEST
+ encapsulation dot1Q 300
+ ip address 10.2.44.1 255.255.255.0
+
+interface Ethernet0/0.500
+ description VLAN500-WIRELESS
+ encapsulation dot1Q 500
+ ip address 10.2.50.1 255.255.255.0
+
+interface Ethernet0/0.999
+ description VLAN999-MANAGEMENT
+ encapsulation dot1Q 999
+ ip address 10.2.99.1 255.255.255.0
+
+! --- Primary WAN link to HQ-RTR1 (BACKUP path — cost 100) ---
+interface Ethernet0/1
+ description WAN-TO-HQ-RTR1-E0/1
+ bandwidth 1000
+ delay 1000
+ ip address 10.0.0.2 255.255.255.252
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf network point-to-point
+ ip ospf cost 100
+ ip ospf bfd
+ bfd interval 300 min_rx 300 multiplier 3
+ ipv6 address 2001:DB8:0:1::2/126
+ ipv6 enable
+ ipv6 ospf 10 area 0
+ ipv6 ospf network point-to-point
+ no shutdown
+
+! --- WAN link to WAN-RTR1 (PREFERRED path — cost 10) ---
+interface Ethernet0/2
+ description WAN-TO-WAN-RTR1-E0/0
+ ip address 10.0.0.10 255.255.255.252
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf network point-to-point
+ ip ospf cost 10
+ ip ospf bfd
+ bfd interval 300 min_rx 300 multiplier 3
+ no shutdown
+
+! --- OSPF Process (IPv4) ---
+router ospf 1
+ router-id 10.0.255.2
+ log-adjacency-changes detail
+ passive-interface default
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2
+ ! WAN backbone links in Area 0
+ network 10.0.255.2 0.0.0.0 area 0
+ network 10.0.0.0 0.0.0.3 area 0
+ network 10.0.0.8 0.0.0.3 area 0
+ ! Branch campus VLANs in Area 2
+ network 10.2.100.0 0.0.0.255 area 2
+ network 10.2.200.0 0.0.0.255 area 2
+ network 10.2.44.0 0.0.0.255 area 2
+ network 10.2.50.0 0.0.0.255 area 2
+ network 10.2.99.0 0.0.0.255 area 2
+ ! Summarize Area 2 into Area 0 at the ABR
+ area 2 range 10.2.0.0 255.255.0.0
+
+! --- OSPFv3 Process (IPv6) ---
+ipv6 unicast-routing
+ipv6 router ospf 10
+ router-id 10.0.255.2
+
+! --- IP SLA — probe directly connected HQ-RTR1 E0/1 IP ---
+! WHY: Target must be reachable WITHOUT OSPF (directly connected /30)
+!      so the probe survives an OSPF failure and keeps the track UP.
+ip sla 10
+ icmp-echo 10.0.0.1 source-ip 10.0.0.2
+ timeout 1000
+ threshold 1000
+ frequency 5
+ip sla schedule 10 life forever start-time now
+
+! --- Object tracking ---
+track 10 ip sla 10 reachability
+
+! --- Floating static backup (AD 250 — last resort, OSPF preferred) ---
+ip route 10.1.0.0 255.255.0.0 10.0.0.1 250 track 10
+
+! --- No static routes (all replaced by OSPF in Project 03) ---
+
+end

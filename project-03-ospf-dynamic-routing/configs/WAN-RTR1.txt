@@ -1,0 +1,59 @@
+! ============================================================
+! DEVICE: WAN-RTR1
+! PROJECT: 03 — OSPF Dynamic Routing
+! ROLE: Internal Area 0 transit router (second WAN path)
+! ROUTER ID: 10.0.255.3
+! BUILD DATE: 2026-04-12
+! NOTE: In CML, E0/0 connects to BR-RTR1 and E0/1 connects to HQ-RTR1.
+!       This was confirmed via CDP after initial cable mismatch was discovered.
+!       Always run 'show cdp neighbors' to verify before assigning IPs.
+! ============================================================
+
+hostname WAN-RTR1
+
+! --- Loopback (stable router ID anchor) ---
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 10.0.255.3 255.255.255.255
+
+! --- WAN link to BR-RTR1 ---
+interface Ethernet0/0
+ description WAN-TO-BR-RTR1-E0/2
+ ip address 10.0.0.9 255.255.255.252
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf network point-to-point
+ ip ospf cost 10
+ ip ospf bfd
+ bfd interval 300 min_rx 300 multiplier 3
+ no shutdown
+
+! --- WAN link to HQ-RTR1 ---
+interface Ethernet0/1
+ description WAN-TO-HQ-RTR1-E0/2
+ ip address 10.0.0.6 255.255.255.252
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf network point-to-point
+ ip ospf cost 10
+ ip ospf bfd
+ bfd interval 300 min_rx 300 multiplier 3
+ no shutdown
+
+! --- OSPF Process (IPv4) ---
+! WAN-RTR1 is an internal Area 0 router only — not an ABR.
+! All interfaces in Area 0.
+router ospf 1
+ router-id 10.0.255.3
+ log-adjacency-changes detail
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+ network 10.0.255.3 0.0.0.0 area 0
+ network 10.0.0.4 0.0.0.3 area 0
+ network 10.0.0.8 0.0.0.3 area 0
+
+! --- LLDP (vendor-neutral neighbour discovery) ---
+lldp run
+
+end

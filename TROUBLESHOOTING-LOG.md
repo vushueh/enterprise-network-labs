@@ -375,3 +375,81 @@ Layer 3 relay: show running-config | section helper revealed wrong helper-addres
 3. Corrected helper-address on HQ-RTR1 E0/0.200 to 10.1.99.50
 
 **Lesson:** A successful ping does not prove a clean routing path. Always check show ip route for the specific destination. A Null0 black-hole with a competing legitimate route causes intermittent success that hides the real fault. Fix routing before fixing application-layer config — dependency order determines whether fixes actually take effect.
+
+---
+
+## Project 03 — OSPF Dynamic Routing
+
+### Entry 1 — WAN-RTR1 Interface IP Mismatch
+
+**Date:** 2026-04-12 | **Phase:** 1 (Pre-work)
+
+**Symptom:** Pings from WAN-RTR1 to HQ-RTR1 (10.0.0.5) and BR-RTR1 (10.0.0.10) failing with 0% success rate immediately after configuring WAN-RTR1 interfaces. Same-subnet pings should never fail — no routing required, just ARP.
+
+**Investigation:** `show cdp neighbors` revealed cables in CML were connected to opposite interfaces from the design document. WAN-RTR1 E0/1 connected to HQ-RTR1 but had the BR-side IP; E0/0 connected to BR-RTR1 but had the HQ-side IP. Additionally, `no ip address` without specifying the full mask cleared the address but the replacement command did not apply, leaving E0/0 unassigned.
+
+**Root cause:** CML cable positions differed from design; IPs were assigned based on design rather than actual cable layout. Secondary issue: IOL `no ip address` behavior when full address/mask not specified.
+
+**Fix:** Reassigned IPs to match actual cable positions confirmed by CDP. E0/1 = 10.0.0.6 (HQ side), E0/0 = 10.0.0.9 (BR side). Pings returned 100% after fix.
+
+**Lesson:** Always run `show cdp neighbors` BEFORE assigning IPs to any new device. CDP reveals actual cable connections. Never assume CML cables are connected where the diagram shows.
+
+---
+
+### Entry 2 — DR/BDR Election on Point-to-Point WAN Links
+
+**Date:** 2026-04-12 | **Phase:** 1
+
+**Symptom:** `show ip ospf neighbor` showed FULL/DR and FULL/BDR on all WAN adjacencies instead of FULL/ - with Pri=0.
+
+**Investigation:** `show ip ospf interface` confirmed network type was BROADCAST (IOL default for Ethernet). DR/BDR elections are unnecessary overhead on a /30 with only 2 endpoints and add delay during convergence.
+
+**Root cause:** IOL Ethernet interfaces default to OSPF network type BROADCAST regardless of subnet mask.
+
+**Fix:** Applied `ip ospf network point-to-point` to all WAN-facing interfaces on all three routers. Adjacencies dropped and reformed — expected behavior when changing network type. Both sides must be changed; one-sided change produces transient NET_TYPE_MISMATCH.
+
+**Lesson:** Always set `ip ospf network point-to-point` on /30 WAN links in IOS/IOL. Applies to both OSPFv2 and OSPFv3.
+
+---
+
+### Entry 3 — OSPF Failover and Reconvergence Test (Phase 5)
+
+**Date:** 2026-04-12 | **Phase:** 5
+
+**Symptom:** Intentional outage. HQ-RTR1 E0/2 shut to test failover to backup path.
+
+**Result:** OSPF immediately removed WAN-RTR1 adjacency (interface-down event, not dead-timer expiry). Route to Branch switched from metric 30 (via WAN-RTR1) to metric 110 (direct backup). On `no shutdown`, traffic returned to preferred path. Cost manipulation worked correctly.
+
+**Lesson:** Interface-down events trigger immediate adjacency loss — no need to wait for dead timer. OSPF cost engineering (cost 10 preferred vs cost 100 backup) produces predictable deterministic failover.
+
+---
+
+### Entry 4 — IP SLA Probe Would Not Start (Threshold > Timeout)
+
+**Date:** 2026-04-12 | **Phase:** 7
+
+**Symptom:** IP SLA probe not running. Track object showed Reachability Down, return code Unknown. Floating static never installed. `show ip sla statistics` showed Unknown counters. Operation time to live: 0.
+
+**Investigation:** `show ip sla configuration` revealed `Next Scheduled Start Time: Pending trigger` and `Status: notInService`. Threshold was 5000ms (default), timeout was 1000ms. The `ip sla schedule` command had been silently rejected with: `%Scheduling a probe with threshold 5000 ms greater than timeout 1000 ms is not allowed.`
+
+**Root cause:** IOS rejects `ip sla schedule` when threshold > timeout, leaving probe in `notInService`. No error is shown at the time of configuration — only at schedule time.
+
+**Fix:** Removed and recreated SLA with `threshold 1000` and `timeout 1000` (threshold ≤ timeout). After fix, track showed Reachability is Up with RTT 1ms.
+
+**Lesson:** When IP SLA won't start, check `show ip sla configuration` for `Pending trigger` and `notInService`. Always set threshold equal to or less than timeout.
+
+---
+
+### Entry 5 — IP SLA Probe Target Caused Track to Fail During OSPF Outage
+
+**Date:** 2026-04-12 | **Phase:** 7
+
+**Symptom:** When OSPF was shut down to test the floating static backup, the track object went Down instead of staying Up. Floating static never installed. Network lost all reachability — the exact failure the backup was designed to prevent.
+
+**Investigation:** Probe target was 10.0.255.1 (HQ-RTR1 loopback) — reachable only via OSPF routes. When OSPF died, the route to the probe target disappeared, the ICMP probe failed, track went Down, and the floating static condition was never met.
+
+**Root cause:** The probe target was reachable ONLY through the routing protocol it was designed to back up. When OSPF failed, both the primary routing and the backup mechanism failed simultaneously.
+
+**Fix:** Changed probe target to directly connected /30 neighbor IP (10.0.0.2 on HQ-RTR1, 10.0.0.1 on BR-RTR1). A directly connected IP requires only ARP — it works regardless of OSPF state. After fix: with OSPF down, track stayed Up, floating static installed, pings succeeded 100%.
+
+**Lesson:** IP SLA probe target must be reachable INDEPENDENTLY of the routing protocol it backs up. Always probe a directly connected IP on the backup link. The probe must survive the same failure scenario it is designed to detect.
