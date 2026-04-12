@@ -18,6 +18,8 @@ vlan 200
  name Sales
 vlan 300
  name Guest
+vlan 400
+ name Servers
 vlan 999
  name Management
 vlan 1000
@@ -30,43 +32,40 @@ interface vlan 999
 
 ip default-gateway 10.1.99.1
 
-! --- Phase 2: Trunk to HQ-ASW1 (redundant path) ---
+! --- Phase 2: Trunks ---
 interface Ethernet0/1
  description TRUNK-TO-HQ-ASW1-E0/1
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport trunk native vlan 1000
- switchport trunk allowed vlan 100,200,300,999
+ switchport trunk allowed vlan 100,200,300,400,999
  switchport nonegotiate
  no shutdown
 
-! --- Phase 2: Trunk to HQ-ASW2 (redundant path) ---
 interface Ethernet0/2
  description TRUNK-TO-HQ-ASW2-E0/1
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport trunk native vlan 1000
- switchport trunk allowed vlan 100,200,300,999
+ switchport trunk allowed vlan 100,200,300,400,999
  switchport nonegotiate
  no shutdown
 
-! --- Phase 2: Trunk to HQ-DSW1 (inter-distribution) ---
 interface Ethernet0/3
  description TRUNK-TO-HQ-DSW1-E0/3
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport trunk native vlan 1000
- switchport trunk allowed vlan 100,200,300,999
+ switchport trunk allowed vlan 100,200,300,400,999
  switchport nonegotiate
  no shutdown
 
-! --- Phase 4: STP — Root for VLANs 200 and 300 ---
+! --- Phase 4: STP ---
 spanning-tree mode rapid-pvst
 spanning-tree vlan 200 priority 4096
 spanning-tree vlan 300 priority 4096
-
-! --- Phase 4: STP — Backup root for VLANs 100 and 999 ---
 spanning-tree vlan 100 priority 8192
+spanning-tree vlan 400 priority 8192
 spanning-tree vlan 999 priority 8192
 
 ! --- Phase 5: SSH Hardening ---
