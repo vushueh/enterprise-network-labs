@@ -20,33 +20,25 @@ interface Ethernet0/0
  no shutdown
 
 interface Ethernet0/0.100
- description GATEWAY-VLAN100-ENGINEERING
+ description VLAN100-ENGINEERING
  encapsulation dot1Q 100
  ip address 10.1.100.1 255.255.255.0
- ip helper-address 10.1.99.50
  ipv6 address 2001:DB8:1:100::1/64
  ipv6 enable
  ipv6 ospf 10 area 1
 
 interface Ethernet0/0.200
- description GATEWAY-VLAN200-SALES
+ description VLAN200-SALES
  encapsulation dot1Q 200
  ip address 10.1.200.1 255.255.255.0
- ip helper-address 10.1.99.50
 
 interface Ethernet0/0.300
- description GATEWAY-VLAN300-GUEST
+ description VLAN300-GUEST
  encapsulation dot1Q 300
  ip address 10.1.44.1 255.255.255.0
- ip helper-address 10.1.99.50
-
-interface Ethernet0/0.400
- description GATEWAY-VLAN400-SERVERS
- encapsulation dot1Q 400
- ip address 10.1.40.1 255.255.255.0
 
 interface Ethernet0/0.999
- description GATEWAY-VLAN999-MANAGEMENT
+ description VLAN999-MANAGEMENT
  encapsulation dot1Q 999
  ip address 10.1.99.1 255.255.255.0
 
