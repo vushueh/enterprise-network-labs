@@ -61,6 +61,10 @@ provides a last-resort failsafe even if the routing protocol itself fails.
 
 > CML lab topology — 15 nodes running in Cisco CML 2.9 with IOL routers and IOL-L2 switches.
 
+![Topology Change — WAN-RTR1 Added](diagrams/topology-change.png)
+
+> Annotated topology showing the new WAN-RTR1 node and the two additional /30 links added in Project 03.
+
 ---
 
 ### OSPF Area Design
