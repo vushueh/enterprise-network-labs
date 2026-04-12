@@ -10,18 +10,15 @@ configure terminal
 hostname HQ-RTR1
 
 ! --- LLDP (Operational Standard) ---
-! WHY: Vendor-neutral neighbor discovery alongside CDP
 lldp run
 
 ! --- Phase 3: Physical trunk interface ---
-! WHY: Subinterfaces handle IP. Physical interface just needs to be up.
 interface Ethernet0/0
  description TRUNK-TO-HQ-DSW1-E0/0
  no ip address
  no shutdown
 
 ! --- Phase 3: Subinterface VLAN 100 (Engineering) ---
-! WHY: Acts as default gateway for all devices in VLAN 100
 interface Ethernet0/0.100
  description GATEWAY-VLAN100-ENGINEERING
  encapsulation dot1Q 100
@@ -34,11 +31,16 @@ interface Ethernet0/0.200
  ip address 10.1.200.1 255.255.255.0
 
 ! --- Phase 3: Subinterface VLAN 300 (Guest) ---
-! NOTE: VLAN 300 uses 10.1.44.0/24 (300 > 255, so shorthand octet .44)
 interface Ethernet0/0.300
  description GATEWAY-VLAN300-GUEST
  encapsulation dot1Q 300
  ip address 10.1.44.1 255.255.255.0
+
+! --- Phase 3: Subinterface VLAN 400 (Servers) ---
+interface Ethernet0/0.400
+ description GATEWAY-VLAN400-SERVERS
+ encapsulation dot1Q 400
+ ip address 10.1.40.1 255.255.255.0
 
 ! --- Phase 3: Subinterface VLAN 999 (Management) ---
 interface Ethernet0/0.999
@@ -53,14 +55,11 @@ interface Loopback0
 
 ! --- Phase 5: SSH hardening ---
 ip domain-name lab.local
-! NOTE: After this config, run: crypto key generate rsa general-keys modulus 2048
 username admin privilege 15 secret CMLlab2025!
 ip ssh version 2
 ip ssh time-out 60
 ip ssh authentication-retries 3
 
-! --- Phase 5: VTY lines — SSH only ---
-! WHY: Restrict remote access to SSH only, no Telnet
 line vty 0 4
  transport input ssh
  login local
@@ -68,22 +67,17 @@ line vty 0 4
  logging synchronous
  access-class 10 in
 
-! --- Phase 5: Console protection ---
 line console 0
  login local
  exec-timeout 10 0
  logging synchronous
 
-! --- Phase 5: VTY ACL — Management VLAN only ---
-! WHY: Only allow SSH from 10.1.99.0/24 (management VLAN)
 access-list 10 permit 10.1.99.0 0.0.0.255
 access-list 10 deny any log
 
-! --- Phase 5: Disable HTTP/HTTPS management ---
 no ip http server
 no ip http secure-server
 
-! --- Phase 5: Banner ---
 banner motd ^
 ============================================
 AUTHORIZED ACCESS ONLY
