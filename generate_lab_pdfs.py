@@ -1556,6 +1556,829 @@ def build_project_02():
     return story
 
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Project 03 — OSPF Dynamic Routing
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def build_project_03():
+    SS   = f"{BASE}/project-03-ospf-dynamic-routing/verification/screenshots"
+    TOPO = f"{BASE}/project-03-ospf-dynamic-routing/diagrams/cml-topology.png"
+    story = []
+
+    # ── Cover ──
+    story += cover_page(
+        "Project 03 — OSPF Dynamic Routing",
+        "Multi-Area OSPF with BFD, MD5 Auth, IP SLA, and OSPFv3",
+        [
+            "Author: Leonel Chongong",
+            "Date: April 2026",
+            "Platform: Cisco CML 2.9 | IOL Routers",
+            "Methodology: Build → Verify → Break → Fix",
+        ]
+    )
+
+    # ── Setup and Scenario ──
+    story.append(section_header("Setup and Scenario"))
+    story.append(sp(8))
+    story.append(p("<b>Business Context</b>", "subsec"))
+    story.append(p(
+        "After completing Projects 01 and 02, the two-site HQ and Branch network "
+        "relied entirely on manually configured static routes. Every subnet had to be "
+        "explicitly listed on every router. There was no automatic failover — if a WAN "
+        "link failed, traffic stopped. There was no authentication on routing updates, "
+        "and convergence after a failure depended on the OSPF dead timer (40 seconds "
+        "by default). This lab replaces the static routing foundation with a production-grade "
+        "dynamic routing architecture."
+    ))
+    story.append(sp(6))
+    story.append(p("<b>What You Will Build</b>", "subsec"))
+    story.append(p(
+        "A three-router WAN with multi-area OSPF, adding a transit router (WAN-RTR1) "
+        "as a second WAN path between HQ and Branch. The design includes:"
+    ))
+    for item in [
+        "Single-area OSPF migration removing all static routes with zero downtime",
+        "Multi-area design: Area 0 (WAN backbone), Area 1 (HQ campus), Area 2 (Branch)",
+        "ABR route summarization: 10.1.0.0/16 at HQ-RTR1 and 10.2.0.0/16 at BR-RTR1",
+        "MD5 authentication on all WAN-facing OSPF interfaces (key-id 1)",
+        "OSPF cost manipulation: WAN-RTR1 path preferred (cost 20), direct link backup (cost 100)",
+        "BFD at 300ms / multiplier 3 for sub-second link failure detection",
+        "IP SLA ICMP probes with object tracking and floating static routes (AD 250)",
+        "OSPFv3 replacing IPv6 static routes from Project 02",
+        "Full link failure, convergence, and restoration testing",
+    ]:
+        story.append(p(f"• {item}", "bullet"))
+    story.append(sp(6))
+
+    # ── STAR Summary ──
+    story.append(section_header("STAR Summary"))
+    story.append(sp(8))
+    for label, text in [
+        ("Situation",
+         "Two-site network with static routing only — no failover, no authentication, "
+         "40-second convergence on link failure, manual route maintenance for every subnet."),
+        ("Task",
+         "Migrate to multi-area OSPF with redundancy, authentication, sub-second BFD "
+         "failover, and a tracked floating static last-resort backup layer."),
+        ("Action",
+         "Deployed WAN-RTR1 as transit router. Migrated to single-area OSPF then "
+         "restructured into 3-area design with ABR summarization. Configured MD5 auth, "
+         "cost-based path selection, BFD, IP SLA tracking, floating statics (AD 250), "
+         "and OSPFv3. Diagnosed and resolved 5 real troubleshooting scenarios."),
+        ("Result",
+         "Network fails over in under 1 second (BFD). Three redundancy layers: "
+         "preferred OSPF path via WAN-RTR1, backup OSPF via direct link, and tracked "
+         "floating static last resort. Full IPv6 dynamic routing via OSPFv3."),
+    ]:
+        story.append(p(f"<b>{label}:</b>", "subsec"))
+        story.append(p(text))
+        story.append(sp(4))
+
+    # ── Technologies Used ──
+    story.append(section_header("Technologies Used"))
+    story.append(sp(8))
+    for item in [
+        "OSPFv2 — multi-area (Areas 0, 1, 2) with loopback router IDs",
+        "OSPFv3 — IPv6 dynamic routing replacing static routes from Project 02",
+        "OSPF MD5 authentication on WAN interfaces (key-id 1, key: OSPF-WAN-KEY)",
+        "OSPF cost manipulation — explicit ip ospf cost per interface",
+        "OSPF passive-interface default with selective no passive on WAN links",
+        "BFD — Bidirectional Forwarding Detection (300ms interval / multiplier 3)",
+        "IP SLA — ICMP echo probes to directly connected /30 neighbor IPs",
+        "Object Tracking — track ip sla reachability",
+        "Floating static routes — AD 250 with track condition",
+        "ABR route summarization — area range command",
+        "ip ospf network point-to-point on all /30 WAN interfaces",
+        "CDP verification before IP assignment on new devices",
+    ]:
+        story.append(p(f"• {item}", "bullet"))
+    story.append(sp(6))
+
+    # ── Network Topology ──
+    story.append(section_header("Network Topology"))
+    story.append(sp(6))
+    story.append(embed_image(TOPO))
+    story.append(caption("Figure T.1 — CML Topology — Project 03 OSPF Dynamic Routing (15 Nodes)"))
+    story.append(sp(6))
+    story.append(p("<b>OSPF Area Design</b>", "subsec"))
+    story.append(p(
+        "Area 0 (Backbone): All three WAN /30 links and loopbacks. "
+        "Area 1 (HQ Campus): HQ VLAN subinterfaces — summarized to 10.1.0.0/16 at ABR. "
+        "Area 2 (Branch Campus): Branch VLAN subinterfaces — summarized to 10.2.0.0/16 at ABR. "
+        "HQ-RTR1 and BR-RTR1 are ABRs. WAN-RTR1 is an internal Area 0 router only."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>New Connections Added in Project 03</b>", "subsec"))
+    story.append(ip_table(
+        ["Side A", "Interface", "Side B", "Interface", "Subnet"],
+        [
+            ["HQ-RTR1",  "Ethernet0/2", "WAN-RTR1", "Ethernet0/1", "10.0.0.4/30"],
+            ["WAN-RTR1", "Ethernet0/0", "BR-RTR1",  "Ethernet0/2", "10.0.0.8/30"],
+        ]
+    ))
+    story.append(sp(10))
+
+    # ── IP Addressing ──
+    story.append(section_header("IP Addressing"))
+    story.append(sp(6))
+    story.append(p("<b>WAN Links (Point-to-Point /30)</b>", "subsec"))
+    story.append(ip_table(
+        ["Link", "Router A", "IP", "Router B", "IP"],
+        [
+            ["Primary WAN",   "HQ-RTR1 E0/1",  "10.0.0.1/30",  "BR-RTR1 E0/1",  "10.0.0.2/30"],
+            ["HQ to WAN-RTR1","HQ-RTR1 E0/2",  "10.0.0.5/30",  "WAN-RTR1 E0/1", "10.0.0.6/30"],
+            ["BR to WAN-RTR1","BR-RTR1 E0/2",  "10.0.0.10/30", "WAN-RTR1 E0/0", "10.0.0.9/30"],
+        ]
+    ))
+    story.append(sp(8))
+    story.append(p("<b>Loopbacks (Router IDs)</b>", "subsec"))
+    story.append(ip_table(
+        ["Router", "Loopback0", "OSPF Role"],
+        [
+            ["HQ-RTR1",  "10.0.255.1/32", "ABR — Area 0 and Area 1"],
+            ["BR-RTR1",  "10.0.255.2/32", "ABR — Area 0 and Area 2"],
+            ["WAN-RTR1", "10.0.255.3/32", "Internal — Area 0 only"],
+        ]
+    ))
+    story.append(sp(8))
+    story.append(p("<b>HQ Campus VLANs (Area 1 — summarized to 10.1.0.0/16)</b>", "subsec"))
+    story.append(ip_table(
+        ["VLAN", "Name", "Subnet", "Gateway"],
+        [
+            ["100", "Engineering", "10.1.100.0/24", "10.1.100.1 (HQ-RTR1)"],
+            ["200", "Sales",       "10.1.200.0/24", "10.1.200.1"],
+            ["300", "Guest",       "10.1.44.0/24",  "10.1.44.1"],
+            ["400", "Server",      "10.1.40.0/24",  "10.1.40.1"],
+            ["999", "Management",  "10.1.99.0/24",  "10.1.99.1"],
+        ]
+    ))
+    story.append(sp(8))
+    story.append(p("<b>Branch Campus VLANs (Area 2 — summarized to 10.2.0.0/16)</b>", "subsec"))
+    story.append(ip_table(
+        ["VLAN", "Name", "Subnet", "Gateway"],
+        [
+            ["100", "Engineering", "10.2.100.0/24", "10.2.100.1 (BR-RTR1)"],
+            ["200", "Sales",       "10.2.200.0/24", "10.2.200.1"],
+            ["300", "Guest",       "10.2.44.0/24",  "10.2.44.1"],
+            ["500", "Wireless",    "10.2.50.0/24",  "10.2.50.1"],
+            ["999", "Management",  "10.2.99.0/24",  "10.2.99.1"],
+        ]
+    ))
+    story.append(sp(10))
+
+    # ── Pre-Work ──
+    story.append(section_header("Pre-Work — Verify Physical Layer Before Any Config"))
+    story.append(sp(8))
+    story.append(p(
+        "Before touching OSPF, add WAN-RTR1 to the CML topology, cable it, and verify "
+        "actual interface connections using CDP. Do NOT assign IPs until CDP confirms "
+        "which physical interface connects to which neighbor."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 1: Add WAN-RTR1 to CML and run CDP</b>", "step"))
+    story.append(code_block(
+        "show cdp neighbors\n"
+        "show ip interface brief"
+    ))
+    story.append(why_box(
+        "In this build, the CML cables for WAN-RTR1 were connected to opposite interfaces "
+        "from the design document. CDP revealed the actual connections before any IPs were "
+        "assigned, preventing silent misconfiguration. Always trust CDP over the diagram."
+    ))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph1-cdp-neighbors-wan-rtr1.png"))
+    story.append(caption("Figure P.0 — show cdp neighbors on WAN-RTR1 confirming actual cable layout"))
+    story.append(sp(4))
+    story.append(p("<b>Step 2: Configure WAN-RTR1 base config (match IPs to actual cables)</b>", "step"))
+    story.append(code_block(
+        "hostname WAN-RTR1\n"
+        "!\n"
+        "interface Loopback0\n"
+        " description ROUTER-ID-LOOPBACK\n"
+        " ip address 10.0.255.3 255.255.255.255\n"
+        "!\n"
+        "interface Ethernet0/1\n"
+        " description WAN-TO-HQ-RTR1-E0/2\n"
+        " ip address 10.0.0.6 255.255.255.252\n"
+        " no shutdown\n"
+        "!\n"
+        "interface Ethernet0/0\n"
+        " description WAN-TO-BR-RTR1-E0/2\n"
+        " ip address 10.0.0.9 255.255.255.252\n"
+        " no shutdown\n"
+        "!\n"
+        "lldp run"
+    ))
+    story.append(sp(8))
+
+    # ── Phase 1 ──
+    story.append(PageBreak())
+    story.append(section_header("Phase 1 — Single-Area OSPF Migration"))
+    story.append(sp(8))
+    story.append(p(
+        "Remove all static routes and replace with OSPF Area 0 on all three routers. "
+        "Use passive-interface default to prevent OSPF hellos from reaching endpoints. "
+        "Set all WAN interfaces to point-to-point to eliminate DR/BDR elections."
+    ))
+    story.append(sp(4))
+    story.append(note_box(
+        "Critical sequence: configure OSPF on a router FIRST, wait for neighbors to reach "
+        "FULL state, THEN remove static routes. This ensures zero downtime during cutover. "
+        "Never remove statics before OSPF is established."
+    ))
+    story.append(sp(6))
+    story.append(p("<b>Step 1: OSPF on WAN-RTR1 (no statics to remove — start here)</b>", "step"))
+    story.append(code_block(
+        "router ospf 1\n"
+        " router-id 10.0.255.3\n"
+        " log-adjacency-changes detail\n"
+        " passive-interface default\n"
+        " no passive-interface Ethernet0/0\n"
+        " no passive-interface Ethernet0/1\n"
+        " network 10.0.255.3 0.0.0.0 area 0\n"
+        " network 10.0.0.4 0.0.0.3 area 0\n"
+        " network 10.0.0.8 0.0.0.3 area 0"
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 2: OSPF on HQ-RTR1 (configure first, remove statics after FULL)</b>", "step"))
+    story.append(code_block(
+        "router ospf 1\n"
+        " router-id 10.0.255.1\n"
+        " log-adjacency-changes detail\n"
+        " passive-interface default\n"
+        " no passive-interface Ethernet0/1\n"
+        " no passive-interface Ethernet0/2\n"
+        " network 10.0.255.1 0.0.0.0 area 0\n"
+        " network 10.0.0.0 0.0.0.3 area 0\n"
+        " network 10.0.0.4 0.0.0.3 area 0\n"
+        " network 10.1.100.0 0.0.0.255 area 0\n"
+        " network 10.1.200.0 0.0.0.255 area 0\n"
+        " network 10.1.44.0 0.0.0.255 area 0\n"
+        " network 10.1.40.0 0.0.0.255 area 0\n"
+        " network 10.1.99.0 0.0.0.255 area 0\n"
+        "!\n"
+        "! After OSPF neighbors reach FULL:\n"
+        "no ip route 10.2.44.0 255.255.255.0 10.0.0.2\n"
+        "no ip route 10.2.99.0 255.255.255.0 10.0.0.2\n"
+        "no ip route 10.2.100.0 255.255.255.0 10.0.0.2\n"
+        "no ip route 10.2.200.0 255.255.255.0 10.0.0.2"
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 3: Fix DR/BDR election — apply to all WAN interfaces on all 3 routers</b>", "step"))
+    story.append(code_block(
+        "! HQ-RTR1 and BR-RTR1: Ethernet0/1 and Ethernet0/2\n"
+        "! WAN-RTR1: Ethernet0/0 and Ethernet0/1\n"
+        "interface Ethernet0/1\n"
+        " ip ospf network point-to-point\n"
+        "interface Ethernet0/2\n"
+        " ip ospf network point-to-point"
+    ))
+    story.append(why_box(
+        "IOL Ethernet interfaces default to OSPF BROADCAST network type, triggering DR/BDR "
+        "election on every /30 WAN link. With only 2 routers on a /30, the election is "
+        "pure overhead and slows convergence. point-to-point eliminates it. Neighbors will "
+        "briefly drop and reform — expected behavior during the change."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Phase 1 Verification</b>", "verify_label"))
+    story.append(code_block(
+        "show ip ospf neighbor        ! FULL/ - with Pri=0 on all routers\n"
+        "show ip route ospf           ! O routes present, no S routes remaining\n"
+        "show running-config | include ip route  ! Should return nothing\n"
+        "ping 10.2.100.1 source 10.1.100.1"
+    ))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph1-ospf-neighbors-full.png"))
+    story.append(caption("Figure P.1 — show ip ospf neighbor on HQ-RTR1 — FULL/ - with Pri=0 on both neighbors"))
+    story.append(sp(8))
+
+    # ── Phase 2 ──
+    story.append(PageBreak())
+    story.append(section_header("Phase 2 — Multi-Area OSPF Design"))
+    story.append(sp(8))
+    story.append(p(
+        "Split the single Area 0 into three areas. Move HQ campus VLANs to Area 1 "
+        "and Branch campus VLANs to Area 2. Configure ABR summarization so WAN-RTR1 "
+        "sees one summary per site instead of 5 individual /24 routes."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 1: HQ-RTR1 — move campus VLANs from Area 0 to Area 1</b>", "step"))
+    story.append(code_block(
+        "router ospf 1\n"
+        " no network 10.1.100.0 0.0.0.255 area 0\n"
+        " no network 10.1.200.0 0.0.0.255 area 0\n"
+        " no network 10.1.44.0  0.0.0.255 area 0\n"
+        " no network 10.1.40.0  0.0.0.255 area 0\n"
+        " no network 10.1.99.0  0.0.0.255 area 0\n"
+        " network 10.1.100.0 0.0.0.255 area 1\n"
+        " network 10.1.200.0 0.0.0.255 area 1\n"
+        " network 10.1.44.0  0.0.0.255 area 1\n"
+        " network 10.1.40.0  0.0.0.255 area 1\n"
+        " network 10.1.99.0  0.0.0.255 area 1\n"
+        " area 1 range 10.1.0.0 255.255.0.0"
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 2: BR-RTR1 — move campus VLANs from Area 0 to Area 2</b>", "step"))
+    story.append(code_block(
+        "router ospf 1\n"
+        " no network 10.2.100.0 0.0.0.255 area 0\n"
+        " no network 10.2.200.0 0.0.0.255 area 0\n"
+        " no network 10.2.44.0  0.0.0.255 area 0\n"
+        " no network 10.2.50.0  0.0.0.255 area 0\n"
+        " no network 10.2.99.0  0.0.0.255 area 0\n"
+        " network 10.2.100.0 0.0.0.255 area 2\n"
+        " network 10.2.200.0 0.0.0.255 area 2\n"
+        " network 10.2.44.0  0.0.0.255 area 2\n"
+        " network 10.2.50.0  0.0.0.255 area 2\n"
+        " network 10.2.99.0  0.0.0.255 area 2\n"
+        " area 2 range 10.2.0.0 255.255.0.0"
+    ))
+    story.append(why_box(
+        "The area range command at each ABR generates a single Type 3 Summary LSA into Area 0. "
+        "WAN-RTR1 sees O IA 10.1.0.0/16 and O IA 10.2.0.0/16 instead of 5 individual /24 "
+        "routes per site. New subnets added within the range are automatically included with "
+        "no changes required on WAN-RTR1 or the remote site."
+    ))
+    story.append(sp(4))
+    story.append(note_box(
+        "HQ-RTR1 and BR-RTR1 will show 'O 10.x.0.0/16 is a summary, Null0' in the route "
+        "table. This is correct behavior — IOS installs a discard route to Null0 at the ABR "
+        "to prevent routing loops within the summary range. It is not an error."
+    ))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph2-wan-rtr1-ospf-routes.png"))
+    story.append(caption("Figure P.2 — show ip route ospf on WAN-RTR1 — O IA 10.1.0.0/16 and O IA 10.2.0.0/16"))
+    story.append(sp(8))
+
+    # ── Phase 3 ──
+    story.append(section_header("Phase 3 — OSPF MD5 Authentication"))
+    story.append(sp(8))
+    story.append(p(
+        "Authenticate all OSPF routing updates on WAN interfaces. Without authentication, "
+        "any device on a WAN link can inject false routes. MD5 means packets without the "
+        "correct key are silently dropped. Both sides of every WAN link must use the same "
+        "key ID (1) and password (OSPF-WAN-KEY)."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Apply on all WAN interfaces on all 3 routers:</b>", "step"))
+    story.append(code_block(
+        "! HQ-RTR1 — Ethernet0/1 and Ethernet0/2\n"
+        "interface Ethernet0/1\n"
+        " ip ospf message-digest-key 1 md5 OSPF-WAN-KEY\n"
+        " ip ospf authentication message-digest\n"
+        "interface Ethernet0/2\n"
+        " ip ospf message-digest-key 1 md5 OSPF-WAN-KEY\n"
+        " ip ospf authentication message-digest\n"
+        "!\n"
+        "! Repeat identical config on BR-RTR1 E0/1 and E0/2\n"
+        "! and on WAN-RTR1 E0/0 and E0/1"
+    ))
+    story.append(why_box(
+        "Passive interfaces do not send OSPF hellos so authentication on LAN interfaces is "
+        "meaningless — there are no neighbors to authenticate. WAN links are the attack surface "
+        "where a rogue device could be inserted. Interface-level MD5 is explicit and auditable "
+        "per-interface. A mismatch in key ID or password drops the adjacency immediately."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Verification</b>", "verify_label"))
+    story.append(code_block(
+        "show running-config interface Ethernet0/1\n"
+        "! Look for: ip ospf authentication message-digest\n"
+        "!           ip ospf message-digest-key 1 md5 7 [encrypted-key]\n"
+        "!\n"
+        "show ip ospf neighbor   ! All neighbors still FULL/ -"
+    ))
+    story.append(sp(8))
+
+    # ── Phase 4 ──
+    story.append(section_header("Phase 4 — OSPF Cost Manipulation"))
+    story.append(sp(8))
+    story.append(p(
+        "Make path selection deterministic. Preferred path via WAN-RTR1 (total cost 20). "
+        "Backup path via direct HQ-RTR1 to BR-RTR1 link (cost 100)."
+    ))
+    story.append(sp(4))
+    story.append(ip_table(
+        ["Path", "Interfaces", "Cost", "Total", "Role"],
+        [
+            ["Via WAN-RTR1",  "HQ-RTR1 E0/2 + WAN-RTR1 transit", "10 + 10", "20",  "PREFERRED"],
+            ["Direct HQ-BR",  "HQ-RTR1 E0/1",                     "100",     "100", "BACKUP"],
+        ]
+    ))
+    story.append(sp(6))
+    story.append(p("<b>Apply on all 3 routers:</b>", "step"))
+    story.append(code_block(
+        "! HQ-RTR1\n"
+        "interface Ethernet0/1\n"
+        " ip ospf cost 100   ! direct backup link\n"
+        "interface Ethernet0/2\n"
+        " ip ospf cost 10    ! preferred WAN-RTR1 path\n"
+        "!\n"
+        "! BR-RTR1 (mirror of HQ-RTR1)\n"
+        "interface Ethernet0/1\n"
+        " ip ospf cost 100\n"
+        "interface Ethernet0/2\n"
+        " ip ospf cost 10\n"
+        "!\n"
+        "! WAN-RTR1 (transit router — both links preferred)\n"
+        "interface Ethernet0/0\n"
+        " ip ospf cost 10\n"
+        "interface Ethernet0/1\n"
+        " ip ospf cost 10"
+    ))
+    story.append(why_box(
+        "Explicit cost values are deterministic and portable. When you read the config you "
+        "immediately know the cost — no math required. With bandwidth-calculated costs you "
+        "must know the reference bandwidth and calculate. Explicit costs survive interface "
+        "type changes without unexpected side effects."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Phase 4 Verification</b>", "verify_label"))
+    story.append(code_block(
+        "show ip route 10.2.100.1   ! Next hop: 10.0.0.6 (WAN-RTR1), metric 30\n"
+        "traceroute 10.2.100.1 source 10.1.100.1\n"
+        "! Expected: Hop 1: 10.0.0.6 (WAN-RTR1), Hop 2: 10.0.0.10 (BR-RTR1)"
+    ))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph4-traceroute-preferred-path.png"))
+    story.append(caption("Figure P.4 — traceroute HQ to Branch confirming path goes through WAN-RTR1"))
+    story.append(sp(8))
+
+    # ── Phase 5 ──
+    story.append(PageBreak())
+    story.append(section_header("Phase 5 — Link Failure and Convergence Testing"))
+    story.append(sp(8))
+    story.append(p(
+        "Prove the backup path activates automatically. Shut the preferred WAN-RTR1 link, "
+        "confirm OSPF reconverges to the direct backup, restore the link, and confirm "
+        "traffic returns to the preferred path."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 1: Baseline — confirm preferred path active on HQ-RTR1</b>", "step"))
+    story.append(code_block(
+        "show ip ospf neighbor           ! Both neighbors: FULL/ -\n"
+        "show ip route 10.2.100.1        ! Via 10.0.0.6 on E0/2, metric 30\n"
+        "traceroute 10.2.100.1 source 10.1.100.1"
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 2: Simulate failure — shut HQ-RTR1 Ethernet0/2</b>", "step"))
+    story.append(code_block(
+        "configure terminal\n"
+        " interface Ethernet0/2\n"
+        "  shutdown\n"
+        "end"
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 3: Verify failover — backup path active</b>", "step"))
+    story.append(code_block(
+        "show ip ospf neighbor\n"
+        "! WAN-RTR1 (10.0.255.3) should be gone\n"
+        "show ip route 10.2.100.1\n"
+        "! Expected: via 10.0.0.2 on Ethernet0/1, metric 110"
+    ))
+    story.append(embed_image(f"{SS}/P03-Ph5-failover-route-change.png"))
+    story.append(caption("Figure P.5a — Route switches to backup path (metric 110) after E0/2 shutdown"))
+    story.append(sp(4))
+    story.append(p("<b>Step 4: Restore E0/2 and verify preferred path returns</b>", "step"))
+    story.append(code_block(
+        "configure terminal\n"
+        " interface Ethernet0/2\n"
+        "  no shutdown\n"
+        "end\n"
+        "!\n"
+        "show ip route 10.2.100.1\n"
+        "! Expected: back to 10.0.0.6 on Ethernet0/2, metric 30"
+    ))
+    story.append(embed_image(f"{SS}/P03-Ph5-route-restored.png"))
+    story.append(caption("Figure P.5b — Route restored to preferred WAN-RTR1 path after E0/2 no shutdown"))
+    story.append(sp(4))
+    story.append(ip_table(
+        ["State", "Next Hop", "Metric", "Interface"],
+        [
+            ["Normal",        "10.0.0.6", "30",  "Ethernet0/2 (via WAN-RTR1)"],
+            ["E0/2 shutdown", "10.0.0.2", "110", "Ethernet0/1 (direct backup)"],
+            ["Restored",      "10.0.0.6", "30",  "Ethernet0/2 (preferred returns)"],
+        ]
+    ))
+    story.append(sp(8))
+
+    # ── Phase 6 ──
+    story.append(section_header("Phase 6 — BFD for Sub-Second Failover"))
+    story.append(sp(8))
+    story.append(p(
+        "OSPF's default dead timer is 40 seconds — a link failure can take up to 40 seconds "
+        "to trigger reconvergence. BFD runs independently of OSPF and detects link failures "
+        "in milliseconds. When BFD detects failure it immediately notifies OSPF."
+    ))
+    story.append(sp(4))
+    story.append(ip_table(
+        ["Parameter", "Value", "Result"],
+        [
+            ["BFD interval",    "300ms",  "Probe sent every 300ms"],
+            ["min_rx",          "300ms",  "Accept probes every 300ms"],
+            ["Multiplier",      "3",      "Failure declared after 3 missed probes"],
+            ["Detection time",  "900ms",  "Sub-second — 44x faster than OSPF dead timer"],
+        ]
+    ))
+    story.append(sp(6))
+    story.append(p("<b>Apply on all WAN interfaces on all 3 routers:</b>", "step"))
+    story.append(code_block(
+        "! HQ-RTR1 E0/1 and E0/2 (repeat for BR-RTR1 and WAN-RTR1)\n"
+        "interface Ethernet0/1\n"
+        " bfd interval 300 min_rx 300 multiplier 3\n"
+        " ip ospf bfd\n"
+        "interface Ethernet0/2\n"
+        " bfd interval 300 min_rx 300 multiplier 3\n"
+        " ip ospf bfd"
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Phase 6 Verification</b>", "verify_label"))
+    story.append(code_block(
+        "show bfd neighbors\n"
+        "! Expected:\n"
+        "! NeighAddr   LD/RD   RH/RS  State  Int\n"
+        "! 10.0.0.2    1/1     Up     Up     Et0/1\n"
+        "! 10.0.0.6    2/2     Up     Up     Et0/2\n"
+        "!\n"
+        "show ip ospf neighbor   ! All still FULL/ -"
+    ))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph6-bfd-neighbors-up.png"))
+    story.append(caption("Figure P.6 — show bfd neighbors on HQ-RTR1 — all sessions Up/Up"))
+    story.append(sp(8))
+
+    # ── Phase 7 ──
+    story.append(PageBreak())
+    story.append(section_header("Phase 7 — IP SLA + Tracked Floating Static Route"))
+    story.append(sp(8))
+    story.append(p(
+        "Add a third redundancy layer. If OSPF itself fails (not just a link), a tracked "
+        "floating static route (AD 250) activates automatically. The IP SLA probe target "
+        "must be reachable independently of OSPF."
+    ))
+    story.append(sp(4))
+    story.append(note_box(
+        "Critical design lesson learned during this build: the initial probe targeted "
+        "WAN-RTR1's loopback (10.0.255.3), reachable only via OSPF routes. When OSPF "
+        "was shut down to test the backup, the probe lost its route, the track went Down, "
+        "and the floating static never installed — defeating the entire backup mechanism. "
+        "Fix: always probe the directly connected /30 neighbor IP. No routing needed — just ARP."
+    ))
+    story.append(sp(6))
+    story.append(p("<b>Step 1: Configure IP SLA, tracking, and floating static on HQ-RTR1</b>", "step"))
+    story.append(code_block(
+        "ip sla 10\n"
+        " icmp-echo 10.0.0.2 source-ip 10.0.0.1\n"
+        " timeout 1000\n"
+        " threshold 1000      ! threshold must be <= timeout\n"
+        " frequency 5\n"
+        "exit\n"
+        "!\n"
+        "ip sla schedule 10 life forever start-time now\n"
+        "!\n"
+        "track 10 ip sla 10 reachability\n"
+        "!\n"
+        "ip route 10.2.0.0 255.255.0.0 10.0.0.2 250 track 10"
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 2: Mirror on BR-RTR1</b>", "step"))
+    story.append(code_block(
+        "ip sla 10\n"
+        " icmp-echo 10.0.0.1 source-ip 10.0.0.2\n"
+        " timeout 1000\n"
+        " threshold 1000\n"
+        " frequency 5\n"
+        "exit\n"
+        "ip sla schedule 10 life forever start-time now\n"
+        "track 10 ip sla 10 reachability\n"
+        "ip route 10.1.0.0 255.255.0.0 10.0.0.1 250 track 10"
+    ))
+    story.append(why_box(
+        "A directly connected /30 IP requires only ARP — no routing protocol. The probe "
+        "survives an OSPF failure because the physical E0/1 link is still up. AD 250 sits "
+        "below OSPF (AD 110), so the floating static is invisible during normal operation "
+        "and only installs when OSPF routes disappear from the table."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Phase 7 Verification</b>", "verify_label"))
+    story.append(code_block(
+        "show ip sla statistics     ! Successes incrementing, return code: OK\n"
+        "show track                 ! Reachability is Up\n"
+        "show ip route static       ! Empty — OSPF preferred (AD 110 < 250)\n"
+        "!\n"
+        "! Test with OSPF shut down on BR-RTR1:\n"
+        "! router ospf 1 -> shutdown\n"
+        "! show track            -> Reachability is Up (probe still works)\n"
+        "! show ip route static  -> S 10.1.0.0/16 [250/0] via 10.0.0.1\n"
+        "! ping 10.1.100.1 source 10.2.100.1 -> !!!!! 100%"
+    ))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph7-track-up-sla-running.png"))
+    story.append(caption("Figure P.7a — show track and show ip sla statistics — Reachability Up, return code OK"))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph7-floating-static-active.png"))
+    story.append(caption("Figure P.7b — show ip route static on BR-RTR1 with OSPF shut — S 10.1.0.0/16 [250/0] installed"))
+    story.append(sp(8))
+
+    # ── Phase 8 ──
+    story.append(PageBreak())
+    story.append(section_header("Phase 8 — OSPFv3 for IPv6"))
+    story.append(sp(8))
+    story.append(p(
+        "Replace IPv6 static routes from Project 02 with OSPFv3 multi-area dynamic routing. "
+        "IPv6 exists only on the direct HQ-BR WAN link (E0/1) and VLAN 100 subinterfaces. "
+        "WAN-RTR1 backup path has no IPv6 in this design."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 1: Configure OSPFv3 on HQ-RTR1</b>", "step"))
+    story.append(code_block(
+        "no ipv6 route 2001:DB8:2:100::/64 2001:DB8:0:1::2\n"
+        "!\n"
+        "ipv6 unicast-routing\n"
+        "!\n"
+        "ipv6 router ospf 10\n"
+        " router-id 10.0.255.1\n"
+        "!\n"
+        "interface Ethernet0/1\n"
+        " ipv6 ospf 10 area 0\n"
+        " ipv6 ospf network point-to-point\n"
+        "!\n"
+        "interface Ethernet0/0.100\n"
+        " ipv6 ospf 10 area 1"
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Step 2: Configure OSPFv3 on BR-RTR1</b>", "step"))
+    story.append(code_block(
+        "no ipv6 route 2001:DB8:1:100::/64 2001:DB8:0:1::1\n"
+        "!\n"
+        "ipv6 unicast-routing\n"
+        "!\n"
+        "ipv6 router ospf 10\n"
+        " router-id 10.0.255.2\n"
+        "!\n"
+        "interface Ethernet0/1\n"
+        " ipv6 ospf 10 area 0\n"
+        " ipv6 ospf network point-to-point\n"
+        "!\n"
+        "interface Ethernet0/0.100\n"
+        " ipv6 ospf 10 area 2"
+    ))
+    story.append(why_box(
+        "OSPFv3 needs the same point-to-point treatment as OSPFv2. Apply "
+        "ipv6 ospf network point-to-point on both sides before checking adjacency. "
+        "A one-sided change produces a transient NET_TYPE_MISMATCH log message that "
+        "resolves automatically once both routers are updated."
+    ))
+    story.append(sp(4))
+    story.append(p("<b>Phase 8 Verification</b>", "verify_label"))
+    story.append(code_block(
+        "show ospfv3 neighbor\n"
+        "! Expected: Neighbor ID 10.0.255.2, Pri 0, State FULL/ -\n"
+        "!\n"
+        "show ipv6 route ospf\n"
+        "! Expected: OI 2001:DB8:2:100::/64 [110/110] via FE80::..., Ethernet0/1\n"
+        "!\n"
+        "ping 2001:DB8:2:100::1 source 2001:DB8:1:100::1\n"
+        "ping 2001:DB8:1:100::1 source 2001:DB8:2:100::1"
+    ))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph8-ospfv3-neighbor-full.png"))
+    story.append(caption("Figure P.8a — show ospfv3 neighbor on HQ-RTR1 — FULL/ - with Pri=0"))
+    story.append(sp(4))
+    story.append(embed_image(f"{SS}/P03-Ph8-ipv6-ping-success.png"))
+    story.append(caption("Figure P.8b — IPv6 ping from HQ VLAN 100 to Branch VLAN 100: !!!!! 100%"))
+    story.append(sp(8))
+
+    # ── Final Checklist ──
+    story.append(PageBreak())
+    story.append(section_header("Final Verification Checklist"))
+    story.append(sp(8))
+    story.append(checklist_table(
+        ["#", "Test", "Command", "Device", "Expected"],
+        [
+            ["1",  "OSPF neighbors FULL",        "show ip ospf neighbor",             "All routers", "FULL/ - Pri=0"],
+            ["2",  "No statics remain",          "show run | include ip route",        "HQ/BR-RTR1",  "Empty"],
+            ["3",  "O IA summaries on WAN-RTR1", "show ip route ospf",                 "WAN-RTR1",    "O IA 10.1.0.0/16 and 10.2.0.0/16"],
+            ["4",  "E0/2 cost = 10",             "show ip ospf int E0/2",              "HQ/BR-RTR1",  "Cost: 10, POINT_TO_POINT"],
+            ["5",  "E0/1 cost = 100",            "show ip ospf int E0/1",              "HQ/BR-RTR1",  "Cost: 100"],
+            ["6",  "MD5 auth on WAN ints",       "show run int E0/1 | include ospf",   "All routers", "authentication message-digest"],
+            ["7",  "BFD sessions Up",            "show bfd neighbors",                 "All routers", "Up/Up on all sessions"],
+            ["8",  "IP SLA running",             "show ip sla statistics",             "HQ/BR-RTR1",  "Successes incrementing, OK"],
+            ["9",  "Track object Up",            "show track",                         "HQ/BR-RTR1",  "Reachability Up"],
+            ["10", "Traceroute via WAN-RTR1",    "traceroute 10.2.100.1 src 10.1.100.1","HQ-RTR1",   "Hop 1: 10.0.0.6"],
+            ["11", "OSPFv3 neighbor FULL",       "show ospfv3 neighbor",               "HQ/BR-RTR1",  "FULL/ - Pri=0"],
+            ["12", "IPv4 end-to-end",            "ping 10.2.100.1 src 10.1.100.1",    "HQ-RTR1",     "!!!!!"],
+            ["13", "IPv6 end-to-end",            "ping 2001:DB8:2:100::1",            "HQ-RTR1",     "!!!!!"],
+        ]
+    ))
+    story.append(sp(10))
+
+    # ── Troubleshooting ──
+    story.append(section_header("Troubleshooting Log — Project 03"))
+    story.append(sp(8))
+    entries = [
+        (
+            "Entry 1 — WAN-RTR1 Interface IP Mismatch",
+            "Pings from WAN-RTR1 to HQ and Branch failing 0% immediately after config. Same-subnet /30 pings require only ARP — they should never fail.",
+            "CML cables were connected to opposite interfaces from the design. IPs assigned from the design had the wrong side on each interface. Additionally, 'no ip address' without the full mask left E0/0 unassigned.",
+            "Ran 'show cdp neighbors' to discover actual cable layout. Reassigned IPs to match physical connections confirmed by CDP. Pings returned 100% after fix.",
+            "Always run 'show cdp neighbors' BEFORE assigning IPs to any new device. Never assume CML cable connections match the design diagram.",
+        ),
+        (
+            "Entry 2 — DR/BDR Election on /30 WAN Links",
+            "'show ip ospf neighbor' showed FULL/DR and FULL/BDR instead of FULL/ - with Pri=0 on point-to-point /30 WAN links.",
+            "IOL Ethernet interfaces default to OSPF network type BROADCAST regardless of subnet mask. This triggers DR/BDR election on every link, including /30s with only 2 endpoints.",
+            "Applied 'ip ospf network point-to-point' to all WAN interfaces on all 3 routers. Adjacencies briefly dropped and reformed — expected during network type change.",
+            "Always apply 'ip ospf network point-to-point' on /30 WAN links in IOL. The same applies to OSPFv3 — use 'ipv6 ospf network point-to-point'.",
+        ),
+        (
+            "Entry 3 — Intentional Failover Test (Phase 5)",
+            "Intentional outage: shut HQ-RTR1 E0/2 to verify OSPF reconverges to backup path without waiting 40 seconds.",
+            "Intentional test. No actual fault.",
+            "Interface-down triggered immediate adjacency loss. Route metric changed from 30 (preferred via WAN-RTR1) to 110 (backup direct link). On restoration, traffic returned to preferred path automatically.",
+            "Interface-down events trigger immediate OSPF adjacency removal — no dead timer wait. Cost engineering produces deterministic failover.",
+        ),
+        (
+            "Entry 4 — IP SLA Probe Would Not Start",
+            "IP SLA not running. Track showed Reachability Down, return code Unknown. 'show ip sla statistics' returned Unknown counters. Operation time to live: 0.",
+            "IOS rejects 'ip sla schedule' when threshold > timeout. Default threshold is 5000ms; timeout was 1000ms. The schedule command was silently rejected, leaving the probe in notInService state.",
+            "Removed and recreated SLA with threshold 1000 and timeout 1000. After fix: track showed Reachability Up with RTT 1ms, success counters incrementing.",
+            "When IP SLA will not start, check 'show ip sla configuration' for 'Pending trigger' and 'notInService'. Always set threshold equal to or less than timeout.",
+        ),
+        (
+            "Entry 5 — IP SLA Probe Failed During OSPF Outage",
+            "When OSPF was shut down to test the floating static backup, the track went Down. Floating static never installed. Network lost all inter-site reachability.",
+            "The probe target was WAN-RTR1 loopback 10.0.255.3 — reachable only via OSPF routes. When OSPF died, the route to the probe target disappeared, the probe failed, track went Down, and the floating static never installed.",
+            "Changed probe target to the directly connected /30 IP on the backup link (10.0.0.2 from HQ-RTR1, 10.0.0.1 from BR-RTR1). A /30 directly connected IP requires only ARP — it works regardless of OSPF state.",
+            "IP SLA probe target must be reachable independently of the routing protocol it backs up. Always probe a directly connected interface IP on the backup path, never a loopback or remote address.",
+        ),
+    ]
+    for title, symptom, root_cause, fix, lesson in entries:
+        story.append(p(f"<b>{title}</b>", "subsec"))
+        for label, content in [("Symptom", symptom), ("Root Cause", root_cause),
+                                ("Fix", fix), ("Lesson", lesson)]:
+            story.append(p(f"<b>{label}:</b> {content}"))
+            story.append(sp(3))
+        story.append(HRFlowable(width=USABLE_W, thickness=0.5,
+                                color=colors.HexColor("#CCCCCC"), spaceAfter=8))
+
+    # ── Break / Fix Challenge ──
+    story.append(section_header("Break / Fix Challenge"))
+    story.append(sp(8))
+    story.append(p(
+        "Each challenge introduces a deliberate misconfiguration. Diagnose using only "
+        "show commands — do not look at the running-config until you have a hypothesis."
+    ))
+    story.append(sp(6))
+    challenges = [
+        (
+            "Challenge 1 — OSPF adjacency drops after applying MD5",
+            "After adding MD5 authentication, one WAN adjacency drops and never recovers. "
+            "'show ip ospf neighbor' shows EXSTART or DOWN oscillation on one interface.",
+            "Check 'show ip ospf interface E0/x' on both sides. Compare the authentication type. "
+            "Run 'debug ip ospf adj' briefly to see the mismatch message.",
+        ),
+        (
+            "Challenge 2 — Traffic taking the backup path instead of WAN-RTR1",
+            "Traceroute from HQ to Branch shows only 1 hop (direct to BR-RTR1). "
+            "The preferred WAN-RTR1 path should produce 2 hops. Both OSPF neighbors are FULL.",
+            "Check 'show ip ospf interface E0/1' and 'show ip ospf interface E0/2' on HQ-RTR1. "
+            "Compare the Cost values. What was not applied?",
+        ),
+        (
+            "Challenge 3 — IP SLA showing Unknown return code after scheduling",
+            "After configuring and scheduling IP SLA, 'show ip sla statistics' shows "
+            "Return code: Unknown and Number of successes: 0. Track object shows Down.",
+            "Run 'show ip sla configuration 10'. Look at the Threshold and Timeout values. "
+            "Which one is larger, and why does that matter?",
+        ),
+        (
+            "Challenge 4 — OSPFv3 neighbor stuck at EXSTART",
+            "After configuring OSPFv3, 'show ospfv3 neighbor' shows EXSTART and never "
+            "reaches FULL. IPv4 OSPF is working correctly on the same interfaces.",
+            "Run 'show ospfv3 interface E0/1' on both routers. Compare the network type. "
+            "Is it the same on both sides?",
+        ),
+    ]
+    for scenario, symptoms, hint in challenges:
+        story.append(p(f"<b>{scenario}</b>", "subsec"))
+        story.append(p(f"<b>Symptoms:</b> {symptoms}"))
+        story.append(sp(3))
+        story.append(p(f"<b>Hint:</b> {hint}"))
+        story.append(sp(3))
+        story.append(HRFlowable(width=USABLE_W, thickness=0.5,
+                                color=colors.HexColor("#CCCCCC"), spaceAfter=6))
+
+    story.append(sp(10))
+    story.append(p(
+        "<b>Build date:</b> 2026-04-12 &nbsp;&nbsp; "
+        "<b>Platform:</b> Cisco IOL in CML 2.9 &nbsp;&nbsp; "
+        "<b>Nodes:</b> 15 (adds WAN-RTR1 to Project 02 topology)"
+    ))
+
+    return story
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # PDF generation
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1580,6 +2403,10 @@ def generate_pdf(story, output_path, project_title):
 
 def main():
     outputs = {
+        "p03": [
+            f"{BASE}/project-03-ospf-dynamic-routing/docs/ospf-dynamic-routing-lab-guide.pdf",
+            f"{BASE}/docs/project-03-ospf-dynamic-routing-lab-guide.pdf",
+        ],
         "p01": [
             f"{BASE}/project-01-campus-foundation/docs/campus-foundation-lab-guide.pdf",
             f"{BASE}/docs/project-01-campus-foundation-lab-guide.pdf",
@@ -1612,6 +2439,18 @@ def main():
     for dest in outputs["p02"][1:]:
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         shutil.copy2(primary02, dest)
+        print(f"  Copied: {dest}")
+
+    print("\nBuilding Project 03 story...")
+    story03 = build_project_03()
+    print(f"  Story elements: {len(story03)}")
+
+    primary03 = outputs["p03"][0]
+    generate_pdf(story03, primary03, "Project 03 — OSPF Dynamic Routing")
+
+    for dest in outputs["p03"][1:]:
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copy2(primary03, dest)
         print(f"  Copied: {dest}")
 
     print("\nAll PDFs generated successfully.")
