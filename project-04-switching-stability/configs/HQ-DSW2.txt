@@ -1,0 +1,161 @@
+! ============================================================
+! DEVICE: HQ-DSW2
+! PROJECT: 04 — Switching Layer Stability
+! ROLE: HQ Distribution Switch 2 — STP Root for VLANs 200/300
+! BUILD DATE: 2026-04-13
+! CUMULATIVE: Includes all changes from Projects 01, 02, 03, 04
+! NOTE: CDP-verified cabling:
+!       Et0/0 → HQ-DHCP-DNS server (access port, VLAN 999)
+!       Et0/1 → HQ-ASW1 Et0/1 (access uplink, Root Guard)
+!       Et0/2 → HQ-ASW2 Et0/1 (access uplink, Root Guard)
+!       Et0/3 → HQ-DSW1 Et0/3 (LACP member Po1)
+!       Et1/0 → HQ-DSW1 Et1/0 (LACP member Po1)
+! ============================================================
+
+hostname HQ-DSW2
+
+lldp run
+
+! --- VLAN Database ---
+vlan 100
+ name Engineering
+vlan 200
+ name Sales
+vlan 300
+ name Guest
+vlan 400
+ name Servers
+vlan 999
+ name Management
+vlan 1000
+ name NATIVE-UNUSED
+
+! --- Management SVI ---
+interface vlan 999
+ description MANAGEMENT-SVI
+ ip address 10.1.99.12 255.255.255.0
+ no shutdown
+
+ip default-gateway 10.1.99.1
+
+! --- DHCP/DNS server access port ---
+! WHY: Server is statically addressed in VLAN 999.
+!      PortFast skips 30s STP delay on server boot.
+!      BPDU Guard error-disables if a switch is plugged in here.
+interface Ethernet0/0
+ description SERVER-HQ-DHCP-DNS-VLAN999
+ switchport mode access
+ switchport access vlan 999
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+
+! --- Access switch uplinks (Root Guard) ---
+interface Ethernet0/1
+ description TRUNK-TO-HQ-ASW1-E0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ spanning-tree guard root
+ no shutdown
+
+interface Ethernet0/2
+ description TRUNK-TO-HQ-ASW2-E0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ spanning-tree guard root
+ no shutdown
+
+! --- LACP EtherChannel members ---
+interface Ethernet0/3
+ description LACP-MEMBER-TO-HQ-DSW1
+ switchport trunk encapsulation dot1q
+ channel-group 1 mode active
+ udld port
+ no shutdown
+
+interface Ethernet1/0
+ description LACP-MEMBER-TO-HQ-DSW1
+ switchport trunk encapsulation dot1q
+ channel-group 1 mode active
+ udld port
+ no shutdown
+
+! --- Port-channel (Loop Guard) ---
+interface Port-channel1
+ description PORT-CHANNEL-TO-HQ-DSW1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ spanning-tree guard loop
+ no shutdown
+
+! --- STP ---
+spanning-tree mode rapid-pvst
+spanning-tree pathcost method long
+spanning-tree vlan 200 priority 4096
+spanning-tree vlan 300 priority 4096
+spanning-tree vlan 100 priority 8192
+spanning-tree vlan 400 priority 8192
+spanning-tree vlan 999 priority 8192
+
+! --- UDLD ---
+udld enable
+
+! --- Errdisable recovery ---
+errdisable recovery cause bpduguard
+errdisable recovery cause dhcp-rate-limit
+errdisable recovery cause udld
+errdisable recovery cause security-violation
+errdisable recovery cause psecure-violation
+errdisable recovery interval 300
+
+! --- VTP ---
+vtp domain LAB
+vtp version 3
+vtp mode transparent
+
+! --- SSH Hardening ---
+ip domain-name lab.local
+username admin privilege 15 secret CMLlab2025!
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+
+line vty 0 4
+ transport input ssh
+ login local
+ exec-timeout 10 0
+ logging synchronous
+ access-class 10 in
+
+line console 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+
+access-list 10 permit 10.1.99.0 0.0.0.255
+access-list 10 deny any log
+
+no ip http server
+no ip http secure-server
+
+banner motd ^
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^
+
+service password-encryption
+enable secret CMLenableP@ss!
+
+end
+write memory

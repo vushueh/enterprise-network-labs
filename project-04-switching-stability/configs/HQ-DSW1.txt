@@ -1,0 +1,180 @@
+! ============================================================
+! DEVICE: HQ-DSW1
+! PROJECT: 04 — Switching Layer Stability
+! ROLE: HQ Distribution Switch 1 — STP Root for VLANs 100/400/999
+! ROUTER ID: N/A (Layer 2 switch)
+! BUILD DATE: 2026-04-13
+! CUMULATIVE: Includes all changes from Projects 01, 02, 03, 04
+! NOTE: CDP-verified cabling:
+!       Et0/0 → HQ-RTR1 Et0/0 (router-facing trunk, BPDU Filter)
+!       Et0/1 → HQ-ASW1 Et0/0 (access uplink, Root Guard)
+!       Et0/2 → HQ-ASW2 Et0/0 (access uplink, Root Guard)
+!       Et0/3 → HQ-DSW2 Et0/3 (LACP member Po1)
+!       Et1/0 → HQ-DSW2 Et1/0 (LACP member Po1)
+! ============================================================
+
+hostname HQ-DSW1
+
+lldp run
+
+! --- VLAN Database ---
+vlan 100
+ name Engineering
+vlan 200
+ name Sales
+vlan 300
+ name Guest
+vlan 400
+ name Servers
+vlan 999
+ name Management
+vlan 1000
+ name NATIVE-UNUSED
+
+! --- Management SVI ---
+interface vlan 999
+ description MANAGEMENT-SVI
+ ip address 10.1.99.11 255.255.255.0
+ no shutdown
+
+ip default-gateway 10.1.99.1
+
+! --- Router-facing trunk (BPDU Filter) ---
+! WHY: Router does not participate in STP. BPDU Filter stops
+!      STP from sending or processing BPDUs on this link.
+interface Ethernet0/0
+ description TRUNK-TO-HQ-RTR1-E0/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ spanning-tree bpdufilter enable
+ no shutdown
+
+! --- Access switch uplinks (Root Guard) ---
+! WHY: Root Guard prevents access switches from ever sending
+!      a superior BPDU that could change the root bridge placement.
+interface Ethernet0/1
+ description TRUNK-TO-HQ-ASW1-E0/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ spanning-tree guard root
+ no shutdown
+
+interface Ethernet0/2
+ description TRUNK-TO-HQ-ASW2-E0/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ spanning-tree guard root
+ no shutdown
+
+! --- LACP EtherChannel members ---
+! WHY: LACP bundles two physical links into one logical link.
+!      STP sees Port-channel1, not two separate links.
+!      mode active = sends LACP PDUs, negotiates the bundle.
+interface Ethernet0/3
+ description LACP-MEMBER-TO-HQ-DSW2
+ switchport trunk encapsulation dot1q
+ channel-group 1 mode active
+ udld port
+ no shutdown
+
+interface Ethernet1/0
+ description LACP-MEMBER-TO-HQ-DSW2
+ switchport trunk encapsulation dot1q
+ channel-group 1 mode active
+ udld port
+ no shutdown
+
+! --- Port-channel (LACP logical interface, Loop Guard) ---
+! WHY: Trunk settings on Port-channel, not on member interfaces.
+!      Loop Guard protects against unidirectional failure on this link.
+interface Port-channel1
+ description PORT-CHANNEL-TO-HQ-DSW2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ spanning-tree guard loop
+ no shutdown
+
+! --- STP ---
+! WHY: Rapid-PVST for fast convergence.
+!      Pathcost method long for 32-bit cost values (modern speeds).
+!      Explicit root priorities — never let STP decide randomly.
+spanning-tree mode rapid-pvst
+spanning-tree pathcost method long
+spanning-tree vlan 100 priority 4096
+spanning-tree vlan 400 priority 4096
+spanning-tree vlan 999 priority 4096
+spanning-tree vlan 200 priority 8192
+spanning-tree vlan 300 priority 8192
+
+! --- UDLD ---
+! WHY: Detect one-way link failures on inter-switch connections.
+!      Not applied to Et0/0 (router-facing — router doesn't use UDLD).
+udld enable
+
+! --- Errdisable recovery ---
+! WHY: Auto-recover ports after error events.
+!      300s interval: long enough to prevent rapid flap, short enough
+!      to recover automatically without operator intervention.
+errdisable recovery cause bpduguard
+errdisable recovery cause dhcp-rate-limit
+errdisable recovery cause udld
+errdisable recovery cause security-violation
+errdisable recovery cause psecure-violation
+errdisable recovery interval 300
+
+! --- VTP ---
+! WHY: Transparent mode. Each switch manages its own VLAN database.
+!      Safer than server/client — no risk of accidental VLAN wipe.
+vtp domain LAB
+vtp version 3
+vtp mode transparent
+
+! --- SSH Hardening ---
+ip domain-name lab.local
+username admin privilege 15 secret CMLlab2025!
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+
+line vty 0 4
+ transport input ssh
+ login local
+ exec-timeout 10 0
+ logging synchronous
+ access-class 10 in
+
+line console 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+
+access-list 10 permit 10.1.99.0 0.0.0.255
+access-list 10 deny any log
+
+no ip http server
+no ip http secure-server
+
+banner motd ^
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^
+
+service password-encryption
+enable secret CMLenableP@ss!
+
+end
+write memory
