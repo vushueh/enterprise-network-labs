@@ -928,23 +928,3 @@ show interfaces trunk                   ! Et0/0 native VLAN 1000
 | BPDU Guard | `spanning-tree bpduguard enable` | Error-disable port if BPDU received on access port |
 | BPDU Filter | `spanning-tree bpdufilter enable` | Stop STP interaction on router-facing port |
 | PortFast | `spanning-tree portfast` | Skip STP listening/learning on access ports |
-
----
-
-## Screenshots Required
-
-Run these commands and save the output as screenshots in `verification/screenshots/`:
-
-| Filename | Device | Command |
-|----------|--------|---------|
-| `P04-Ph1-etherchannel-summary.png` | HQ-DSW1 | `show etherchannel summary` |
-| `P04-Ph1-interfaces-trunk.png` | HQ-DSW1 | `show interfaces trunk` |
-| `P04-Ph2-stp-summary.png` | HQ-DSW1 | `show spanning-tree summary` |
-| `P04-Ph2-inconsistentports.png` | HQ-DSW1 | `show spanning-tree inconsistentports` |
-| `P04-Ph3-errdisable-recovery.png` | HQ-DSW1 | `show errdisable recovery` |
-| `P04-Ph4-vtp-vlan600.png` | HQ-DSW2 | `show vlan brief` (while VLAN 600 exists) |
-| `P04-Ph5-mac-trace-asw1.png` | HQ-ASW1 | `show mac address-table dynamic vlan 100` |
-| `P04-Ph5-mac-trace-dsw1.png` | HQ-DSW1 | `show mac address-table address 5254.00d7.cbbc` |
-| `P04-Ph6-access-protection.png` | HQ-ASW1 | `show running-config interface Ethernet0/2` |
-| `P04-Ph7-fault-before.png` | HQ-DSW1 | `show etherchannel summary` + `show spanning-tree inconsistentports` |
-| `P04-Ph7-fault-after.png` | HQ-DSW1 | `show etherchannel summary` + `show spanning-tree root` |
