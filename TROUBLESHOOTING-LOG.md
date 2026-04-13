@@ -453,3 +453,45 @@ Layer 3 relay: show running-config | section helper revealed wrong helper-addres
 **Fix:** Changed probe target to directly connected /30 neighbor IP (10.0.0.2 on HQ-RTR1, 10.0.0.1 on BR-RTR1). A directly connected IP requires only ARP — it works regardless of OSPF state. After fix: with OSPF down, track stayed Up, floating static installed, pings succeeded 100%.
 
 **Lesson:** IP SLA probe target must be reachable INDEPENDENTLY of the routing protocol it backs up. Always probe a directly connected IP on the backup link. The probe must survive the same failure scenario it is designed to detect.
+
+---
+
+## Project 04 — Switching Layer Stability
+
+### P04-01 — Storm Control rejected on IOL-L2
+
+**Phase:** Phase 6 — Access Port Protection
+**Symptom:** `storm-control broadcast level 1.00 0.50` rejected with `% Invalid input detected at '^' marker`.
+**Root cause:** CML IOL-L2 image does not implement storm control (ASIC-level hardware feature not available in software switch image).
+**Fix:** Platform limitation. Applied available protections: PortFast, BPDU Guard, BPDU Filter.
+**Lesson:** Always verify platform feature support with `show ?` before building a phase around a specific command.
+
+---
+
+### P04-02 — LACP member rejected when changing mode during fault injection
+
+**Phase:** Phase 7 — Break/Fix
+**Symptom:** `channel-group 1 mode on` rejected with `Command rejected: the interface can not be added to the channel group` on HQ-DSW2 Et1/0 during fault injection.
+**Root cause:** Port retained internal LACP state after `no channel-group 1`. Attempting to re-add with incompatible mode `on` conflicted with the existing LACP bundle.
+**Fix:** `default interface Ethernet1/0` to fully reset port state, then re-configured with `channel-group 1 mode active`.
+**Lesson:** Use `default interface` as a clean reset before re-configuring a port that was removed from an EtherChannel.
+
+---
+
+### P04-03 — Root Inconsistent on distribution downlinks (correct behavior)
+
+**Phase:** Phase 2 — Advanced STP Controls
+**Symptom:** `show spanning-tree inconsistentports` showed DSW1 Et0/1 and Et0/2 as Root Inconsistent for VLANs 200/300 after enabling Root Guard.
+**Root cause:** Expected behavior in a split-root design. Access switches have uplinks to both distribution switches and advertise root-path BPDUs for all VLANs. Root Guard blocks the ones where the local switch is not the intended root.
+**Fix:** No fix required. This is correct and intended.
+**Lesson:** Cross-reference `show spanning-tree inconsistentports` with `show spanning-tree root` before treating inconsistency as a fault.
+
+---
+
+### P04-04 — VTP VLAN 600 persisted after returning to transparent mode
+
+**Phase:** Phase 4 — VTP v3 Learning Lab
+**Symptom:** VLAN 600 (VTP-Test) remained in `show vlan brief` on HQ-DSW2, HQ-ASW1, and HQ-ASW2 after switching back to `vtp mode transparent`.
+**Root cause:** Changing from VTP client to transparent mode does not delete learned VLANs.
+**Fix:** Manually ran `configure terminal → no vlan 600 → end → write memory` on each affected switch.
+**Lesson:** Returning to VTP transparent mode is not a clean slate. Test VLANs must be removed explicitly.

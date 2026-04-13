@@ -1,0 +1,110 @@
+! ============================================================
+! DEVICE: HQ-ASW2
+! PROJECT: 04 — Switching Layer Stability
+! ROLE: HQ Access Switch 2
+! BUILD DATE: 2026-04-13
+! CUMULATIVE: Includes all changes from Projects 01, 02, 03, 04
+! NOTE: CDP-verified cabling:
+!       Et0/0 → HQ-DSW1 Et0/2 (primary distribution uplink)
+!       Et0/1 → HQ-DSW2 Et0/2 (redundant distribution uplink)
+!       Et0/2 → PC-SALES1 (Sales, VLAN 200, PortFast + BPDU Guard)
+! ============================================================
+
+hostname HQ-ASW2
+
+lldp run
+
+! --- VLAN Database ---
+vlan 100
+ name Engineering
+vlan 200
+ name Sales
+vlan 300
+ name Guest
+vlan 400
+ name Servers
+vlan 999
+ name Management
+vlan 1000
+ name NATIVE-UNUSED
+
+! --- Management SVI ---
+interface vlan 999
+ description MANAGEMENT-SVI
+ ip address 10.1.99.14 255.255.255.0
+ no shutdown
+
+ip default-gateway 10.1.99.1
+
+! --- Distribution uplinks (dual-homed) ---
+interface Ethernet0/0
+ description TRUNK-TO-HQ-DSW1-E0/2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ no shutdown
+
+interface Ethernet0/1
+ description TRUNK-TO-HQ-DSW2-E0/2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,400,999
+ switchport nonegotiate
+ no shutdown
+
+! --- Access ports ---
+interface Ethernet0/2
+ description ACCESS-PC-SALES1-VLAN200
+ switchport mode access
+ switchport access vlan 200
+ switchport nonegotiate
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+
+! --- STP ---
+spanning-tree mode rapid-pvst
+spanning-tree pathcost method long
+
+! --- VTP ---
+vtp domain LAB
+vtp version 3
+vtp mode transparent
+
+! --- SSH Hardening ---
+ip domain-name lab.local
+username admin privilege 15 secret CMLlab2025!
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+
+line vty 0 4
+ transport input ssh
+ login local
+ exec-timeout 10 0
+ logging synchronous
+ access-class 10 in
+
+line console 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+
+access-list 10 permit 10.1.99.0 0.0.0.255
+access-list 10 deny any log
+
+banner motd ^
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^
+
+service password-encryption
+enable secret CMLenableP@ss!
+
+end
+write memory
