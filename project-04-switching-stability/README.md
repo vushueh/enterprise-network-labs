@@ -24,6 +24,30 @@
 
 ---
 
+### L2 Protection Map
+
+![L2 Topology — Protection Feature Placement](diagrams/p04-diagram1-l2-topology.png)
+
+This is the reference map for where every L2 protection feature was placed in Project 4. The green double line between HQ-DSW1 and HQ-DSW2 is the LACP EtherChannel Po1 — two physical links bundled into one logical trunk, giving STP a single clean path to work with instead of two separate links it would have to block one of. Loop Guard sits on Po1 because that's the inter-distribution path where a unidirectional failure would be most dangerous. Moving down, both distribution switches have Root Guard on their downlinks toward the access layer — this is the boundary that says "access switches are not allowed to influence root placement." At the bottom, the access ports on ASW1 and ASW2 have PortFast plus BPDU Guard, which means they skip the STP listening/learning delay for normal hosts but immediately shut down if something starts sending BPDUs — like a rogue switch being plugged into a user port. Finally, the router-facing uplink on HQ-DSW1 E0/0 has BPDU Filter, not BPDU Guard, because the router doesn't speak STP at all and you never want an STP shutdown on the uplink to your gateway.
+
+---
+
+### STP Split-Root Design
+
+![STP Split-Root — Active Paths and Root Guard](diagrams/p04-diagram2-stp-split-root.png)
+
+This shows the deliberate design decision behind Project 4's STP topology. Rather than letting one switch own all VLANs as root (which wastes the second distribution switch as pure standby), the root role is split: HQ-DSW1 is root for VLANs 100, 400, and 999, and HQ-DSW2 is root for VLANs 200 and 300. The solid colored arrows show the active forwarding paths — each VLAN flows toward its designated root. The red dashed arrows are where Root Guard fires: when DSW2 advertises a BPDU on a downlink for a VLAN where DSW1 is supposed to be root, Root Guard puts that port into root-inconsistent state and blocks it. This is what the live output confirmed — and it's the correct, expected behavior of the design, not an error. The EtherChannel Po1 across the middle carries inter-distribution traffic for VLANs that need to cross the boundary, with Loop Guard protecting against a silent link failure on that path.
+
+---
+
+### Phase 7 — Break/Fix Arc
+
+![Phase 7 — Three-Fault Break/Fix Exercise](diagrams/p04-diagram3-phase7-breakfix.png)
+
+This maps the full arc of the three-fault exercise — what was broken, what it looked like, and how it was fixed. Fault 1 was the LACP mismatch: one member of Po1 on HQ-DSW2 was forced to mode on while the other side stayed mode active, causing Et1/0 to show as suspended in show etherchannel summary. The fix was a clean default interface followed by re-applying channel-group 1 mode active. Fault 2 was the native VLAN mismatch: ASW1's uplink was set to native VLAN 999 while DSW1 expected 1000, which CDP immediately flagged. One command fixed it. Fault 3 was the root hijack attempt: ASW1 was given spanning-tree vlan 100 priority 0, which would normally steal the root role — but Root Guard on DSW1's downlink put the port into root-inconsistent state and contained the damage. Removing the rogue priority and letting Root Guard recover restored the clean split-root state. The bottom row shows what verified success looked like after all three fixes landed.
+
+---
+
 ## Network Design
 
 ### HQ Switching — Physical Port Map (CDP-verified)
