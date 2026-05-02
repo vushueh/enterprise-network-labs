@@ -1,0 +1,57 @@
+! ============================================================
+! DEVICE: HQ-ASW2 | PROJECT: 06 — Security Hardening
+! PHASE: 1 — Port Security
+! PLATFORM: CML 2.9 — IOL-L2
+! INTERFACES: Ethernet format (E0/0, E0/1, E1/0, etc.)
+! LAST UPDATED: 2026-05-02
+! ============================================================
+! Starter Project 06 config for the ATTACKER1 test port.
+! Preserve existing Project 01-05 baseline configuration.
+! ============================================================
+
+enable
+configure terminal
+
+! --- Neighbor Discovery ---
+! WHY: LLDP gives a vendor-neutral topology check alongside CDP.
+lldp run
+
+! --- ATTACKER1 Access Port Security ---
+! WHY: This port is the controlled rogue-device test point for Project 06.
+interface Ethernet1/1
+ description ACCESS-ATTACKER1-VLAN100-SECURITY-TEST
+ switchport mode access
+ switchport access vlan 100
+ switchport nonegotiate
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ no shutdown
+
+end
+write memory
+
+! --- VERIFICATION ---
+! Run these commands and capture proof:
+! show cdp neighbors
+! show interfaces status
+! show running-config interface Ethernet1/1
+! show port-security interface Ethernet1/1
+! show port-security address interface Ethernet1/1
+! show logging | include PSECURE
+
+! --- OPTIONAL SHUTDOWN-MODE TEST AFTER RESTRICT MODE IS VERIFIED ---
+! Use only when ready to validate errdisable behavior:
+! configure terminal
+! interface Ethernet1/1
+!  switchport port-security violation shutdown
+! end
+! write memory
+!
+! After violation:
+! show interfaces status err-disabled
+! show errdisable recovery
+! show logging | include PSECURE|ERRDISABLE
