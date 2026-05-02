@@ -17,6 +17,13 @@
 
 ---
 
+## Topology
+
+![CML Topology — Project 05 Internet Access and NAT](verification/screenshots/P05-Ph1-cml-topology.png)
+> Project 05 adds ISP-RTR1 on HQ-RTR1 Ethernet0/3 as the public edge, EXT-WEB1 on the simulated internet segment, and HQ-SRV1 on HQ-DSW1 Ethernet1/1 in VLAN 400.
+
+---
+
 ## Topology Changes
 
 Project 05 adds a simulated ISP edge and two Nginx web servers.
@@ -180,7 +187,6 @@ router ospf 1
 
 **Important Phase 1 observation:** BR-RTR1 learned the default route, but pings from Branch to ISP failed before NAT. That was expected because the ISP had no return route to private 10.x.x.x addresses. This failure became the proof that Phase 2 PAT was required.
 
-![CML Topology](verification/screenshots/P05-Ph1-cml-topology.png)
 ![CDP Neighbors HQ-RTR1](verification/screenshots/P05-Ph1-cdp-neighbors-hq-rtr1.png)
 ![IP Interface Brief HQ-RTR1](verification/screenshots/P05-Ph1-ip-int-brief-hq-rtr1.png)
 ![Default Route and Ping ISP from HQ](verification/screenshots/P05-Ph1-ping-isp-from-hq-and-P05-Ph1-default-route-hq-rtr1.png)
