@@ -175,22 +175,33 @@ router ospf 1
 
 ### Verification
 
+#### ISP Cabling and Edge Connectivity
+
 | Test | Command | Result |
 |------|---------|--------|
 | ISP cabling | `show cdp neighbors` on HQ-RTR1 | ISP-RTR1 seen on Ethernet0/3 |
 | HQ edge IP | `show ip interface brief` on HQ-RTR1 | E0/3 203.0.113.1 up/up |
 | ISP handoff | `ping 203.0.113.2` from HQ-RTR1 | 100% success |
 | ISP loopback | `ping 10.0.255.4` from HQ-RTR1 | 100% success |
-| HQ default | `show ip route 0.0.0.0` | Static default via 203.0.113.2 |
-| OSPF default LSA | `show ip ospf database external` | Type-5 0.0.0.0/0 from 10.0.255.1 |
+
+![CDP Neighbors — ISP-RTR1 visible on HQ-RTR1 E0/3](verification/screenshots/P05-Ph1-cdp-neighbors-hq-rtr1.png)
+![IP Interface Brief — E0/3 up/up at 203.0.113.1](verification/screenshots/P05-Ph1-ip-int-brief-hq-rtr1.png)
+
+#### Default Route and OSPF Type-5 Propagation
+
+| Test | Command | Result |
+|------|---------|--------|
+| HQ default route | `show ip route 0.0.0.0` on HQ-RTR1 | Static default via 203.0.113.2 |
+| OSPF default LSA | `show ip ospf database external` on HQ-RTR1 | Type-5 0.0.0.0/0 from 10.0.255.1 |
 | Branch learned default | `show ip route 0.0.0.0` on BR-RTR1 | O*E2 default route via OSPF |
 
-**Important Phase 1 observation:** BR-RTR1 learned the default route, but pings from Branch to ISP failed before NAT. That was expected because the ISP had no return route to private 10.x.x.x addresses. This failure became the proof that Phase 2 PAT was required.
+![Default Route and ISP Ping from HQ](verification/screenshots/P05-Ph1-ping-isp-from-hq-and-P05-Ph1-default-route-hq-rtr1.png)
+![OSPF Type-5 External LSA — 0.0.0.0/0 originated by HQ-RTR1](verification/screenshots/P05-Ph1-ospf-type5-lsa.png)
 
-![CDP Neighbors HQ-RTR1](verification/screenshots/P05-Ph1-cdp-neighbors-hq-rtr1.png)
-![IP Interface Brief HQ-RTR1](verification/screenshots/P05-Ph1-ip-int-brief-hq-rtr1.png)
-![Default Route and Ping ISP from HQ](verification/screenshots/P05-Ph1-ping-isp-from-hq-and-P05-Ph1-default-route-hq-rtr1.png)
-![OSPF Type-5 LSA](verification/screenshots/P05-Ph1-ospf-type5-lsa.png)
+#### Branch Behavior Before NAT
+
+**Important observation:** BR-RTR1 learned the default route, but pings from Branch to ISP failed before NAT. That was expected — the ISP had no return route to private 10.x.x.x addresses. This failure became the proof that Phase 2 PAT was required.
+
 ![Branch Ping to ISP Before NAT — expected fail](verification/screenshots/P05-Ph1-ping-isp-from-br-no-nat.png)
 
 ---
@@ -243,7 +254,19 @@ ip nat inside source list NAT-PAT-SOURCES interface Ethernet0/3 overload
 
 ### Verification Proof
 
-A successful HTTP test from PC-ENG1 to EXT-WEB1 produced a TCP PAT entry:
+#### Management VLAN Excluded from NAT
+
+`Ethernet0/0.999` was deliberately left without `ip nat inside`, and management subnets are absent from the NAT source list. Management traffic cannot initiate internet sessions.
+
+![Management VLAN Excluded — E0/0.999 has no ip nat inside](verification/screenshots/P05-Ph2-mgmt-excluded.png)
+
+#### HTTP Test Through PAT
+
+A successful HTTP request from PC-ENG1 to EXT-WEB1 proved full TCP translation — not just ICMP ping.
+
+![wget to EXT-WEB1 — Nginx page returned through PAT](verification/screenshots/P05-Ph2-wget-ext-web1.png)
+
+#### NAT Translation Table and Statistics
 
 ```text
 tcp 203.0.113.1:4096   10.1.100.194:54156   203.0.113.100:80   203.0.113.100:80
@@ -258,12 +281,15 @@ tcp 203.0.113.1:4096   10.1.100.194:54156   203.0.113.100:80   203.0.113.100:80
 
 **Why this is the PAT proof:** The source port changed from 54156 to 4096. That unique port mapping is how many internal hosts share one outside address.
 
-![Management VLAN Excluded from NAT](verification/screenshots/P05-Ph2-mgmt-excluded.png)
-![wget to EXT-WEB1 Success](verification/screenshots/P05-Ph2-wget-ext-web1.png)
-![NAT Translations — HQ PAT](verification/screenshots/P05-Ph2-nat-translations.png)
-![NAT Statistics](verification/screenshots/P05-Ph2-nat-statistics.png)
-![Branch Ping to ISP After NAT](verification/screenshots/P05-Ph2-ping-branch-to-isp.png)
-![NAT Translations — Branch Traffic](verification/screenshots/P05-Ph2-nat-translations-branch.png)
+![NAT Translations — HQ PAT entry showing port rewrite](verification/screenshots/P05-Ph2-nat-translations.png)
+![NAT Statistics — hits, misses, and dynamic mappings](verification/screenshots/P05-Ph2-nat-statistics.png)
+
+#### Branch Traffic Through PAT
+
+Branch subnets (10.2.x.x) followed the OSPF default route to HQ-RTR1 and were translated through PAT to reach EXT-WEB1.
+
+![Branch Ping to ISP After NAT — 100% success](verification/screenshots/P05-Ph2-ping-branch-to-isp.png)
+![NAT Translations — Branch 10.2.x.x translated to 203.0.113.1](verification/screenshots/P05-Ph2-nat-translations-branch.png)
 
 ---
 
@@ -300,6 +326,14 @@ ip route 203.0.113.10 255.255.255.255 203.0.113.1
 
 ### Verification Proof
 
+#### Inbound Access from ISP-RTR1
+
+ISP-RTR1 pinged 203.0.113.10 to simulate an outside host reaching the published server. The first packet was lost to ARP resolution — not a NAT fault.
+
+![Inbound Ping from ISP-RTR1 to 203.0.113.10 — .!!!!](verification/screenshots/P05-Ph3-ping-inbound-isp.png)
+
+#### NAT Translation Table
+
 ```text
 icmp 203.0.113.10:2    10.1.40.10:2       203.0.113.2:2      203.0.113.2:2
 ---  203.0.113.10      10.1.40.10         ---                ---
@@ -307,12 +341,12 @@ icmp 203.0.113.10:2    10.1.40.10:2       203.0.113.2:2      203.0.113.2:2
 
 The `---` row is the permanent static NAT entry. The ICMP row is the active outside-to-inside session from ISP-RTR1.
 
-**Note:** The first inbound ping showed `.!!!!`. That first dropped packet was ARP resolution for 10.1.40.10, not a NAT fault.
+![NAT Translations — External view showing static mapping and active ICMP session](verification/screenshots/P05-Ph3-nat-translations-external.png)
+![NAT Translations — Hairpin (internal host accessing HQ-SRV1 via its public IP)](verification/screenshots/P05-Ph3-nat-translations-hairpin.png)
 
-![Inbound Ping from ISP-RTR1](verification/screenshots/P05-Ph3-ping-inbound-isp.png)
-![NAT Translations — External View](verification/screenshots/P05-Ph3-nat-translations-external.png)
-![NAT Translations — Hairpin](verification/screenshots/P05-Ph3-nat-translations-hairpin.png)
-![NAT Statistics Phase 3](verification/screenshots/P05-Ph3-nat-statistics.png)
+#### NAT Statistics
+
+![NAT Statistics — static and dynamic entries confirmed](verification/screenshots/P05-Ph3-nat-statistics.png)
 
 ---
 
@@ -385,20 +419,28 @@ interface Ethernet0/0.300
 
 ### Verification Proof
 
+#### ACL Configuration and Interface Binding
+
 | Test | Result |
 |------|--------|
 | `show ip access-lists GUEST-RESTRICT` | ACL present with two denies and one permit |
 | `show ip interface Ethernet0/0.300` | Inbound access list is GUEST-RESTRICT |
-| `ping 203.0.113.100 source 10.1.44.1 repeat 5` | 100% success |
-| `ping 10.1.100.1 source 10.1.44.1 repeat 5` | 0% success |
-| `ping 10.1.200.1 source 10.1.44.1 repeat 5` | 0% success |
-| `ping 10.1.40.1 source 10.1.44.1 repeat 5` | 0% success |
+
+![Guest ACL Rules — two deny lines blocking internal ranges, one permit for internet](verification/screenshots/p05-ph5-guest-acl-rules.png)
+![Guest ACL Applied Inbound on E0/0.300](verification/screenshots/p05-ph5-guest-acl-applied.png)
+
+#### Traffic Testing — Internet Pass, Internal Block
+
+| Test | Result |
+|------|--------|
+| `ping 203.0.113.100 source 10.1.44.1 repeat 5` | 100% — internet reachable |
+| `ping 10.1.100.1 source 10.1.44.1 repeat 5` | 0% — Engineering blocked |
+| `ping 10.1.200.1 source 10.1.44.1 repeat 5` | 0% — Sales blocked |
+| `ping 10.1.40.1 source 10.1.44.1 repeat 5` | 0% — Servers blocked |
 
 **Validation caveat:** There was no dedicated Guest PC in VLAN 300. Router-sourced pings are a functional approximation, but a future Guest endpoint would be the best way to prove inbound ACL counters from real host traffic.
 
-![Guest ACL Rules](verification/screenshots/p05-ph5-guest-acl-rules.png)
-![Guest ACL Applied to Interface](verification/screenshots/p05-ph5-guest-acl-applied.png)
-![Guest Isolation Test — Internet Pass, Internal Block](verification/screenshots/p05-ph5-guest-isolation-test.png)
+![Guest Isolation Test — internet passes, all internal pings blocked](verification/screenshots/p05-ph5-guest-isolation-test.png)
 
 ---
 
