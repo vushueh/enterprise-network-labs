@@ -24,7 +24,7 @@ Each project follows the **Build → Verify → Break → Fix** method — every
 | 03 | [OSPF Dynamic Routing](project-03-ospf-dynamic-routing/) | Single-area OSPF, OSPF auth, IP SLA, BFD, OSPFv3 | ✅ |
 | 04 | [Switching Stability](project-04-switching-stability/) | LACP EtherChannel, STP advanced, UDLD, VTP v3, errdisable recovery | ✅ |
 | 05 | [Internet + NAT](project-05-internet-nat/) | PAT, static NAT, extended ACLs, object groups | ✅ |
-| 06 | Security Hardening | Port security, DHCP snooping, DAI, IP Source Guard | ⬜ |
+| 06 | [Security Hardening](project-06-security-hardening/) | Port security, DHCP snooping, DAI, IP Source Guard | 🔄 |
 | 07 | ASAv Firewall | ASA security levels, stateful inspection, DMZ, packet-tracer | ⬜ |
 | 08 | Site-to-Site VPN | GRE/IPsec, IKEv2, tunnel OSPF | ⬜ |
 | 09 | Monitoring | Syslog, SNMPv3, NetFlow, NTP auth, EEM, config archive | ⬜ |
