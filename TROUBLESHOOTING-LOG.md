@@ -495,3 +495,61 @@ Layer 3 relay: show running-config | section helper revealed wrong helper-addres
 **Root cause:** Changing from VTP client to transparent mode does not delete learned VLANs.
 **Fix:** Manually ran `configure terminal → no vlan 600 → end → write memory` on each affected switch.
 **Lesson:** Returning to VTP transparent mode is not a clean slate. Test VLANs must be removed explicitly.
+
+---
+
+## Project 05 — Internet Access and NAT
+
+### P05-01 — Object-group network wildcard mask rejected
+
+**Date:** 2026-05-02 | **Phase:** Phase 4 — Object Groups for ACLs
+
+**Symptom:** Object-group entries using wildcard format (`10.1.100.0 0.0.0.255`) rejected with `% Mask 0.0.0.255 is not supported`.
+
+**Root cause:** In the `object-group network` context, this IOL image expects subnet mask format, not wildcard mask. Wildcards are valid in flat extended ACL lines but not inside an object-group.
+
+**Fix:** Rebuilt the object-group using subnet mask format (`255.255.255.0`).
+
+**Lesson:** Flat extended ACLs use wildcard masks. Object-group network uses subnet masks on this IOL image. Always verify syntax from the exact IOS mode where the command will be entered.
+
+---
+
+### P05-02 — `wget` to 203.0.113.97 returned connection refused
+
+**Date:** 2026-05-02 | **Phase:** Phase 2 — PAT
+
+**Symptom:** `wget http://203.0.113.97` returned `Connection refused`. `curl` was also unavailable on Alpine (`curl: not found`).
+
+**Root cause:** 203.0.113.97 is ISP-RTR1 Ethernet0/1 — a router interface with no HTTP service on TCP/80. The router rejected the connection. Target should have been EXT-WEB1 at 203.0.113.100. Alpine nodes include BusyBox `wget` but not `curl`.
+
+**Fix:** Target EXT-WEB1 at 203.0.113.100. Use `wget -O - http://203.0.113.100` on all Alpine nodes.
+
+**Lesson:** `Connection refused` proves TCP SYN reached the destination and was rejected. It is not a NAT failure. For CML Alpine nodes, always use `wget -O -` as the HTTP test tool — `curl` is not installed.
+
+---
+
+### P05-03 — No Guest PC available for VLAN 300 ACL inbound counter verification
+
+**Date:** 2026-05-02 | **Phase:** Phase 5 — Guest VLAN 300 ACL Isolation
+
+**Symptom:** BusyBox `ping` does not accept Cisco-style `source` keyword. PC-ENG1 is physically in VLAN 100 and cannot source traffic as a VLAN 300 host.
+
+**Root cause:** No dedicated Guest endpoint in VLAN 300. Router-generated pings from HQ-RTR1 do not traverse inbound on E0/0.300 the same way a real host would — inbound ACL hit counters stayed at zero.
+
+**Fix:** Verified ACL was present and bound inbound to E0/0.300 using `show ip access-lists` and `show ip interface`. Used HQ-RTR1 extended pings sourced from 10.1.44.1 as a functional approximation. A dedicated Guest PC would give true hit counter proof.
+
+**Lesson:** ACL placement can be verified without an endpoint. Inbound ACL hit counters require traffic from an actual host on that VLAN. Add a dedicated Guest PC in a future validation pass.
+
+---
+
+### P05-04 — First inbound static NAT ping lost one packet
+
+**Date:** 2026-05-02 | **Phase:** Phase 3 — Static NAT for HQ-SRV1
+
+**Symptom:** First ping toward 203.0.113.10 returned `.!!!!` instead of `!!!!!`.
+
+**Root cause:** First packet lost while HQ-RTR1 resolved ARP for HQ-SRV1 at 10.1.40.10. After ARP cache populated, packets 2–5 succeeded.
+
+**Fix:** No configuration fix required. Second ping returns 100%.
+
+**Lesson:** One dropped first packet during initial testing is almost always ARP resolution, not a routing or NAT failure. Always run a second ping before changing config.
