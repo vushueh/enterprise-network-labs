@@ -23,7 +23,7 @@ Each project follows the **Build → Verify → Break → Fix** method — every
 | 02 | [Multi-Site + DHCP](project-02-multi-site-dhcp/) | DHCP relay, Dnsmasq, static routing, IPv6 | ✅ |
 | 03 | [OSPF Dynamic Routing](project-03-ospf-dynamic-routing/) | Single-area OSPF, OSPF auth, IP SLA, BFD, OSPFv3 | ✅ |
 | 04 | [Switching Stability](project-04-switching-stability/) | LACP EtherChannel, STP advanced, UDLD, VTP v3, errdisable recovery | ✅ |
-| 05 | Internet + NAT | PAT, static NAT, extended ACLs, object groups | ⬜ |
+| 05 | [Internet + NAT](project-05-internet-nat/) | PAT, static NAT, extended ACLs, object groups | ✅ |
 | 06 | Security Hardening | Port security, DHCP snooping, DAI, IP Source Guard | ⬜ |
 | 07 | ASAv Firewall | ASA security levels, stateful inspection, DMZ, packet-tracer | ⬜ |
 | 08 | Site-to-Site VPN | GRE/IPsec, IKEv2, tunnel OSPF | ⬜ |

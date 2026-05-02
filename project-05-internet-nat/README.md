@@ -180,6 +180,13 @@ router ospf 1
 
 **Important Phase 1 observation:** BR-RTR1 learned the default route, but pings from Branch to ISP failed before NAT. That was expected because the ISP had no return route to private 10.x.x.x addresses. This failure became the proof that Phase 2 PAT was required.
 
+![CML Topology](verification/screenshots/P05-Ph1-cml-topology.png)
+![CDP Neighbors HQ-RTR1](verification/screenshots/P05-Ph1-cdp-neighbors-hq-rtr1.png)
+![IP Interface Brief HQ-RTR1](verification/screenshots/P05-Ph1-ip-int-brief-hq-rtr1.png)
+![Default Route and Ping ISP from HQ](verification/screenshots/P05-Ph1-ping-isp-from-hq-and-P05-Ph1-default-route-hq-rtr1.png)
+![OSPF Type-5 LSA](verification/screenshots/P05-Ph1-ospf-type5-lsa.png)
+![Branch Ping to ISP Before NAT — expected fail](verification/screenshots/P05-Ph1-ping-isp-from-br-no-nat.png)
+
 ---
 
 ## Phase 2 — PAT / NAT Overload
@@ -245,6 +252,13 @@ tcp 203.0.113.1:4096   10.1.100.194:54156   203.0.113.100:80   203.0.113.100:80
 
 **Why this is the PAT proof:** The source port changed from 54156 to 4096. That unique port mapping is how many internal hosts share one outside address.
 
+![Management VLAN Excluded from NAT](verification/screenshots/P05-Ph2-mgmt-excluded.png)
+![wget to EXT-WEB1 Success](verification/screenshots/P05-Ph2-wget-ext-web1.png)
+![NAT Translations — HQ PAT](verification/screenshots/P05-Ph2-nat-translations.png)
+![NAT Statistics](verification/screenshots/P05-Ph2-nat-statistics.png)
+![Branch Ping to ISP After NAT](verification/screenshots/P05-Ph2-ping-branch-to-isp.png)
+![NAT Translations — Branch Traffic](verification/screenshots/P05-Ph2-nat-translations-branch.png)
+
 ---
 
 ## Phase 3 — Static NAT for HQ-SRV1
@@ -289,6 +303,11 @@ The `---` row is the permanent static NAT entry. The ICMP row is the active outs
 
 **Note:** The first inbound ping showed `.!!!!`. That first dropped packet was ARP resolution for 10.1.40.10, not a NAT fault.
 
+![Inbound Ping from ISP-RTR1](verification/screenshots/P05-Ph3-ping-inbound-isp.png)
+![NAT Translations — External View](verification/screenshots/P05-Ph3-nat-translations-external.png)
+![NAT Translations — Hairpin](verification/screenshots/P05-Ph3-nat-translations-hairpin.png)
+![NAT Statistics Phase 3](verification/screenshots/P05-Ph3-nat-statistics.png)
+
 ---
 
 ## Phase 4 — Object Groups for ACLs
@@ -332,6 +351,8 @@ tcp 203.0.113.1:4096   10.1.100.194:38650 203.0.113.100:80   203.0.113.100:80
 
 **Platform note:** `show object-group INSIDE-NAT-SOURCES` was not supported on this IOL image. The working ACL reference plus live PAT translation proved the object-group was active.
 
+![NAT ACL Object-Group and Post-Refactor Translations](verification/screenshots/p05-ph4-nat-acl-object-group-and-p05-ph4-nat-translations-post-refactor.png)
+
 ---
 
 ## Phase 5 — Guest VLAN 300 ACL Isolation
@@ -369,6 +390,10 @@ interface Ethernet0/0.300
 
 **Validation caveat:** There was no dedicated Guest PC in VLAN 300. Router-sourced pings are a functional approximation, but a future Guest endpoint would be the best way to prove inbound ACL counters from real host traffic.
 
+![Guest ACL Rules](verification/screenshots/p05-ph5-guest-acl-rules.png)
+![Guest ACL Applied to Interface](verification/screenshots/p05-ph5-guest-acl-applied.png)
+![Guest Isolation Test — Internet Pass, Internal Block](verification/screenshots/p05-ph5-guest-isolation-test.png)
+
 ---
 
 ## Phase 6 — TCP MSS Clamping
@@ -400,6 +425,8 @@ interface Ethernet0/3
 ```
 
 IOL does not provide a dedicated `show ip tcp adjust-mss` command, so the running interface config is the authoritative verification.
+
+![MSS Clamp Running Config](verification/screenshots/p05-ph6-mss-clamp-config.png)
 
 ---
 
