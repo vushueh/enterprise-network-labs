@@ -1,0 +1,65 @@
+!
+! Project 05 — Internet Access and NAT
+! Device: ISP-RTR1
+! Role: Simulated ISP router and outside NAT test point
+!
+hostname ISP-RTR1
+no ip domain-lookup
+ip domain-name lab.local
+service password-encryption
+enable secret CMLenableP@ss!
+username admin privilege 15 secret CMLlab2025!
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+lldp run
+!
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 10.0.255.4 255.255.255.255
+!
+interface Ethernet0/0
+ description WAN-TO-HQ-RTR1-E0/3
+ ip address 203.0.113.2 255.255.255.252
+ no shutdown
+!
+interface Ethernet0/1
+ description INTERNET-SEGMENT-EXT-WEB1
+ ip address 203.0.113.97 255.255.255.240
+ no shutdown
+!
+interface Ethernet0/2
+ shutdown
+!
+interface Ethernet0/3
+ shutdown
+!
+! Host route for the public static NAT address assigned to HQ-SRV1.
+! 203.0.113.10 is not directly connected to ISP-RTR1, so ISP forwards it to HQ-RTR1.
+ip route 203.0.113.10 255.255.255.255 203.0.113.1
+!
+access-list 10 permit 10.1.99.0 0.0.0.255
+!
+no ip http server
+no ip http secure-server
+!
+banner motd ^
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^
+!
+line console 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+!
+line vty 0 4
+ access-class 10 in
+ transport input ssh
+ login local
+ exec-timeout 10 0
+ logging synchronous
+!
+end
