@@ -1,0 +1,181 @@
+!
+! Project 05 — Internet Access and NAT
+! Device: HQ-RTR1
+! Role: Enterprise edge router, inter-VLAN gateway, OSPF default originator, NAT boundary
+!
+hostname HQ-RTR1
+no ip domain-lookup
+ip domain-name lab.local
+service password-encryption
+enable secret CMLenableP@ss!
+username admin privilege 15 secret CMLlab2025!
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+lldp run
+!
+ipv6 unicast-routing
+!
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 10.0.255.1 255.255.255.255
+!
+interface Ethernet0/0
+ description TRUNK-TO-HQ-DSW1-E0/0
+ no ip address
+ no shutdown
+!
+interface Ethernet0/0.100
+ description GATEWAY-VLAN100-ENGINEERING
+ encapsulation dot1Q 100
+ ip address 10.1.100.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ip nat inside
+ ipv6 address 2001:DB8:1:100::1/64
+ ipv6 enable
+ ipv6 ospf 10 area 1
+!
+interface Ethernet0/0.200
+ description GATEWAY-VLAN200-SALES
+ encapsulation dot1Q 200
+ ip address 10.1.200.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ip nat inside
+!
+interface Ethernet0/0.300
+ description GATEWAY-VLAN300-GUEST
+ encapsulation dot1Q 300
+ ip address 10.1.44.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ip access-group GUEST-RESTRICT in
+ ip nat inside
+!
+interface Ethernet0/0.400
+ description GATEWAY-VLAN400-SERVERS
+ encapsulation dot1Q 400
+ ip address 10.1.40.1 255.255.255.0
+ ip nat inside
+!
+interface Ethernet0/0.999
+ description GATEWAY-VLAN999-MANAGEMENT
+ encapsulation dot1Q 999
+ ip address 10.1.99.1 255.255.255.0
+ ! Management is deliberately not marked ip nat inside.
+ ! VLAN 999 must not initiate internet sessions through PAT.
+!
+interface Ethernet0/1
+ description WAN-TO-BR-RTR1-E0/1
+ bandwidth 1000
+ delay 1000
+ ip address 10.0.0.1 255.255.255.252
+ ip nat inside
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf network point-to-point
+ ip ospf cost 100
+ ip ospf bfd
+ bfd interval 300 min_rx 300 multiplier 3
+ ipv6 address 2001:DB8:0:1::1/126
+ ipv6 enable
+ ipv6 ospf 10 area 0
+ ipv6 ospf network point-to-point
+ no shutdown
+!
+interface Ethernet0/2
+ description WAN-TO-WAN-RTR1-E0/1
+ ip address 10.0.0.5 255.255.255.252
+ ip nat inside
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf network point-to-point
+ ip ospf cost 10
+ ip ospf bfd
+ bfd interval 300 min_rx 300 multiplier 3
+ no shutdown
+!
+interface Ethernet0/3
+ description ISP-TO-ISP-RTR1-E0/0
+ ip address 203.0.113.1 255.255.255.252
+ ip nat outside
+ ip tcp adjust-mss 1452
+ no shutdown
+!
+router ospf 1
+ router-id 10.0.255.1
+ log-adjacency-changes detail
+ passive-interface default
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2
+ network 10.0.255.1 0.0.0.0 area 0
+ network 10.0.0.0 0.0.0.3 area 0
+ network 10.0.0.4 0.0.0.3 area 0
+ network 10.1.100.0 0.0.0.255 area 1
+ network 10.1.200.0 0.0.0.255 area 1
+ network 10.1.44.0 0.0.0.255 area 1
+ network 10.1.40.0 0.0.0.255 area 1
+ network 10.1.99.0 0.0.0.255 area 1
+ area 1 range 10.1.0.0 255.255.0.0
+ default-information originate
+!
+ipv6 router ospf 10
+ router-id 10.0.255.1
+!
+ip sla 10
+ icmp-echo 10.0.0.2 source-ip 10.0.0.1
+ timeout 1000
+ threshold 1000
+ frequency 5
+ip sla schedule 10 life forever start-time now
+track 10 ip sla 10 reachability
+ip route 10.2.0.0 255.255.0.0 10.0.0.2 250 track 10
+ip route 0.0.0.0 0.0.0.0 203.0.113.2
+!
+object-group network INSIDE-NAT-SOURCES
+ description All subnets permitted through PAT - Management excluded
+ 10.1.100.0 255.255.255.0
+ 10.1.200.0 255.255.255.0
+ 10.1.44.0 255.255.255.0
+ 10.1.40.0 255.255.255.0
+ 10.2.100.0 255.255.255.0
+ 10.2.200.0 255.255.255.0
+ 10.2.44.0 255.255.255.0
+!
+ip access-list extended NAT-PAT-SOURCES
+ remark PAT sources are maintained in INSIDE-NAT-SOURCES object-group
+ permit ip object-group INSIDE-NAT-SOURCES any
+!
+ip access-list extended GUEST-RESTRICT
+ remark Block Guest to all internal subnets
+ deny   ip 10.1.44.0 0.0.0.255 10.1.0.0 0.0.255.255
+ deny   ip 10.1.44.0 0.0.0.255 10.2.0.0 0.0.255.255
+ remark Allow Guest to reach internet through PAT
+ permit ip 10.1.44.0 0.0.0.255 any
+!
+ip nat inside source list NAT-PAT-SOURCES interface Ethernet0/3 overload
+ip nat inside source static 10.1.40.10 203.0.113.10
+!
+access-list 10 permit 10.1.99.0 0.0.0.255
+!
+no ip http server
+no ip http secure-server
+!
+banner motd ^
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^
+!
+line console 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+!
+line vty 0 4
+ access-class 10 in
+ transport input ssh
+ login local
+ exec-timeout 10 0
+ logging synchronous
+!
+end
