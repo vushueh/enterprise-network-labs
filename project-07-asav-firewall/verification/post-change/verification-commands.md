@@ -1,5 +1,7 @@
 # Project 07 — Verification Commands
 
+**Status:** Phases 1-6 complete. Break/fix is deferred and is not part of this verification set.
+
 ## Phase 1 — ASAv Basic Setup
 
 ```
@@ -77,6 +79,24 @@ packet-tracer input inside icmp 10.1.100.10 8 0 203.0.113.100
 
 ---
 
+## Phase 4 — packet-tracer Verification
+
+```
+! HQ-FW1
+packet-tracer input inside tcp 10.1.100.194 12345 203.0.113.100 80 detailed
+packet-tracer input outside tcp 203.0.113.2 12345 203.0.113.10 80 detailed
+packet-tracer input outside tcp 203.0.113.2 12345 10.0.0.14 22 detailed
+packet-tracer input outside icmp 203.0.113.2 8 0 10.0.0.14 detailed
+```
+
+**Expected:**
+- inside→outside web flow: allowed and PAT translated to outside interface
+- outside→DMZ HTTP: allowed and static NAT translated to 10.1.40.10
+- outside→inside SSH: dropped by outside ACL/default policy
+- outside→inside ICMP: dropped unless initiated from inside and tracked by inspection
+
+---
+
 ## Phase 5 — Logging
 
 ```
@@ -109,3 +129,9 @@ show conn count
 - Active connections show: inside IP, outside IP, translated IP, flags
 - Flags: UO = UDP open, UIOB = established TCP
 - DMZ connections show server real IP and translated public IP
+
+---
+
+## Deferred Break/Fix — Not Verified
+
+The planned security-level fault is reserved for a future video demonstration. Do not add it to this verification checklist as completed evidence until the break/fix is actually performed.

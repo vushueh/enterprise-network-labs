@@ -1,26 +1,34 @@
-# Troubleshooting Log — Project 07 ASAv Firewall
+# Project 07 — Troubleshooting Log
 
-Project-local troubleshooting entries for Project 07.
+Project-local troubleshooting entries for the ASAv perimeter firewall lab.
 
 ---
 
-## P07-T01 — Planned Break/Fix: Inside Interface Security Level Set to 0
+## Current Status
 
-**Phase:** Break/Fix Challenge
+Phases 1-6 completed without a live unresolved issue requiring a repair entry. Verification evidence is captured under [verification/screenshots/](verification/screenshots/) and the command checklist is captured in [verification/post-change/verification-commands.md](verification/post-change/verification-commands.md).
 
-**Symptom:** All traffic from inside campus to internet is denied. Users cannot reach internet.
-Inside-initiated pings to outside fail. No ACL deny messages — traffic drops silently.
+---
 
-**Diagnosis path:**
+## Deferred Break/Fix — Not Completed
+
+### P07-BF-01 — Inside interface security level set to 0
+
+**Status:** Deferred for future video demonstration. This fault has not been injected, fixed, or marked complete.
+
+**Planned symptom:** Inside campus clients lose inside-to-outside connectivity because the ASA treats the inside interface as untrusted.
+
+**Planned diagnosis path:**
 ```
 packet-tracer input inside tcp 10.1.100.10 12345 203.0.113.100 80
 show nameif
 show interface ip brief
+show running-config interface GigabitEthernet0/0
 ```
-`packet-tracer` shows implicit deny at security level check.
-`show nameif` reveals inside interface security level is 0 instead of 100.
 
-**Fix:**
+**Expected root cause when demonstrated:** `GigabitEthernet0/0` has `security-level 0` instead of `security-level 100`.
+
+**Expected fix when demonstrated:**
 ```
 interface GigabitEthernet0/0
  security-level 100
@@ -28,12 +36,4 @@ end
 write memory
 ```
 
-**Lesson:** ASA security level 100 = maximum trust (inside). Security level 0 = untrusted (outside).
-Traffic flows from higher to lower by default — reversing inside to 0 means it cannot
-initiate anything. Always verify `show nameif` immediately after interface configuration.
-
----
-
-## Live Issues
-
-No additional live Project 07 issues captured yet.
+**Documentation rule:** Add a new dated entry after the future video demonstration is recorded. Do not convert this deferred plan into a completed troubleshooting entry until the fault is actually demonstrated and fixed.
