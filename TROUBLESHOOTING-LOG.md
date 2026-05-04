@@ -556,7 +556,23 @@ Layer 3 relay: show running-config | section helper revealed wrong helper-addres
 
 ---
 
-## Project 06 — Security Hardening (Discovered During Project 07 Pre-work)
+## Project 06 — Security Hardening
+
+### P06-T01 — Planned Break/Fix: DHCP Snooping Trust on Wrong Port
+
+**Date:** 2026-05-02 | **Phase:** Break/Fix Challenge — DHCP Snooping
+
+**Symptom:** Legitimate clients fail to receive DHCP leases after DHCP snooping is enabled.
+
+**Root cause:** DHCP snooping trust is placed on an access port instead of the real trunk/uplink toward the authorized DHCP server path. Valid DHCP offers arrive on an untrusted interface and are dropped.
+
+**Fix:** Remove `ip dhcp snooping trust` from the access port and apply it only to the correct uplink/trunk interface. Clear counters, renew DHCP, and verify the binding table.
+
+**Lesson:** DHCP snooping trust is a directional trust decision. Trust the path to the real DHCP server, never the user edge.
+
+---
+
+### P06-01 — ACL-VLAN200-IN Blocking DHCP Renewals and DNS to 10.1.99.50 (Discovered During Project 07 Pre-work)
 
 ### P06-01 — ACL-VLAN200-IN Blocking DHCP Renewals and DNS to 10.1.99.50
 
