@@ -160,12 +160,18 @@ configure terminal
 object network OBJ-HQ-SRV1
  host 10.1.40.10
 
-! --- Outside-to-DMZ: permit HTTP only, deny everything else (logged) ---
-! WHY log on deny: Every blocked outside attempt is a security event — must be auditable.
-access-list ACL-OUTSIDE-IN extended permit tcp any object OBJ-HQ-SRV1 eq 80 log
-access-list ACL-OUTSIDE-IN extended deny ip any any log
+! --- Outside-to-DMZ: permit HTTP only, explicit internal subnet denies, final deny any ---
+! WHY explicit internal denies: Prevents spoofed RFC1918 packets from outside from being
+!      evaluated against the broad permit. Defense-in-depth — drop before reaching NAT.
+! WHY log informational interval 60: Throttled logging prevents syslog flooding from
+!      scanners while still capturing denied events for audit.
+access-list P07-OUTSIDE-IN extended permit tcp any object OBJ-HQ-SRV1 eq 80 log
+access-list P07-OUTSIDE-IN extended deny ip 10.0.0.0 255.0.0.0 any log informational interval 60
+access-list P07-OUTSIDE-IN extended deny ip 10.1.0.0 255.255.0.0 any log informational interval 60
+access-list P07-OUTSIDE-IN extended deny ip 10.2.0.0 255.255.0.0 any log informational interval 60
+access-list P07-OUTSIDE-IN extended deny ip any any log informational interval 60
 
-access-group ACL-OUTSIDE-IN in interface outside
+access-group P07-OUTSIDE-IN in interface outside
 
 ! --- Application inspection ---
 ! WHY inspect icmp: Allows ICMP reply through without a broad outside permit.
@@ -182,7 +188,7 @@ end
 write memory
 
 ! --- VERIFICATION ---
-! show access-list ACL-OUTSIDE-IN                                         → Two entries present
+! show access-list P07-OUTSIDE-IN                                         → Two entries present
 ! show service-policy global                                               → ICMP, DNS, HTTP inspection active
 ! packet-tracer input outside tcp 203.0.113.2 12345 203.0.113.10 80      → Allow
 ! packet-tracer input outside tcp 203.0.113.2 12345 10.0.0.14 22         → Drop
@@ -203,22 +209,31 @@ configure terminal
 
 ! --- Enable logging ---
 ! WHY informational: Captures permitted and denied flows; full visibility for lab.
+! WHY device-id hostname: Syslog messages tagged with firewall name — essential when
+!      multiple devices send to the same collector (HQ-SYSLOG at 10.1.99.51).
 logging enable
 logging timestamp
+logging device-id hostname
 logging trap informational
+logging buffered informational
 logging host inside 10.1.99.51
 logging asdm informational
 
 ! --- Threat detection ---
-! WHY: Provides host-level traffic statistics — identifies top talkers without external tools.
+! WHY basic-threat: Detects scanning/DoS patterns using rate-based heuristics.
+! WHY statistics access-list: Per-ACL hit rate tracking — shows which deny rules fire most.
+! WHY statistics host: Per-host traffic volume — identifies top talkers without external tools.
 threat-detection basic-threat
-threat-detection statistics
+threat-detection statistics access-list
+threat-detection statistics host
 
 end
 write memory
 
 ! --- VERIFICATION ---
-! show logging                             → Logging enabled, host 10.1.99.51 configured
-! show access-list ACL-OUTSIDE-IN         → Hit counters increment after traffic
-! show threat-detection statistics host   → Host statistics visible after test traffic
+! show logging                                      → Logging enabled, host 10.1.99.51 configured
+! show logging | include Syslog                     → Active syslog sessions displayed
+! show access-list P07-OUTSIDE-IN                   → Hit counters increment after traffic
+! show threat-detection statistics host             → Host statistics visible after test traffic
+! show threat-detection statistics access-list      → Per-ACL hit rates displayed
 ```

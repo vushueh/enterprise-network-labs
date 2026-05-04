@@ -176,9 +176,7 @@ ip route 10.1.40.0 255.255.255.0 10.0.0.14
 | ISP handoff | `ping 203.0.113.1` from ISP-RTR1 | ASA outside interface responds |
 
 ![HQ-FW1 interface status and security levels](verification/screenshots/P07-Ph1-hq-fw1-status.png)
-![HQ-FW1 connectivity and policy verification](verification/screenshots/P07-Ph1-hq-fw1-connectivity-policy.png)
 ![HQ-RTR1 post-cutover interface and route table](verification/screenshots/P07-Ph1-hq-rtr1-interface-ip route-brief.png)
-![ISP-RTR1 outside ping to HQ-FW1](verification/screenshots/P07-Ph1-isp-rtr1-outside-ping.png)
 
 **Platform caveat:** ASAv uses `GigabitEthernet0/x` interface names in CML, while IOL routers use `Ethernet0/x`. Mixing these interface names is the easiest cutover mistake.
 
@@ -248,13 +246,28 @@ The firewall must deny outside-originated traffic by default while allowing only
 ### Key Configuration
 
 ```cisco
-object network OBJ-HQ-SRV1
- host 10.1.40.10
+! --- Outside ACL (P07-OUTSIDE-IN) ---
+! WHY: ACL name includes project prefix so it is clearly project-specific config.
+! WHY deny internal subnets explicitly: Prevents RFC1918 address spoofing from outside
+!      even before the catch-all deny fires.
+access-list P07-OUTSIDE-IN remark PH3 permit public HTTP to DMZ web server only
+access-list P07-OUTSIDE-IN extended permit tcp any host 10.1.40.10 eq www log informational interval 60
 
-access-list ACL-OUTSIDE-IN extended permit tcp any object OBJ-HQ-SRV1 eq 80 log
-access-list ACL-OUTSIDE-IN extended deny ip any any log
-access-group ACL-OUTSIDE-IN in interface outside
+access-list P07-OUTSIDE-IN remark PH3 deny unsolicited outside access to internal networks
+access-list P07-OUTSIDE-IN extended deny ip any 10.0.0.0 255.255.0.0 log informational interval 60
+access-list P07-OUTSIDE-IN extended deny ip any 10.1.0.0 255.255.0.0 log informational interval 60
+access-list P07-OUTSIDE-IN extended deny ip any 10.2.0.0 255.255.0.0 log informational interval 60
 
+access-list P07-OUTSIDE-IN remark PH3 deny all other outside traffic
+access-list P07-OUTSIDE-IN extended deny ip any any log informational interval 60
+
+access-group P07-OUTSIDE-IN in interface outside
+
+! --- Application inspection ---
+! WHY inspect icmp: Allows ICMP replies through without a broad outside permit.
+!      ASA tracks ICMP request/reply pairs statefully — return traffic is matched.
+! WHY inspect dns: Validates DNS message format, prevents cache poisoning.
+! WHY inspect http: HTTP visibility; enables future URL filtering.
 policy-map global_policy
  class inspection_default
   inspect icmp
@@ -266,15 +279,13 @@ policy-map global_policy
 
 | Test | Command | Expected Result |
 |------|---------|-----------------|
-| Outside ACL | `show access-list ACL-OUTSIDE-IN` | HTTP permit and deny entries present |
+| Outside ACL | `show access-list P07-OUTSIDE-IN` | HTTP permit and deny entries present |
 | Allowed HTTP | `packet-tracer input outside tcp 203.0.113.2 12345 203.0.113.10 80` | Allow to DMZ server |
 | Blocked inside access | `packet-tracer input outside tcp 203.0.113.2 12345 10.0.0.14 22` | Drop |
 | Inspection policy | `show service-policy global` | HTTP, DNS, and ICMP inspection counters visible |
 
-![HQ-FW1 policy configuration](verification/screenshots/P07-Ph3-hq-fw1-policy-config.png)
 ![packet-tracer allowed outside-to-DMZ HTTP flow](verification/screenshots/P07-Ph3-hq-fw1-packet-tracer-policy-Allowed.png)
 ![packet-tracer denied outside-to-inside flow](verification/screenshots/P07-Ph3-hq-fw1-packet-tracer-policy-Drop.png)
-![HQ-RTR1 ICMP inspection test](verification/screenshots/P07-Ph3-hq-rtr1-icmp-inspection-test.png)
 
 **Platform caveat:** ASA ACLs on the outside interface are evaluated after NAT logic in a way that can be confusing when moving from IOS router ACLs. `packet-tracer` is the authoritative tool for confirming ASA order of operations.
 
@@ -312,6 +323,8 @@ packet-tracer input inside icmp 10.1.100.10 8 0 203.0.113.100 detailed
 ![packet-tracer allowed outside-to-DMZ HTTP flow](verification/screenshots/P07-Ph3-hq-fw1-packet-tracer-policy-Allowed.png)
 ![packet-tracer denied outside-to-inside flow](verification/screenshots/P07-Ph3-hq-fw1-packet-tracer-policy-Drop.png)
 
+> These packet-tracer screenshots are shared from Phase 3. Phase 4 is the interpretation layer — all remaining screenshots are in [verification/screenshots/](verification/screenshots/).
+
 **Platform caveat:** `packet-tracer` can show an allowed decision even when an endpoint service is down. Use it to verify firewall policy, then use endpoint tests to verify the server/application.
 
 > For all Phase 4 verification see [verification/screenshots/](verification/screenshots/).
@@ -330,26 +343,37 @@ A firewall that blocks traffic silently is difficult to operate. This phase make
 ```cisco
 logging enable
 logging timestamp
+logging device-id hostname
+logging buffered informational
 logging trap informational
 logging host inside 10.1.99.51
-logging asdm informational
 
 threat-detection basic-threat
-threat-detection statistics
+threat-detection statistics access-list
+threat-detection statistics host
 ```
 
 ### Verification Proof
 
-| Test | Command | Expected Result |
-|------|---------|-----------------|
-| ASA logging | `show logging` | Logging enabled with host 10.1.99.51 |
-| ACL counters | `show access-list ACL-OUTSIDE-IN` | Hit counters increment after tests |
-| Syslog proof | `tail -f /var/log/syslog` on HQ-SYSLOG | ASA messages arrive |
-| Threat visibility | `show threat-detection statistics host` | Host statistics visible after traffic |
+| Test | Command | Result |
+|------|---------|--------|
+| Logging active | `show running-config logging` | `logging host inside 10.1.99.51` present |
+| Syslog forwarding | `show logging` | `Logging to inside 10.1.99.51, UDP TX:58` |
+| HTTP permitted + logged | `show logging \| include 106100` | `P07-OUTSIDE-IN permitted tcp outside/203.0.113.2 -> dmz/10.1.40.10(80)` |
+| SSH denied + logged | `show logging \| include 106100` | `P07-OUTSIDE-IN denied tcp outside/203.0.113.2 -> dmz/10.1.40.10(22)` |
+| ACL hit counters | `show access-list P07-OUTSIDE-IN` | HTTP permit: hitcnt=1, deny 10.1.0.0/16: hitcnt=4 |
 
-![HQ-FW1 logging configuration](verification/screenshots/P07-Ph5-hq-fw1-logging-config.png)
-![HQ-FW1 live log proof](verification/screenshots/P07-Ph5-hq-fw1-log-proof.png)
-![ISP-RTR1 log-triggering tests](verification/screenshots/P07-Ph5-isp-rtr1-log-tests.png)
+**Actual log output captured:**
+
+```
+%ASA-6-106100: access-list P07-OUTSIDE-IN permitted tcp outside/203.0.113.2(12655) -> dmz/10.1.40.10(80) hit-cnt 1 first hit
+%ASA-6-302013: Built inbound TCP connection 85 for outside:203.0.113.2/12655 to dmz:10.1.40.10/80
+
+%ASA-6-106100: access-list P07-OUTSIDE-IN denied tcp outside/203.0.113.2(27409) -> dmz/10.1.40.10(22) hit-cnt 1 first hit
+```
+
+![HQ-FW1 live log proof — permitted HTTP and denied SSH both logged](verification/screenshots/P07-Ph5-hq-fw1-log-proof.png)
+![ISP-RTR1 log-triggering tests — telnet to TCP/80 and TCP/22](verification/screenshots/P07-Ph5-isp-rtr1-log-tests.png)
 
 **Platform caveat:** Informational logging is useful in a lab but can be noisy in production. Production firewalls normally tune message severity, ACL logging, and rate limits.
 
@@ -376,12 +400,31 @@ show local-host
 
 ### Verification Proof
 
-| Test | Command | Expected Result |
-|------|---------|-----------------|
-| Active flows | `show conn` | Inside, outside, and DMZ sessions visible |
-| Flow details | `show conn detail` | Real and translated addresses visible |
-| Connection count | `show conn count` | Nonzero count during active tests |
-| DMZ session | Outside HTTP test to 203.0.113.10 | Connection maps to 10.1.40.10 |
+| Test | Command | Result |
+|------|---------|--------|
+| Outside → DMZ connection | `show conn` while ISP-RTR1 telnet open | `TCP outside 203.0.113.2:15089 dmz 10.1.40.10:80, flags UB` |
+| Inside → outside connection | `show conn` while PC-ENG1 telnet open | `TCP outside 203.0.113.100:80 inside 10.1.100.194:36166, flags Ux` |
+| DMZ session detail | `show conn detail` | Initiator/Responder, xlate id, flow id visible |
+
+**Actual `show conn` output captured:**
+
+```
+! Outside-to-DMZ (ISP-RTR1 → HQ-SRV1)
+TCP outside  203.0.113.2:15089 dmz  10.1.40.10:80, idle 0:00:28, bytes 0, flags UB
+
+! Detail:
+TCP outside: 203.0.113.2/15089 dmz: 10.1.40.10/80,
+    flags UB , idle 21s, uptime 21s, timeout 1h0m, bytes 0
+  Initiator: 203.0.113.2, Responder: 10.1.40.10
+
+! Inside-to-outside (PC-ENG1 → EXT-WEB1)
+TCP outside  203.0.113.100:80 inside  10.1.100.194:36166, idle 0:00:14, bytes 0, flags Ux
+
+! Detail:
+TCP outside: 203.0.113.100/80 inside: 10.1.100.194/36166,
+    flags Ux , idle 21s, uptime 21s, timeout 1h0m
+  Initiator: 10.1.100.194, Responder: 203.0.113.100
+```
 
 ![HQ-FW1 outside-to-DMZ connection table](verification/screenshots/P07-Ph6-hq-fw1-conn-outside-dmz.png)
 

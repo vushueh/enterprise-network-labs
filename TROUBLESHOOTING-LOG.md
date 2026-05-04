@@ -608,3 +608,87 @@ show logging | include 10.1.200.142
 Lines 5/6/7 appear above line 10. DHCP renewal denials stop. ICMP denials to 10.1.99.1 continue (correct).
 
 **Lesson:** DHCP discovers are broadcasts handled by ip helper-address before ACLs — initial DHCP always works. DHCP renewals are unicast and hit inbound ACLs directly. Any ACL that blocks a VLAN from the management range will silently break DHCP renewals if the DHCP server lives in that management range. Always permit UDP port 67/68 and UDP/TCP 53 to the specific DHCP/DNS server host BEFORE the broad management deny. Apply the same correction to ACL-VLAN100-IN and ACL-VLAN300-IN.
+
+---
+
+## Project 07 — ASAv Perimeter Firewall
+
+### P07-T01 — ICMP Pings Failing After Phase 1 Cutover
+
+**Date:** 2026-05-04 | **Phase:** 1 — Basic Setup and Cutover
+
+**Symptom:** After completing Phase 1, ping from PC-ENG1 (10.1.100.10) to EXT-WEB1 (203.0.113.100) succeeded in the forward direction but ICMP replies were dropped. Inside-to-outside ping showed 0% success. Packet-tracer showed Allow but live ICMP replies were dropped at the outside interface.
+
+**Investigation:**
+```
+packet-tracer input inside icmp 10.1.100.10 8 0 203.0.113.100
+show service-policy global
+```
+Packet-tracer showed Allow for the forward path. `show service-policy global` showed no ICMP inspection active in `inspection_default`.
+
+**Root cause:** ASA stateful inspection does not track ICMP by default. Without `inspect icmp`, the ASA has no record of the outbound ICMP request and drops the reply as an uninitiated inbound flow.
+
+**Fix:** Added ICMP inspection under the global policy-map in Phase 3:
+```
+policy-map global_policy
+ class inspection_default
+  inspect icmp
+```
+
+**Lesson:** On ASA, stateful ICMP tracking requires explicit `inspect icmp`. Without it, ICMP replies from lower-security zones are dropped even though the outbound request was permitted. Always include `inspect icmp` in the global inspection policy.
+
+---
+
+### P07-T02 — Outside-to-DMZ HTTP Dropped Despite Static NAT Configured
+
+**Date:** 2026-05-04 | **Phase:** 2 — NAT Migration
+
+**Symptom:** After configuring static NAT (10.1.40.10 ↔ 203.0.113.10), `packet-tracer input outside tcp 203.0.113.2 12345 203.0.113.10 80` showed Drop. No traffic was reaching HQ-SRV1 from outside.
+
+**Investigation:**
+```
+show nat detail
+packet-tracer input outside tcp 203.0.113.2 12345 203.0.113.10 80
+```
+`show nat detail` confirmed NAT rule existed and translation was correct. Packet-tracer showed Phase 2 (NAT) passed but Phase 3 (Access-List) showed Drop — no ACL permitted inbound traffic on the outside interface.
+
+**Root cause:** On ASA, NAT and ACL are independent. NAT translates the address — it does NOT grant permission. Outside-initiated traffic also requires an explicit inbound ACL on the outside interface. Without it, ASA drops outside-initiated flows regardless of NAT configuration.
+
+**Fix:** Applied in Phase 3:
+```
+access-list P07-OUTSIDE-IN extended permit tcp any object OBJ-HQ-SRV1 eq 80 log
+access-list P07-OUTSIDE-IN extended deny ip any any log
+access-group P07-OUTSIDE-IN in interface outside
+```
+
+**Lesson:** ASA NAT ≠ permission. This is the critical conceptual difference from IOS NAT. On ASA, always configure both NAT and ACL for outside-initiated flows. Packet-tracer is the fastest way to pinpoint which phase is dropping the traffic.
+
+---
+
+### P07-T03 — HQ-SYSLOG Unreachable After Phase 5 Logging Config
+
+**Date:** 2026-05-04 | **Phase:** 5 — Logging and Threat Detection
+
+**Symptom:** After configuring `logging host inside 10.1.99.51` on HQ-FW1, no syslog messages appeared on HQ-SYSLOG. `show logging` confirmed the logging host was set and logging was enabled.
+
+**Investigation:**
+```
+ping inside 10.1.99.51
+show logging
+```
+Ping from HQ-FW1 to 10.1.99.51 failed. Checked HQ-DSW1 in CML — HQ-SYSLOG was connected to Et1/1 which was in VLAN 400 instead of VLAN 999.
+
+**Root cause:** HQ-DSW1 Et1/1 (HQ-SYSLOG uplink) remained in VLAN 400 from the original Project 06 build when HQ-SRV1 occupied that VLAN. When HQ-SRV1 moved to the firewall DMZ, VLAN 400 on HQ-DSW1 was orphaned but Et1/1 was never updated. HQ-SYSLOG should have been in VLAN 999 (management) from the start.
+
+**Fix:**
+```
+! On HQ-DSW1:
+interface Ethernet1/1
+ switchport access vlan 999
+ no shutdown
+end
+write memory
+```
+Ping returned 100%. Syslog messages began appearing on HQ-SYSLOG immediately.
+
+**Lesson:** When migrating a server to a new segment, audit all downstream switchport VLAN assignments for nodes remaining on the old segment. A syslog collector receiving nothing silently is much harder to notice than a broken ping — always verify with `show logging` hit counters AND actual messages on the collector.
