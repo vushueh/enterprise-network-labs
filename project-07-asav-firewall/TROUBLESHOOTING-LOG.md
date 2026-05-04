@@ -6,7 +6,7 @@ Project-local troubleshooting entries for the ASAv perimeter firewall lab.
 
 ## Current Status
 
-Phases 1-6 completed without a live unresolved issue requiring a repair entry. Verification evidence is captured under [verification/screenshots/](verification/screenshots/) and the command checklist is captured in [verification/post-change/verification-commands.md](verification/post-change/verification-commands.md).
+Phases 1-6 completed without a live unresolved issue requiring a repair entry. Verification evidence is captured under [verification/screenshots/](verification/screenshots/), and the phase command flow is documented directly in [README.md](README.md).
 
 ---
 

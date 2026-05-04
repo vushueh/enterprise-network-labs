@@ -128,9 +128,28 @@
 
 ---
 
+## Phase 4 — packet-tracer Verification
+
+### DL-08 — Use packet-tracer as the primary ASA policy debugger
+
+**Decision:** Validate allowed, denied, and translated flows with ASA `packet-tracer` before relying only on endpoint tests.
+
+**Alternatives considered:**
+- Use only ping, wget, and live endpoint tests
+- Use only `show access-list` counters after generating traffic
+
+**Why this was chosen:**
+- `packet-tracer` shows the ASA decision path across route lookup, NAT, ACL, and inspection
+- It separates firewall policy errors from endpoint or service availability issues
+- It provides clear portfolio evidence for allowed outside-to-DMZ HTTP, denied outside-to-inside SSH, and inside-to-outside NAT behavior
+
+**Trade-offs:** `packet-tracer` simulates the firewall path but does not prove the destination application is actually listening. Endpoint tests still matter after policy is verified.
+
+---
+
 ## Phase 5 — Logging and Visibility
 
-### DL-08 — Send firewall logs to HQ-SYSLOG
+### DL-09 — Send firewall logs to HQ-SYSLOG
 
 **Decision:** Enable timestamped ASA logging to 10.1.99.51 and log ACL decisions.
 
@@ -144,6 +163,25 @@
 - Visibility is part of the security control, not an optional extra
 
 **Trade-offs:** Informational logging can be noisy in production. For this lab, it creates useful proof and troubleshooting context.
+
+---
+
+## Phase 6 — Stateful Connection Analysis
+
+### DL-10 — Verify firewall state with show conn
+
+**Decision:** Use `show conn`, `show conn detail`, and `show conn count` as the final proof that ASAv is tracking active sessions.
+
+**Alternatives considered:**
+- Stop verification after ACL and packet-tracer results
+- Use only endpoint ping or HTTP tests
+
+**Why this was chosen:**
+- The primary value of ASAv over router ACLs is stateful inspection
+- `show conn` proves that permitted flows create tracked connection entries
+- DMZ connection entries show the practical result of combining static NAT, ACL policy, and state tracking
+
+**Trade-offs:** Connection entries age out quickly, so traffic must be generated immediately before capture.
 
 ---
 
