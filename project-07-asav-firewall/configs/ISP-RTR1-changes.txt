@@ -1,0 +1,17 @@
+! ============================================================
+! DEVICE: ISP-RTR1 | PROJECT: 07 — ASAv Firewall
+! Changes only — ISP handoff now faces HQ-FW1 instead of HQ-RTR1
+! ============================================================
+
+! Interface description update — IP unchanged (203.0.113.2/30)
+interface Ethernet0/0
+ description OUTSIDE-TO-HQ-FW1-GI0/1
+ no shutdown
+
+! Static route for HQ-SRV1 public IP — next hop is now HQ-FW1 outside
+! WHY: ISP must know how to reach 203.0.113.10 (static NAT public IP).
+!      Without this, inbound traffic to the DMZ server is black-holed at ISP.
+ip route 203.0.113.10 255.255.255.255 203.0.113.1
+
+end
+write memory
