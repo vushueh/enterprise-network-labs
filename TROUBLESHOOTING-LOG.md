@@ -553,3 +553,42 @@ Layer 3 relay: show running-config | section helper revealed wrong helper-addres
 **Fix:** No configuration fix required. Second ping returns 100%.
 
 **Lesson:** One dropped first packet during initial testing is almost always ARP resolution, not a routing or NAT failure. Always run a second ping before changing config.
+
+---
+
+## Project 06 — Security Hardening (Discovered During Project 07 Pre-work)
+
+### P06-01 — ACL-VLAN200-IN Blocking DHCP Renewals and DNS to 10.1.99.50
+
+**Date:** 2026-05-03 | **Phase:** Post-build review
+
+**Symptom:** Console on HQ-RTR1 flooded with repeated syslog messages:
+```
+%SEC-6-IPACCESSLOGDP: list ACL-VLAN200-IN denied icmp 10.1.200.142 -> 10.1.99.1 (8/0), 360 packets
+%SEC-6-IPACCESSLOGP: list ACL-VLAN200-IN denied udp 10.1.200.142(68) -> 10.1.99.50(67), 1 packet
+```
+ICMP denials appeared every ~5 minutes. DHCP renewal denial appeared intermittently.
+
+**Investigation:** `show ip access-lists ACL-VLAN200-IN` confirmed line 10 had 97,067+ matches — a Sales VLAN device (10.1.200.142 = PC-SALES1) continuously pinging the Management VLAN gateway (10.1.99.1). That is correct behavior — the ACL is working as designed from Project 06. The critical finding was the UDP deny: source port 68 (DHCP client) to destination port 67 (DHCP server at 10.1.99.50). This is a DHCP lease renewal — not a DHCP discover.
+
+**Root cause:** DHCP discover packets are broadcasts (0.0.0.0 → 255.255.255.255) processed by `ip helper-address` before the inbound ACL sees them — so initial DHCP works fine. DHCP renewals however are unicast (client IP → server IP) and DO hit the inbound ACL. The broad deny line `deny ip 10.1.200.0 0.0.0.255 10.1.99.0 0.0.0.255` blocks unicast renewal packets to 10.1.99.50 before they can reach the relay. Same problem exists for DNS UDP/TCP 53 to 10.1.99.50. Without a fix, VLAN 200 devices will fail to renew leases and eventually lose their IPs.
+
+**Fix:** Added three permit lines BEFORE the management deny on ACL-VLAN200-IN:
+```
+ip access-list extended ACL-VLAN200-IN
+ 5 permit udp 10.1.200.0 0.0.0.255 eq 68 host 10.1.99.50 eq 67
+ 6 permit udp 10.1.200.0 0.0.0.255 host 10.1.99.50 eq 53
+ 7 permit tcp 10.1.200.0 0.0.0.255 host 10.1.99.50 eq 53
+```
+Line 5 permits DHCP renewals (source port 68 client → destination port 67 server).
+Lines 6 and 7 permit DNS over UDP and TCP to the DHCP/DNS server specifically.
+The broad management deny at line 10 still blocks everything else to 10.1.99.0/24.
+
+**Verification:**
+```
+show ip access-lists ACL-VLAN200-IN
+show logging | include 10.1.200.142
+```
+Lines 5/6/7 appear above line 10. DHCP renewal denials stop. ICMP denials to 10.1.99.1 continue (correct).
+
+**Lesson:** DHCP discovers are broadcasts handled by ip helper-address before ACLs — initial DHCP always works. DHCP renewals are unicast and hit inbound ACLs directly. Any ACL that blocks a VLAN from the management range will silently break DHCP renewals if the DHCP server lives in that management range. Always permit UDP port 67/68 and UDP/TCP 53 to the specific DHCP/DNS server host BEFORE the broad management deny. Apply the same correction to ACL-VLAN100-IN and ACL-VLAN300-IN.
