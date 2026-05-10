@@ -1,83 +1,67 @@
 # Codex Standing Orders — Enterprise Network Labs
 
 You are working on Leonel's enterprise network lab series built in Cisco CML 2.9.
-This repo lives at: `/home/leonel/code/enterprise-network-labs/` (WSL Ubuntu)
-GitHub: `vushueh/enterprise-network-labs` (main branch)
+GitHub repo: `vushueh/enterprise-network-labs` (main branch)
+WSL repo (local): `/home/leonel/code/enterprise-network-labs/`
+
+---
 
 ## At the START of every session — do these first
 
-1. **Read `CLAUDE-REVIEW.md`** in this repo root.
-   - If it contains OPEN critique items, address them before starting new work.
-   - After fixing each item, mark it RESOLVED and note what you did.
+Read these three files from GitHub before doing anything else:
 
-2. **Read `TROUBLESHOOTING-LOG.md`** to understand past issues — don't repeat known mistakes.
-
-3. **Check `README.md`** to confirm which project is current and which are complete.
+1. `CLAUDE-REVIEW.md` — resolve any OPEN items before new work
+2. `TROUBLESHOOTING-LOG.md` — don't repeat known mistakes
+3. `README.md` — confirm which project is current and which are complete
 
 ---
 
-## File storage rules — CRITICAL
+## How Codex saves and commits files — CRITICAL
 
-All project files MUST be saved to the live WSL git repo. There are two valid paths to it:
+**Codex Desktop runs in a sandbox that cannot access WSL or UNC paths.**
+The only way Codex can write to the git repo is via the **GitHub connector**.
 
-| Access method | Path |
-|--------------|------|
-| WSL shell (preferred) | `/home/leonel/code/enterprise-network-labs/` |
-| Windows UNC (fallback) | `\\wsl.localhost\Ubuntu\home\leonel\code\enterprise-network-labs\` |
+### Rule: use GitHub connector to create/update files directly on the repo
 
-**NEVER save to these — they are wrong locations:**
-- `C:\Users\CHONGONG\Documents\Codex\...` — Codex session temp folder, not tracked by git
-- `C:\home\leonel\code\enterprise-network-labs\` — stale partial copy, no `.git`, do not use
+For every config file, verification output, README, or doc Codex produces:
+- Use the GitHub connector to create or update that file at the correct path in `vushueh/enterprise-network-labs`
+- Commit message format: `P08: phase 1 — GRE tunnel baseline verification`
+- One commit per completed phase — do not batch multiple phases
 
-If your shell cannot run `wsl.exe` directly, use the Windows UNC path for file writes and run git via:
-```powershell
-wsl.exe -- git -C /home/leonel/code/enterprise-network-labs add project-XX-name/
-wsl.exe -- git -C /home/leonel/code/enterprise-network-labs commit -m "PXX: phase Y — description"
+**Correct repo paths for Project 8:**
 ```
-Or use the full WSL invocation:
-```powershell
-wsl.exe -- bash -c "cd /home/leonel/code/enterprise-network-labs && git add project-08-site-to-site-vpn/ && git commit -m 'P08: phase 1 — baseline verification'"
+project-08-site-to-site-vpn/README.md
+project-08-site-to-site-vpn/requirements.md
+project-08-site-to-site-vpn/decision-log.md
+project-08-site-to-site-vpn/configs/HQ-RTR1-phase1.txt
+project-08-site-to-site-vpn/configs/BR-RTR1-phase1.txt
+project-08-site-to-site-vpn/verification-outputs/phase1-HQ-RTR1-verify.txt
+project-08-site-to-site-vpn/verification-outputs/phase1-BR-RTR1-verify.txt
 ```
+
+**NEVER save to these — they cannot be pushed:**
+- `C:\Users\CHONGONG\Documents\Codex\...` — Codex session folder, not git-tracked
+- `C:\home\leonel\...` — stale partial copy, no `.git`
+
+### After GitHub push — tell Leonel to pull
+
+After committing via GitHub connector, always say:
+> "Files pushed to GitHub. Run `git pull` in WSL, VS Code, or Claude Code to sync locally."
+
+Claude Code will handle the local pull and any additional commit work if needed.
 
 ---
 
-## Commit after EVERY completed phase — no exceptions
+## At the END of every session — update CODEX-LOG.md via GitHub connector
 
-When a phase is complete and verified:
-
-1. Save all configs and verification outputs to the correct WSL paths (see above)
-2. Run from WSL:
-```bash
-cd /home/leonel/code/enterprise-network-labs
-git add project-XX-name/
-git commit -m "PXX: phase Y — <one line description of what was built>"
-```
-
-**Do NOT accumulate multiple phases in one commit.** One commit per phase keeps the history clean and makes it easy to see exactly what changed.
-
-**Do NOT push automatically.** Commit only. Leonel will push when ready — from Codex, Claude Code, VS Code, or WSL terminal, whichever he's using at that moment.
-
-### Commit message format
-```
-P08: phase 1 — GRE tunnel baseline verification
-P08: phase 2 — IPsec IKEv2 encryption applied
-P08: phase 3 — OSPF migrated over tunnel
-P08: break/fix — [describe the fault injected and fixed]
-```
-
----
-
-## At the END of every session — always do this
-
-Append a summary to `CODEX-LOG.md`:
+Append to `CODEX-LOG.md` on the repo:
 
 ```
 ## [DATE] — [what was worked on]
 **Phases completed:** [list]
-**Committed:** yes / no — [commit hash if yes]
-**Pushed:** yes / no
-**Left off at:** [exactly where to resume]
-**Files saved to WSL repo:** [list key file paths]
+**Pushed to GitHub:** yes / no — [commit hash(es)]
+**Left off at:** [exactly where to resume next]
+**Files pushed:** [list key file paths]
 ```
 
 ---
@@ -86,25 +70,25 @@ Append a summary to `CODEX-LOG.md`:
 
 ```
 project-XX-name/
-├── README.md                  # Full lab guide with phases, STAR, verification
-├── requirements.md            # What needs to be built and why
-├── decision-log.md            # Every design choice and why
-├── configs/                   # Final running configs per device per phase
-│   └── DEVICE-phaseN.txt
-├── verification-outputs/      # Copied CLI output proving it works
-│   └── phaseN-DEVICE-verify.txt
-└── screenshots/               # CML topology + key verification screenshots
+├── README.md                     # Full lab guide: phases, STAR, verification
+├── requirements.md               # What needs to be built and why
+├── decision-log.md               # Every design choice and why
+├── configs/
+│   └── DEVICE-phaseN.txt         # Final running config per device per phase
+├── verification-outputs/
+│   └── phaseN-DEVICE-verify.txt  # Copied CLI output proving it works
+└── screenshots/                  # CML topology + key verification screenshots
     └── PXX-phaseN-description.png
 ```
 
-Follow the **Build → Verify → Break → Fix** cycle for every phase.
-All verification CLI output must be saved to `verification-outputs/` — not just shown in chat.
+Follow **Build → Verify → Break → Fix** for every phase.
+Save all verification CLI output to `verification-outputs/` — not just shown in chat.
 
 ---
 
 ## Environment facts
 
 - **CML 2.9** (licensed) — IOL routers (`Ethernet0/x`, `Ethernet1/x`), IOL-L2 switches, ASAv
-- **Git credentials**: WSL at `/home/leonel/.config/gh/hosts.yml`
-- **Push from anywhere**: WSL terminal, VS Code Remote-WSL, Claude Code, or Codex — all work
-- **VS Code** may have files open simultaneously — don't assume files are unchanged between turns
+- **Codex sandbox**: no WSL access, no UNC path access — GitHub connector is the only write path
+- **Claude Code**: has full WSL access, handles git pull/push locally when needed
+- **VS Code Remote-WSL**, **WSL terminal**, **Claude Code** — all can pull from GitHub after Codex pushes
