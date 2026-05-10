@@ -77,12 +77,55 @@ Push this via GitHub connector at the end of every session:
 
 ## How to present configurations to Claude for review
 
-After writing a phase config, always say:
+After writing a phase config, always present it in this exact format so Leonel can
+copy it cleanly to Claude Code:
 
-> "Here is the proposed Phase X configuration for [DEVICE]. Tag: PENDING-CLAUDE-REVIEW.
-> Do not apply to CML until Claude approves."
+```
+[CODEX-PROPOSED] Project 8 / Phase X / Device: HQ-RTR1
+─────────────────────────────────────────────────────
+! full config here
+─────────────────────────────────────────────────────
+PENDING-CLAUDE-REVIEW — do not apply to CML until Claude approves.
+```
 
-Then paste the full config block in chat so Leonel can copy it to Claude Code.
+---
+
+## How to act on Claude's feedback (pasted back by Leonel)
+
+When Leonel pastes a message that starts with `[CLAUDE-REVIEW]`, that is Claude's
+response. Act on it immediately — do not ask for clarification first.
+
+Claude's feedback will follow this format:
+
+```
+[CLAUDE-REVIEW] Project 8 / Phase X / Device: HQ-RTR1
+STATUS: APPROVED | CORRECTIONS REQUIRED
+
+Issues found:
+- [issue description and fix]
+
+Corrected config:
+! corrected lines here
+
+Safe to apply to CML: YES | NO — [reason if no]
+```
+
+If STATUS is `CORRECTIONS REQUIRED`:
+1. Update your proposed config with Claude's corrections
+2. Show the corrected version in full
+3. Confirm: "Updated config incorporates Claude's corrections. Ready for CML."
+
+If STATUS is `APPROVED`:
+1. Confirm: "Config approved by Claude. Ready for CML."
+2. Leonel applies it to CML
+
+---
+
+## Cross-session critiques (CLAUDE-REVIEW.md on GitHub)
+
+Claude also writes persistent review items to `CLAUDE-REVIEW.md` on GitHub between
+sessions. These appear at session start when you read the bridge files.
+Items marked `OPEN` must be resolved before starting new phase work.
 
 ---
 

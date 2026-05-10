@@ -52,13 +52,18 @@ Step 1 — Codex proposes
    Does NOT apply anything to CML
 
 Step 2 — Claude reviews (before any CML work)
-   Paste Codex's proposed config to Claude Code
-   OR say: "Check what Codex proposed for Phase X"
-   Claude reads the config, checks for errors, flags issues
-   Claude either approves or gives corrections
+   Copy Codex's [CODEX-PROPOSED] block from Codex chat
+   Paste it to Claude Code and say: "Review this before I apply to CML"
+   Claude checks for errors, topology consistency, anything that would break
+   Claude responds with a [CLAUDE-REVIEW] block: APPROVED or CORRECTIONS REQUIRED
 
-Step 3 — Apply to CML
-   Take Claude's approved/corrected config
+Step 3 — Feed Claude's response back to Codex (if corrections needed)
+   Copy Claude's [CLAUDE-REVIEW] block
+   Paste it into Codex chat — Codex reads it and updates the config automatically
+   Codex confirms: "Updated config incorporates Claude's corrections. Ready for CML."
+
+Step 4 — Apply to CML
+   Take the approved/corrected config from Codex
    Apply it to the CML devices manually
    Run verification commands (show ip interface brief, show ip ospf neighbor, etc.)
 

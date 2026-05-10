@@ -8,12 +8,42 @@ This file is written by **Claude Code** and read by **Codex**.
 
 ---
 
-## How to read this file (Codex instructions)
+## Two ways Claude sends feedback to Codex
 
-- **OPEN** = not yet addressed — fix this before starting new work
+### 1. Real-time (within a session — you are the messenger)
+
+Codex proposes a config using this format:
+```
+[CODEX-PROPOSED] Project X / Phase X / Device: NAME
+─────────────────────────────
+! config here
+─────────────────────────────
+PENDING-CLAUDE-REVIEW
+```
+
+You copy that block to Claude Code. Claude responds with:
+```
+[CLAUDE-REVIEW] Project X / Phase X / Device: NAME
+STATUS: APPROVED | CORRECTIONS REQUIRED
+
+Issues found:
+- description and fix
+
+Corrected config:
+! corrected lines
+
+Safe to apply to CML: YES | NO
+```
+
+You paste Claude's `[CLAUDE-REVIEW]` block back into Codex. Codex acts on it immediately.
+
+### 2. Persistent (between sessions — Codex reads at session start)
+
+Claude appends entries below. Status meanings:
+- **OPEN** = not yet addressed — resolve before starting new work
 - **RESOLVED** = already fixed — read for context only
-- **INFO** = no action needed, just background context
+- **INFO** = no action needed, background context only
 
 ---
 
-<!-- Claude will append review entries below this line -->
+<!-- Claude appends persistent review entries below this line -->
