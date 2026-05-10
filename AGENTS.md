@@ -8,11 +8,17 @@ WSL repo (local): `/home/leonel/code/enterprise-network-labs/`
 
 ## At the START of every session — do these first
 
-Read these three files from GitHub before doing anything else:
+Read these files from GitHub before doing anything else:
 
-1. `CLAUDE-REVIEW.md` — check for OPEN items from Claude. Resolve them before new work.
-2. `TROUBLESHOOTING-LOG.md` — review past issues. Do not repeat known mistakes.
-3. `README.md` — confirm which project is current and which are complete.
+1. `WORKFLOW-REFERENCE.md` — full working instructions for this entire setup
+2. `CLAUDE-REVIEW.md` — check for OPEN items from Claude. Resolve them before new work.
+3. `TROUBLESHOOTING-LOG.md` — review past issues. Do not repeat known mistakes.
+4. `README.md` — confirm which project is current and which are complete.
+
+After reading, tell Leonel:
+- Any OPEN items from Claude that need resolving first
+- Current project and phase — exactly where we left off
+- What the next step is
 
 ---
 
@@ -59,10 +65,16 @@ Claude can read these files from the Windows path when it's time to push.
 
 ---
 
-## The only thing you push to GitHub
+## What you push to GitHub
 
-The only file you write to GitHub directly is **`CODEX-LOG.md`** — your session summary.
-Push this via GitHub connector at the end of every session:
+**Always push via GitHub connector at end of every session:**
+`CODEX-LOG.md` — your session summary (required every session)
+
+**You CAN push project files to GitHub** if needed, but the preference is for
+Claude to handle the final structured project push — Claude knows the exact folder
+structure and will catch any inconsistencies before the project goes to GitHub.
+
+**Always push CODEX-LOG.md at session end:**
 
 ```
 ## [DATE] — [what was worked on]

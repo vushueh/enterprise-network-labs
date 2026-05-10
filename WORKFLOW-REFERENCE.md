@@ -4,6 +4,10 @@
 **WSL path:** `/home/leonel/code/enterprise-network-labs/`
 **Last updated:** 2026-05-10
 
+> **Both Codex and Claude Code read this file at the start of every session.**
+> After reading it, each tool confirms they understand the workflow and tells you
+> what the current project status is and what to do next.
+
 ---
 
 ## 1. How the System Works
@@ -11,358 +15,465 @@
 GitHub is the single source of truth. Every tool reads from and writes to it.
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    YOUR WORKFLOW                        │
-│                                                         │
-│  Codex ──proposes configs──► Claude ──reviews/approves──► You apply to CML │
-│    │                            │                           │              │
-│    │                            │                     CML verifies         │
-│    │                            │                           │              │
-│    └──CODEX-LOG.md──► GitHub ◄──┴──pushes complete project─┘              │
-└─────────────────────────────────────────────────────────┘
+Codex proposes config
+       ↓
+Claude reviews it (you paste between windows)
+       ↓
+You apply approved config to CML
+       ↓
+You verify in CML, paste output back
+       ↓
+Repeat for each phase
+       ↓
+All phases complete → Codex OR Claude pushes full project to GitHub
+       ↓
+Claude reviews final push for structure/accuracy
 ```
 
-### The Three Tools and Their Roles
+### The Four Tools and Their Roles
 
-| Tool | Role | Can write to GitHub? |
-|------|------|---------------------|
-| **Codex Desktop** | Proposes configurations, writes lab docs | CODEX-LOG.md only |
-| **Claude Code** | Reviews configs before CML, pushes completed projects | Yes — all project files |
-| **VS Code / WSL / Terminal** | Direct file editing, git operations | Yes — full access |
+| Tool | Primary Role | GitHub access |
+|------|-------------|---------------|
+| **Codex Desktop** | Proposes configs, writes lab docs, saves to session folder | Yes — can push. Preference: Claude pushes final project for structure accuracy |
+| **Claude Code** | Reviews configs before CML, final project push + structure check | Yes — full access |
+| **VS Code (Remote-WSL)** | File editing, git operations, launching Claude Code CLI | Yes — full access |
+| **WSL Terminal** | Git operations, direct file access | Yes — full access |
 
-### The Three Bridge Files (always in the repo root)
+### The Four Bridge Files (repo root — read by both tools every session)
 
 | File | Written by | Read by | Purpose |
 |------|-----------|---------|---------|
-| `AGENTS.md` | Set once, updated by Claude | Codex | Codex standing orders every session |
-| `CLAUDE-REVIEW.md` | Claude | Codex | Claude's critiques — Codex resolves before new work |
-| `CODEX-LOG.md` | Codex | Claude | Session summaries — what was done, where we left off |
+| `WORKFLOW-REFERENCE.md` | Claude (this file) | Both tools | Complete working instructions |
+| `AGENTS.md` | Claude | Codex | Codex-specific standing orders |
+| `CLAUDE-REVIEW.md` | Claude | Codex | Persistent critiques — Codex resolves OPEN items first |
+| `CODEX-LOG.md` | Codex | Claude | Session summaries — what was done, where to resume |
 
 ---
 
-## 2. The Phase-by-Phase Workflow (How a Project Gets Built)
+## 2. What Each Tool Does at Session Start
+
+### Codex — reads from GitHub, then orients you
+
+At the start of every Codex session, Codex will:
+1. Read `WORKFLOW-REFERENCE.md`, `AGENTS.md`, `CLAUDE-REVIEW.md`, `CODEX-LOG.md`, `README.md`
+2. Report back:
+   - Any OPEN items from Claude that need resolving first
+   - Current project and phase
+   - Exactly where we left off
+   - What to do next
+
+### Claude Code — reads from WSL repo, then orients you
+
+At the start of every Claude session, Claude will:
+1. Read `WORKFLOW-REFERENCE.md` and `CODEX-LOG.md` from the repo
+2. Pull latest from GitHub
+3. Report back:
+   - Current project status
+   - What Codex last did
+   - Any corrections needed
+   - What to do next
+
+---
+
+## 3. The Phase-by-Phase Workflow
 
 Every project has multiple phases. This is the exact sequence for each phase:
 
 ```
 Step 1 — Codex proposes
-   Codex writes the full configuration for the phase
-   Saves it to: C:\Users\CHONGONG\Documents\Codex\[date]\[session]\project-XX\configs\
-   Presents it in chat with label: "PENDING-CLAUDE-REVIEW"
-   Does NOT apply anything to CML
+   Codex writes the full config for the phase in [CODEX-PROPOSED] format
+   Saves to its Windows session folder (see Section 5 for how to create it)
+   Does NOT apply anything to CML — always waits for Claude approval
 
-Step 2 — Claude reviews (before any CML work)
-   Copy Codex's [CODEX-PROPOSED] block from Codex chat
-   Paste it to Claude Code and say: "Review this before I apply to CML"
-   Claude checks for errors, topology consistency, anything that would break
-   Claude responds with a [CLAUDE-REVIEW] block: APPROVED or CORRECTIONS REQUIRED
+Step 2 — You bring it to Claude
+   Copy the [CODEX-PROPOSED] block from Codex chat
+   Paste to Claude Code and say: "Review this before I apply to CML"
+   Claude responds with [CLAUDE-REVIEW]: APPROVED or CORRECTIONS REQUIRED
 
 Step 3 — Feed Claude's response back to Codex (if corrections needed)
    Copy Claude's [CLAUDE-REVIEW] block
-   Paste it into Codex chat — Codex reads it and updates the config automatically
-   Codex confirms: "Updated config incorporates Claude's corrections. Ready for CML."
+   Paste it into Codex — Codex updates the config and confirms it's ready
 
 Step 4 — Apply to CML
-   Take the approved/corrected config from Codex
-   Apply it to the CML devices manually
-   Run verification commands (show ip interface brief, show ip ospf neighbor, etc.)
+   Take the approved config and apply it to CML devices manually
+   Run verification commands
 
-Step 4 — Paste verification output back
-   Paste the CML output to Claude
-   Claude confirms it looks correct
-   If something is wrong: fix in CML, re-verify
+Step 5 — Paste verification output back
+   Paste CML output to Claude → Claude confirms it looks correct
+   If wrong: fix in CML, re-verify, paste again
 
-Step 5 — Save verification output
-   Codex saves the verification output to:
-   C:\Users\CHONGONG\Documents\Codex\[date]\[session]\project-XX\verification-outputs\
+Step 6 — Save and log
+   Tell Codex: "Phase X verified. Save configs and verification output to session folder.
+   Update CODEX-LOG.md on GitHub."
 
-Step 6 — Repeat for next phase
+Step 7 — Repeat for next phase
 ```
 
-### When the Project is Fully Complete (all phases done + break/fix done)
+### When the Project Is Fully Complete
 
 ```
-Step A — Tell Claude: "Project X is complete. Review everything and push to GitHub."
-Step B — Claude reads all configs + verification outputs from Codex's Windows session folder
-Step C — Claude reviews the full project for consistency
-Step D — Claude writes any final corrections to CLAUDE-REVIEW.md
-Step E — Claude compiles all files into the correct repo structure
-Step F — Claude commits and pushes the complete project to GitHub
-Step G — Claude marks the project ✅ in README.md
-Step H — Claude clears CLAUDE-REVIEW.md and CODEX-LOG.md for the next project
+Step A — Tell Codex: "All phases complete. Save everything to session folder.
+          Update CODEX-LOG.md with full summary and session folder path. Push CODEX-LOG.md."
+
+Step B — Tell Claude: "Project 8 complete. Codex session folder:
+          C:\Users\CHONGONG\Documents\Codex\[date]\[session-name]\
+          Review the full project and push to GitHub."
+
+Step C — Claude reads all configs + verification outputs from the session folder
+Step D — Claude reviews for correctness and structure
+Step E — Claude pushes to GitHub, marks project ✅ in README.md
+Step F — Claude clears CLAUDE-REVIEW.md and adds separator to CODEX-LOG.md for next project
 ```
 
-**Projects are only pushed to GitHub when fully complete — not after individual phases.**
+**Projects push to GitHub when fully complete — not after individual phases.**
+**Codex CAN push to GitHub. For final project structure, Claude handles it to ensure accuracy.**
 
 ---
 
-## 3. Starting a Session — Every Tool
+## 4. The [CODEX-PROPOSED] / [CLAUDE-REVIEW] Format
 
-### After a Computer Restart or Opening Fresh
+### How Codex presents a config for review
 
-Always do a git pull first on whichever tool you open. GitHub is the truth — your local copy may be behind.
+```
+[CODEX-PROPOSED] Project 8 / Phase 1 / Device: HQ-RTR1
+─────────────────────────────────────────────────────
+interface Tunnel0
+ ip address 10.0.100.1 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 10.0.0.2
+─────────────────────────────────────────────────────
+PENDING-CLAUDE-REVIEW — do not apply to CML until Claude approves.
+```
+
+### How Claude responds
+
+```
+[CLAUDE-REVIEW] Project 8 / Phase 1 / Device: HQ-RTR1
+STATUS: CORRECTIONS REQUIRED
+
+Issues found:
+- Tunnel keepalives missing — add: keepalive 10 3
+- tunnel mode not specified — default is GRE, but make it explicit
+
+Corrected config:
+interface Tunnel0
+ ip address 10.0.100.1 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 10.0.0.2
+ tunnel mode gre ip
+ keepalive 10 3
+
+Safe to apply to CML: YES
+```
+
+Copy Claude's `[CLAUDE-REVIEW]` block and paste it into Codex. Codex updates its config and confirms ready.
 
 ---
 
-### Opening Codex Desktop
+## 5. How to Create the Codex Session Folder
+
+Codex Desktop creates the session folder **automatically** based on the working directory you set and the conversation title. You do not create it manually.
+
+**How it works:**
+1. Open Codex Desktop
+2. Start a new conversation
+3. Set the working directory when prompted — use this format:
+   ```
+   C:\Users\CHONGONG\Documents\Codex\[today's date]\[short session name]
+   ```
+   Example: `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-vpn`
+
+4. Codex creates that folder automatically if it doesn't exist
+5. All files Codex saves during that session go into that folder
+
+**Date format:** `YYYY-MM-DD` (example: `2026-05-10`)
+**Session name:** short, lowercase, hyphens (example: `project-8-phase-1`, `p8-ipsec`, `p8-breakfix`)
+
+**To see what Codex saved after a session:**
+- Windows Explorer: `C:\Users\CHONGONG\Documents\Codex\`
+- WSL terminal: `ls /mnt/c/Users/CHONGONG/Documents/Codex/`
+
+---
+
+## 6. Starting a Session — Every Tool
+
+### After Computer Restart or Opening Fresh
+
+Always sync first. GitHub is the truth — your local copy may be behind.
+
+---
+
+### Codex Desktop
 
 1. Open Codex Desktop
-2. Set working directory: `C:\Users\CHONGONG\Documents\Codex\[today's date]\[session-name]`
-3. Paste this at the start of **every** Codex session:
+2. Start new conversation → set working directory:
+   `C:\Users\CHONGONG\Documents\Codex\[today's date]\[session-name]`
+3. Paste this startup prompt:
 
 ```
-Read my standing orders and project status from GitHub before we begin.
-Read these from vushueh/enterprise-network-labs:
+Read the following files from vushueh/enterprise-network-labs on GitHub
+before doing anything else:
+- WORKFLOW-REFERENCE.md (full working instructions)
 - AGENTS.md (your standing orders)
-- CLAUDE-REVIEW.md (any open items from Claude?)
+- CLAUDE-REVIEW.md (any open items from Claude to resolve first?)
 - CODEX-LOG.md (where did we leave off?)
-- README.md (which project is current?)
+- README.md (current project status)
 
 Then tell me:
-1. Any open Claude review items I need to resolve first?
-2. Where exactly did we leave off?
-3. What is the next phase to work on?
-```
-
-4. Codex reads all three bridge files from GitHub and orients itself
-5. Begin working — Codex proposes configs, you take them to Claude for review
-
----
-
-### Opening Claude Code (Desktop App)
-
-1. Open Claude Code — session startup runs automatically
-   (reads CLAUDE.md, checks recent file changes, verifies GitHub auth)
-2. To pick up where Codex left off:
-
-```
-Check CODEX-LOG.md in the enterprise-network-labs repo and tell me where Codex left off.
-Then pull the latest from GitHub.
-```
-
-3. Claude pulls the repo, reads CODEX-LOG.md, and reports status
-4. To review a config Codex proposed, paste it and say:
-
-```
-Review this Phase X config for Project 8 before I apply it to CML.
-Check for errors, consistency with the existing topology, and anything that could break.
+1. Any OPEN items from Claude I need to resolve first?
+2. Current project and phase — exactly where did we leave off?
+3. What is the next step?
 ```
 
 ---
 
-### Opening VS Code
+### Claude Code — Desktop App
+
+1. Open Claude Code Desktop app
+2. Session startup runs automatically (reads CLAUDE.md, checks repo, verifies GitHub auth)
+3. Say:
+
+```
+Pull the latest from enterprise-network-labs repo.
+Read WORKFLOW-REFERENCE.md and CODEX-LOG.md.
+Tell me: what is the current project status and where did Codex leave off?
+```
+
+### Claude Code — Launched from VS Code Terminal
+
+1. In VS Code, open WSL terminal (`Ctrl + ``)
+2. Navigate to the repo:
+   ```bash
+   cd /home/leonel/code/enterprise-network-labs
+   git pull origin main
+   ```
+3. Launch Claude Code CLI from that directory:
+   ```bash
+   claude
+   ```
+4. Claude Code opens with the repo as context. Say:
+   ```
+   Read WORKFLOW-REFERENCE.md and CODEX-LOG.md.
+   Tell me the current project status and where Codex left off.
+   ```
+
+### Claude Code — Launched from WSL Terminal
+
+1. Open WSL terminal (Windows Terminal → Ubuntu, or `Win+R → wsl`)
+2. Navigate and launch:
+   ```bash
+   cd /home/leonel/code/enterprise-network-labs
+   git pull origin main
+   claude
+   ```
+3. Same startup prompt as above
+
+---
+
+### VS Code
 
 1. Open VS Code
-2. Connect to WSL: click the green `><` button (bottom-left) → **Connect to WSL**
-   OR open a recent WSL folder from File → Open Recent
-3. Open terminal: `Ctrl + `` ` (backtick) — this gives you a WSL bash shell
-4. Sync with GitHub:
-
-```bash
-cd /home/leonel/code/enterprise-network-labs
-git pull origin main
-git log --oneline -5    # see what's new
-```
-
-5. Edit files normally in the VS Code editor
-6. To push changes:
-
-```bash
-git add .
-git commit -m "your message"
-git push origin main
-```
-
-OR use the Source Control panel (left sidebar, branch icon) → Stage → Commit → Push
+2. Connect to WSL: click green `><` button (bottom-left) → **Connect to WSL**
+3. Open the repo folder: File → Open Folder → `/home/leonel/code/enterprise-network-labs`
+4. Open terminal: `Ctrl + `` ` → sync:
+   ```bash
+   git pull origin main
+   git log --oneline -5
+   ```
+5. **To launch Claude Code from here:** in the terminal, run `claude`
+6. **To push changes:**
+   ```bash
+   git add .
+   git commit -m "your message"
+   git push origin main
+   ```
+   OR use the Source Control panel (branch icon, left sidebar)
 
 ---
 
-### Opening WSL Terminal (Ubuntu)
+### WSL Terminal (Ubuntu)
 
-1. Open Windows Terminal → click the `∨` dropdown → **Ubuntu**
-   OR: press `Win + R` → type `wsl` → Enter
-2. Sync with GitHub:
-
-```bash
-cd /home/leonel/code/enterprise-network-labs
-git pull origin main
-git log --oneline -5
-git status
-```
-
-3. Run any git commands from here:
-
-```bash
-git add project-08-site-to-site-vpn/
-git commit -m "P08: complete — all phases verified"
-git push origin main
-```
+1. Windows Terminal → Ubuntu tab, OR `Win+R → wsl`
+2. Sync and check:
+   ```bash
+   cd /home/leonel/code/enterprise-network-labs
+   git pull origin main
+   git log --oneline -5
+   git status
+   ```
+3. **To launch Claude Code from here:** run `claude`
+4. **To push:**
+   ```bash
+   git add .
+   git commit -m "message"
+   git push origin main
+   ```
 
 ---
 
-## 4. Switching Between Tools Mid-Project
+## 7. Switching Between Tools Mid-Project
 
 ### Codex → Claude Code
 
-1. In Codex: copy the proposed config from chat
-2. In Claude Code, paste it and say:
-   `"Review this Phase X config for Project 8 before I apply it to CML"`
-3. Claude reviews, corrects if needed, approves
-4. Apply the approved config to CML
+1. Copy the `[CODEX-PROPOSED]` block from Codex chat
+2. Open Claude Code (Desktop, VS Code terminal, or WSL terminal)
+3. Paste and say: `"Review this Phase X config before I apply it to CML"`
+4. Claude responds with `[CLAUDE-REVIEW]`
+5. If corrections needed: copy `[CLAUDE-REVIEW]` back to Codex
 
-### Codex → VS Code or WSL (to check files or push)
+### Codex → VS Code or WSL
 
-1. Codex saves files to its Windows session folder — it does NOT push project files
+1. Tell Codex: `"Update CODEX-LOG.md on GitHub with current status"`
 2. In VS Code/WSL terminal:
-
-```bash
-cd /home/leonel/code/enterprise-network-labs
-git pull origin main    # get any CODEX-LOG.md updates
-```
-
-3. Files Codex wrote are at:
-   `C:\Users\CHONGONG\Documents\Codex\[date]\[session]\` (Windows)
-   `/mnt/c/Users/CHONGONG/Documents/Codex/[date]\[session]\` (WSL)
+   ```bash
+   cd /home/leonel/code/enterprise-network-labs
+   git pull origin main
+   ```
+3. Codex's session files are at:
+   - Windows: `C:\Users\CHONGONG\Documents\Codex\[date]\[session]\`
+   - WSL: `/mnt/c/Users/CHONGONG/Documents/Codex/[date]/[session]/`
 
 ### VS Code or WSL → Codex
 
-1. Commit and push your changes first:
-
-```bash
-git add .
-git commit -m "your message"
-git push origin main
-```
-
-2. Open Codex with the standard startup prompt — it reads GitHub and picks up your changes
+1. Push any changes:
+   ```bash
+   git add . && git commit -m "message" && git push origin main
+   ```
+2. Open Codex with the standard startup prompt — it reads GitHub and picks up your push
 
 ### Claude Code → Codex
 
 1. Claude commits and pushes whatever it worked on
-2. Open Codex with the standard startup prompt — fully in sync via GitHub
+2. Open Codex with the standard startup prompt — fully in sync
 
 ### VS Code ↔ WSL Terminal
 
-These share the same filesystem — no sync needed. Changes made in VS Code are instantly visible in WSL terminal and vice versa.
+Same filesystem — no sync needed. Changes are instant across both.
 
 ---
 
-## 5. What to Say to Each Tool
+## 8. What to Say to Each Tool
 
-### Codex — Per Phase
+### Codex — start of a phase
 
-**Start of phase:**
 ```
-We are on Project 8, Phase 2 — IPsec IKEv2 encryption.
-Write the proposed configuration for HQ-RTR1 and BR-RTR1.
-Save to your session folder.
-Label it PENDING-CLAUDE-REVIEW — I will take it to Claude before applying to CML.
-```
-
-**After verification passes:**
-```
-Phase 2 verified in CML. Save the verification output to your session folder.
-Update CODEX-LOG.md on GitHub with what we completed today and where we left off.
+Project 8, Phase 2 — IPsec IKEv2 encryption.
+Write the proposed config for HQ-RTR1 and BR-RTR1.
+Use [CODEX-PROPOSED] format. Save to session folder.
+I will take it to Claude before applying to CML.
 ```
 
-**End of final phase (project complete):**
+### Codex — after phase verified in CML
+
 ```
-All phases are complete and verified. Save everything to your session folder.
-Update CODEX-LOG.md: project complete, list all files saved, include the Windows session folder path.
-Claude will handle the GitHub push for the full project.
+Phase 2 verified. Save the verification output to the session folder.
+Update CODEX-LOG.md on GitHub: what was done, where we left off.
 ```
 
-### Claude — Per Phase
+### Codex — project complete
 
-**Before applying to CML:**
 ```
-Review this Phase X config for Project 8 before I apply it to CML.
-[paste config]
-```
-
-**After all phases done:**
-```
-Project 8 is complete. All phases verified.
-Codex saved the files to: C:\Users\CHONGONG\Documents\Codex\[date]\[session]\
-Pull the latest, review the full project, push to GitHub, and mark it complete in README.
+All phases complete and verified. Save everything to session folder.
+Update CODEX-LOG.md: project complete, list all files, include the full session folder path.
 ```
 
-**To check on Codex's work:**
+### Claude — review before CML
+
 ```
-Check what Codex did — read CODEX-LOG.md and the latest session files.
+[paste CODEX-PROPOSED block]
+Review this Phase X config before I apply it to CML.
+```
+
+### Claude — final push
+
+```
+Project 8 complete. Codex session folder:
+C:\Users\CHONGONG\Documents\Codex\[date]\[session-name]\
+Review the full project, push to GitHub, mark P08 complete in README.
+```
+
+### Claude — check Codex work
+
+```
+Check what Codex did — read CODEX-LOG.md and tell me status.
 ```
 
 ---
 
-## 6. Where Files Live
+## 9. Where Files Live
 
-| What | Location |
-|------|----------|
-| Live git repo (WSL) | `/home/leonel/code/enterprise-network-labs/` |
-| Same repo (Windows path) | `\\wsl.localhost\Ubuntu\home\leonel\code\enterprise-network-labs\` |
-| Same repo (WSL from Windows) | `/mnt/c/...` does NOT apply — repo is in WSL, not Windows |
+| What | Path |
+|------|------|
+| Git repo (WSL) | `/home/leonel/code/enterprise-network-labs/` |
+| Git repo (Windows UNC) | `\\wsl.localhost\Ubuntu\home\leonel\code\enterprise-network-labs\` |
 | Codex session output | `C:\Users\CHONGONG\Documents\Codex\[date]\[session]\` |
 | Codex session output (from WSL) | `/mnt/c/Users/CHONGONG/Documents/Codex/[date]/[session]/` |
-| Codex chat history (JSONL) | `C:\Users\CHONGONG\.codex\sessions\YYYY\MM\DD\` |
+| Codex chat history (raw JSONL) | `C:\Users\CHONGONG\.codex\sessions\YYYY\MM\DD\` |
 | GitHub | `https://github.com/vushueh/enterprise-network-labs` |
+| Workflow reference (this file) | `https://github.com/vushueh/enterprise-network-labs/blob/main/WORKFLOW-REFERENCE.md` |
 
 ---
 
-## 7. Project Close-Out Checklist
-
-When a project is 100% complete:
+## 10. Project Close-Out Checklist
 
 ```
 □ All phases built and verified in CML
-□ Break/fix exercise done
+□ Break/fix exercise done and documented
 □ All configs saved in Codex session folder
 □ All verification outputs saved in Codex session folder
+□ Codex updated CODEX-LOG.md with full summary + session folder path
 □ Tell Claude: "Project X complete — push to GitHub"
-□ Claude reviews, compiles, pushes
+□ Claude reviews, compiles, pushes all files
 □ Claude marks project ✅ in README.md
-□ Claude archives CLAUDE-REVIEW.md entries for that project
-□ Claude adds clean separator to CODEX-LOG.md for next project
-□ Confirm on GitHub that all files are present and README is updated
+□ Claude archives CLAUDE-REVIEW.md entries for completed project
+□ Claude adds separator to CODEX-LOG.md for next project
+□ Verify on GitHub: all files present, README updated
 □ Ready for next project
 ```
 
 ---
 
-## 8. Quick Reference Card
+## 11. Quick Reference Card
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REPO:     vushueh/enterprise-network-labs (main)
 WSL:      /home/leonel/code/enterprise-network-labs/
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WORKFLOW: github.com/vushueh/enterprise-network-labs/blob/main/WORKFLOW-REFERENCE.md
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-SYNC (run on any tool after opening):
+SYNC (every tool, every session):
   git pull origin main
 
-CODEX SESSION START:
-  "Read AGENTS.md, CLAUDE-REVIEW.md, CODEX-LOG.md, README.md
-   from vushueh/enterprise-network-labs. Any open items? Where did we leave off?"
+CODEX SESSION START (paste this every time):
+  "Read WORKFLOW-REFERENCE.md, AGENTS.md, CLAUDE-REVIEW.md,
+   CODEX-LOG.md, README.md from vushueh/enterprise-network-labs.
+   Any OPEN items? Where did we leave off? What's next?"
 
-CODEX PHASE SAVE:
-  "Phase X done. Save configs + verification to session folder.
-   Update CODEX-LOG.md on GitHub."
+LAUNCH CLAUDE CODE (from VS Code terminal or WSL):
+  cd /home/leonel/code/enterprise-network-labs
+  git pull origin main
+  claude
 
-BEFORE APPLYING ANY CONFIG TO CML:
-  Paste to Claude: "Review this Phase X config before I apply it to CML"
-  Wait for Claude approval. Then apply.
+BEFORE ANY CONFIG GOES ON A CML DEVICE:
+  Copy [CODEX-PROPOSED] block → paste to Claude
+  Wait for [CLAUDE-REVIEW] APPROVED → then apply
 
-PROJECT COMPLETE → GITHUB PUSH:
-  Tell Claude: "Project X complete. Files at C:\Users\CHONGONG\Documents\Codex\[date]\[session]\
-  Review and push to GitHub."
+PHASE COMPLETE:
+  Tell Codex: "Phase X done. Save to session folder. Update CODEX-LOG.md."
 
-CLAUDE REVIEWS CODEX WORK:
-  "Check what Codex did" → Claude reads CODEX-LOG.md + session JSONL files
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROJECT COMPLETE → PUSH:
+  Tell Claude: "Project X done. Session folder: C:\Users\CHONGONG\Documents\Codex\[date]\[session]\"
+  Claude reviews + pushes to GitHub
+
+CODEX SESSION FOLDER (auto-created by Codex):
+  C:\Users\CHONGONG\Documents\Codex\YYYY-MM-DD\[short-session-name]\
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ---
 
-## 9. Current Project Status
+## 12. Current Project Status
 
 | # | Project | Status |
 |---|---------|--------|
