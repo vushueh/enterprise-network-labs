@@ -85,21 +85,26 @@ Step 1 — Codex proposes
    Saves to its Windows session folder (see Section 5 for how to create it)
    Does NOT apply anything to CML — always waits for Claude approval
 
-Step 2 — You bring it to Claude
-   Copy the [CODEX-PROPOSED] block from Codex chat
-   Paste to Claude Code and say: "Review this before I apply to CML"
+Step 2 — Switch to Claude (no copy-paste needed)
+   Open Claude Code and say:
+   "Read Codex's latest session and review the Phase X config before I apply it to CML"
+   Claude reads the Codex session file directly — finds the proposed config automatically
    Claude responds with [CLAUDE-REVIEW]: APPROVED or CORRECTIONS REQUIRED
 
-Step 3 — Feed Claude's response back to Codex (if corrections needed)
-   Copy Claude's [CLAUDE-REVIEW] block
-   Paste it into Codex — Codex updates the config and confirms it's ready
+   ✅ If APPROVED → skip Step 3, go straight to Step 4
+   ✏️  If CORRECTIONS REQUIRED → do Step 3
+
+Step 3 — Paste corrections back to Codex (only if corrections needed)
+   Copy Claude's [CLAUDE-REVIEW] block (one paste, one direction)
+   Paste into Codex chat — Codex updates its config and confirms ready
 
 Step 4 — Apply to CML
-   Take the approved config and apply it to CML devices manually
+   Take the approved/corrected config and apply to CML devices manually
    Run verification commands
 
-Step 5 — Paste verification output back
-   Paste CML output to Claude → Claude confirms it looks correct
+Step 5 — Paste verification output to Claude
+   Paste the CML show command output to Claude
+   Claude confirms it looks correct
    If wrong: fix in CML, re-verify, paste again
 
 Step 6 — Save and log
@@ -380,9 +385,11 @@ Update CODEX-LOG.md: project complete, list all files, include the full session 
 ### Claude — review before CML
 
 ```
-[paste CODEX-PROPOSED block]
-Review this Phase X config before I apply it to CML.
+Read Codex's latest session and review the Phase X config before I apply it to CML.
 ```
+
+No copy-paste needed. Claude reads the Codex session file directly.
+Only paste something to Claude if you want to show a specific snippet or error message.
 
 ### Claude — final push
 
@@ -456,8 +463,11 @@ LAUNCH CLAUDE CODE (from VS Code terminal or WSL):
   claude
 
 BEFORE ANY CONFIG GOES ON A CML DEVICE:
-  Copy [CODEX-PROPOSED] block → paste to Claude
-  Wait for [CLAUDE-REVIEW] APPROVED → then apply
+  Switch to Claude and say:
+  "Read Codex's latest session and review the Phase X config"
+  Claude reads Codex session file directly — no copy-paste needed
+  If APPROVED → apply to CML
+  If CORRECTIONS → paste Claude's [CLAUDE-REVIEW] back to Codex only
 
 PHASE COMPLETE:
   Tell Codex: "Phase X done. Save to session folder. Update CODEX-LOG.md."
