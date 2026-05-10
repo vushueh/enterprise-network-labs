@@ -1,0 +1,12 @@
+# Enforce LF line endings for all text files
+# Prevents CRLF noise when Codex (Windows) edits files in this WSL repo
+
+* text=auto eol=lf
+
+# Explicitly mark binary files
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
