@@ -175,27 +175,28 @@ Copy Claude's `[CLAUDE-REVIEW]` block and paste it into Codex. Codex updates its
 
 ---
 
-## 5. How to Create the Codex Session Folder
+## 5. How the Codex Session Folder Works
 
-Codex Desktop creates the session folder **automatically** based on the working directory you set and the conversation title. You do not create it manually.
+You do not create the session folder. You do not type any path.
 
-**How it works:**
+**What you do:**
 1. Open Codex Desktop
-2. Start a new conversation
-3. Set the working directory when prompted — use this format:
+2. Click **New Chat**
+3. Give the conversation a short descriptive title — example: `Project 8 Phase 1 GRE Tunnel`
+4. That's it. Codex automatically creates:
    ```
-   C:\Users\CHONGONG\Documents\Codex\[today's date]\[short session name]
+   C:\Users\CHONGONG\Documents\Codex\[today's date]\[title-as-hyphenated-name]\
    ```
-   Example: `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-vpn`
 
-4. Codex creates that folder automatically if it doesn't exist
-5. All files Codex saves during that session go into that folder
+**Example:** Title `Project 8 Phase 1 GRE Tunnel` → Codex creates:
+```
+C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-phase-1-gre-tunnel\
+```
 
-**Date format:** `YYYY-MM-DD` (example: `2026-05-10`)
-**Session name:** short, lowercase, hyphens (example: `project-8-phase-1`, `p8-ipsec`, `p8-breakfix`)
+All files Codex saves during that session go there automatically.
 
 **To see what Codex saved after a session:**
-- Windows Explorer: `C:\Users\CHONGONG\Documents\Codex\`
+- Windows Explorer → `C:\Users\CHONGONG\Documents\Codex\`
 - WSL terminal: `ls /mnt/c/Users/CHONGONG/Documents/Codex/`
 
 ---
@@ -211,8 +212,8 @@ Always sync first. GitHub is the truth — your local copy may be behind.
 ### Codex Desktop
 
 1. Open Codex Desktop
-2. Start new conversation → set working directory:
-   `C:\Users\CHONGONG\Documents\Codex\[today's date]\[session-name]`
+2. Click **New Chat** — give it a short descriptive title like `Project 8 Phase 1 GRE Tunnel`
+   Codex automatically creates the working directory from the date + title. You do nothing.
 3. Paste this startup prompt:
 
 ```
@@ -476,8 +477,9 @@ PROJECT COMPLETE → PUSH:
   Tell Claude: "Project X done. Session folder: C:\Users\CHONGONG\Documents\Codex\[date]\[session]\"
   Claude reviews + pushes to GitHub
 
-CODEX SESSION FOLDER (auto-created by Codex):
-  C:\Users\CHONGONG\Documents\Codex\YYYY-MM-DD\[short-session-name]\
+CODEX SESSION FOLDER (auto-created — you do nothing):
+  Just title your chat descriptively. Codex creates the folder.
+  Find it later at: C:\Users\CHONGONG\Documents\Codex\
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
