@@ -18,16 +18,26 @@ GitHub: `vushueh/enterprise-network-labs` (main branch)
 
 ## File storage rules — CRITICAL
 
-All project files MUST be saved to the WSL repo, not to the Windows Codex working directory.
+All project files MUST be saved to the live WSL git repo. There are two valid paths to it:
 
-| Save to | ✅ Correct path | ❌ Wrong path |
-|---------|---------------|--------------|
-| Configs | `/home/leonel/code/enterprise-network-labs/project-XX-name/configs/` | `C:\Users\CHONGONG\Documents\Codex\...` |
-| Verification | `/home/leonel/code/enterprise-network-labs/project-XX-name/verification-outputs/` | anywhere outside the WSL repo |
-| READMEs, docs | `/home/leonel/code/enterprise-network-labs/project-XX-name/` | — |
+| Access method | Path |
+|--------------|------|
+| WSL shell (preferred) | `/home/leonel/code/enterprise-network-labs/` |
+| Windows UNC (fallback) | `\\wsl.localhost\Ubuntu\home\leonel\code\enterprise-network-labs\` |
 
-From Git Bash / Windows tools, the same paths are accessible as:
-`//wsl.localhost/Ubuntu/home/leonel/code/enterprise-network-labs/`
+**NEVER save to these — they are wrong locations:**
+- `C:\Users\CHONGONG\Documents\Codex\...` — Codex session temp folder, not tracked by git
+- `C:\home\leonel\code\enterprise-network-labs\` — stale partial copy, no `.git`, do not use
+
+If your shell cannot run `wsl.exe` directly, use the Windows UNC path for file writes and run git via:
+```powershell
+wsl.exe -- git -C /home/leonel/code/enterprise-network-labs add project-XX-name/
+wsl.exe -- git -C /home/leonel/code/enterprise-network-labs commit -m "PXX: phase Y — description"
+```
+Or use the full WSL invocation:
+```powershell
+wsl.exe -- bash -c "cd /home/leonel/code/enterprise-network-labs && git add project-08-site-to-site-vpn/ && git commit -m 'P08: phase 1 — baseline verification'"
+```
 
 ---
 
