@@ -151,3 +151,20 @@ show ip ospf neighbor detail
 - `tunnel protection ipsec profile P08-IPSEC-PROFILE` under Tunnel0 on both routers.
 
 **Left off at:** Phase 2 config is proposed but not approved. Next step is to have Claude review `phase2-ikev2-ipsec-proposed.md` before applying anything to CML.
+
+---
+
+## 2026-05-11 — Project 8 Phase 2 Claude correction incorporated
+
+**Project:** P08 — Site-to-Site VPN
+**Claude reviewed:** yes — `CLAUDE-REVIEW.md` marked one correction required
+**Correction incorporated locally:** changed `crypto ikev2 policy P08-IKEV2-POLICY` to `crypto ikev2 policy 10` on both HQ-RTR1 and BR-RTR1.
+**Corrected config saved to Windows session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-read-workflow-reference-md\project-08\configs\phase2-ikev2-ipsec-proposed.md`
+
+### Claude-confirmed items to keep
+- Peer IPs use physical WAN endpoints `10.0.0.1` and `10.0.0.2`.
+- AES-256 / SHA-256 / DH group 14 remain correct.
+- Transform set remains `mode transport` for GRE over IPsec.
+- `set pfs group14`, `dpd 10 3 periodic`, and `tunnel protection ipsec profile P08-IPSEC-PROFILE` remain correct.
+
+**Left off at:** Use the corrected Phase 2 config with numeric IKEv2 policy `10`. Apply to both routers before testing, then verify `show crypto session`, `show crypto ikev2 sa`, `show ip ospf neighbor`, and `show crypto ipsec sa`.
