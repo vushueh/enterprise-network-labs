@@ -692,3 +692,39 @@ write memory
 Ping returned 100%. Syslog messages began appearing on HQ-SYSLOG immediately.
 
 **Lesson:** When migrating a server to a new segment, audit all downstream switchport VLAN assignments for nodes remaining on the old segment. A syslog collector receiving nothing silently is much harder to notice than a broken ping — always verify with `show logging` hit counters AND actual messages on the collector.
+
+---
+
+## Project 08 — Site-to-Site VPN
+
+### Issue P08-T01 — IKEv2 policy name rejected by IOL
+
+**Date:** 2026-05-11
+**Phase:** Phase 2 — IKEv2/IPsec configuration
+**Symptom:** Proposed config used `crypto ikev2 policy P08-IKEV2-POLICY` (named string). Caught by Claude review before CML.
+**Root cause:** IOL requires a numeric priority integer for `crypto ikev2 policy <1-65535>`. Named strings fail silently or are rejected.
+**Fix:** Changed to `crypto ikev2 policy 10` on both routers before applying.
+**Lesson:** IKEv2 policy syntax is platform-specific. Always verify numeric vs. named before applying to CML. The Claude pre-review step caught this without touching any device.
+
+---
+
+### Issue P08-T02 — PFS shows N at SA level on IOL
+
+**Date:** 2026-05-11
+**Phase:** Phase 2/3/4 verification
+**Symptom:** `show crypto ipsec sa | include PFS` showed `PFS (Y/N): N` even though `set pfs group14` was confirmed in running config.
+**Root cause:** IOL platform limitation — stores the command but does not perform DH exchange during CREATE_CHILD_SA. `show crypto ipsec profile` correctly shows `PFS (Y/N): Y`.
+**Fix:** No fix needed. Documented as IOL caveat. On physical hardware or IOS XE, the SA-level output would show Y.
+**Lesson:** Always distinguish profile-level config state from SA-level negotiation state. They can disagree on IOL.
+
+---
+
+### Issue P08-T03 — Phase 4 IKEv2 proposal mismatch break/fix
+
+**Date:** 2026-05-11
+**Phase:** Phase 4 — Deliberate break/fix
+**Fault:** BR-RTR1 IKEv2 proposal changed to AES-128 while HQ-RTR1 remained AES-256. SAs cleared to force immediate renegotiation.
+**Symptom:** Tunnel0 line protocol down, OSPF neighbor over Tunnel0 dropped to DOWN, crypto session DOWN with 0 active SAs.
+**Diagnosis:** `show crypto ikev2 sa` returning empty (not just traffic down — no IKE SA at all). `show running-config | section crypto ikev2 proposal` on both routers confirmed mismatch. No debug needed.
+**Fix:** Restored BR-RTR1 proposal to AES-256. Cleared failed crypto state. VPN recovered in under 2 seconds; OSPF reconverged in under 1 second.
+**Lesson:** Empty `show crypto ikev2 sa` output means the IKEv2 control-plane negotiation itself failed. Compare proposals on both peers first — this resolves the majority of site-to-site VPN outages without any debug.

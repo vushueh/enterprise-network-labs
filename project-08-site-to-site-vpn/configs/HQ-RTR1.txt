@@ -1,0 +1,107 @@
+! ============================================================
+! DEVICE: HQ-RTR1 | PROJECT: 08 — Site-to-Site VPN
+! Role: Headquarters router — GRE/IPsec tunnel originator
+! Builds on: Projects 01-07 baseline config
+! ============================================================
+
+! ============================================================
+! PHASE 1 — GRE Tunnel (no encryption)
+! ============================================================
+
+interface Tunnel0
+ description GRE-TO-BR-RTR1-TUN0-P08
+ ip address 10.0.100.1 255.255.255.252
+ ip mtu 1400
+ ! WHY: Reduce MTU to 1400 to account for GRE (24 bytes) and IPsec transport
+ ! overhead. Prevents fragmentation of full-size Ethernet frames inside the tunnel.
+ ip tcp adjust-mss 1360
+ ! WHY: Clamp TCP MSS so hosts never send segments that would require tunnel fragmentation.
+ ip ospf 1 area 0
+ ip ospf network point-to-point
+ ! WHY: Point-to-point suppresses DR/BDR election on a two-router tunnel — faster adjacency.
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ! WHY: MD5 authentication on the tunnel interface ensures no rogue router can inject
+ ! OSPF LSAs through the GRE tunnel.
+ ip ospf cost 5
+ ! WHY: Cost 5 makes Tunnel0 the lowest-cost path to Branch (metric 15 total).
+ ! Physical direct link costs 100, WAN-RTR1 path costs 10 — tunnel is always preferred.
+ tunnel source Ethernet0/1
+ tunnel destination 10.0.0.2
+ tunnel mode gre ip
+ no shutdown
+
+router ospf 1
+ no passive-interface Tunnel0
+ ! WHY: OSPF must send hellos on Tunnel0 to form the encrypted adjacency.
+ ! Without this, passive-interface would suppress hellos and the tunnel OSPF
+ ! adjacency would never form.
+
+! ============================================================
+! PHASE 2 — IKEv2/IPsec Encryption for GRE Tunnel
+! ============================================================
+
+! --- IKEv2 Proposal ---
+! WHY: Defines Phase 1 (IKE_SA_INIT) security parameters. Both peers must agree
+! on encryption, integrity, and DH group before the IKE security association forms.
+crypto ikev2 proposal P08-IKEV2-PROP
+ encryption aes-cbc-256
+ ! WHY: AES-256 provides 256-bit symmetric encryption for IKEv2 control-plane messages.
+ integrity sha256
+ ! WHY: SHA-256 HMAC for IKE message integrity — stronger than SHA-1 or MD5.
+ group 14
+ ! WHY: DH group 14 (2048-bit MODP) for secure key exchange without ECDH complexity.
+
+! --- IKEv2 Policy ---
+! WHY: Makes the proposal available to the IKEv2 negotiation engine.
+! IOL requires a numeric priority — named policies are not accepted.
+crypto ikev2 policy 10
+ proposal P08-IKEV2-PROP
+
+! --- IKEv2 Keyring ---
+! WHY: Identifies the remote peer and holds pre-shared keys for mutual authentication.
+! Peer is identified by its physical WAN IP (10.0.0.2), not the Tunnel0 overlay IP,
+! because IKE/IPsec sessions form between the GRE outer endpoints.
+crypto ikev2 keyring P08-IKEV2-KEYRING
+ peer BR-RTR1
+  address 10.0.0.2
+  pre-shared-key local P08IKEV2LabKey2026
+  pre-shared-key remote P08IKEV2LabKey2026
+
+! --- IKEv2 Profile ---
+! WHY: Binds peer identity matching, authentication method, keyring, and DPD into
+! a single named object. The IPsec profile references this to authorize Tunnel0 peers.
+crypto ikev2 profile P08-IKEV2-PROFILE
+ match identity remote address 10.0.0.2 255.255.255.255
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local P08-IKEV2-KEYRING
+ dpd 10 3 periodic
+ ! WHY: DPD sends liveness probes every 10 seconds, declares peer dead after 3 failures.
+ ! Enables faster crypto-peer failure detection than relying on traffic timeout alone.
+
+! --- IPsec Transform Set ---
+! WHY: Defines ESP (data-plane) encryption and authentication for the GRE payload.
+crypto ipsec transform-set P08-IPSEC-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+ ! WHY: Transport mode for GRE over IPsec. GRE already provides the tunnel overlay;
+ ! transport mode encrypts the GRE packet without adding a second full IP header.
+ ! Tunnel mode would add a redundant outer IP header, wasting 20 bytes per packet.
+
+! --- IPsec Profile ---
+! WHY: Packages the transform set and IKEv2 profile so Tunnel0 can apply
+! tunnel protection with a single profile reference.
+crypto ipsec profile P08-IPSEC-PROFILE
+ set transform-set P08-IPSEC-TS
+ set ikev2-profile P08-IKEV2-PROFILE
+ set pfs group14
+ ! WHY: PFS group14 forces a fresh DH exchange for each IPsec rekey so that
+ ! compromise of one session key does not expose past sessions.
+ ! Note: IOL platform shows PFS (Y/N): N in show crypto ipsec sa (SA level),
+ ! but show crypto ipsec profile P08-IPSEC-PROFILE correctly shows PFS (Y/N): Y.
+
+! --- Apply IPsec Protection to Tunnel0 ---
+interface Tunnel0
+ tunnel protection ipsec profile P08-IPSEC-PROFILE
+ ! WHY: Attaches the IPsec profile to Tunnel0 so every GRE packet between
+ ! 10.0.0.1 (HQ) and 10.0.0.2 (Branch) is encrypted with AES-256/SHA-256.

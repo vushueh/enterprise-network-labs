@@ -26,7 +26,7 @@ Each project follows the **Build → Verify → Break → Fix** method — every
 | 05 | [Internet + NAT](project-05-internet-nat/) | PAT, static NAT, extended ACLs, object groups | ✅ |
 | 06 | [Security Hardening](project-06-security-hardening/) | Port security, DHCP snooping, DAI, IP Source Guard | ✅ |
 | 07 | [ASAv Firewall](project-07-asav-firewall/) | ASA security levels, stateful inspection, DMZ, packet-tracer | ✅ |
-| 08 | Site-to-Site VPN | GRE/IPsec, IKEv2, tunnel OSPF | ⬜ |
+| 08 | [Site-to-Site VPN](project-08-site-to-site-vpn/) | GRE/IPsec, IKEv2, tunnel OSPF, DPD, PFS | ✅ |
 | 09 | Monitoring | Syslog, SNMPv3, NetFlow, NTP auth, EEM, config archive | ⬜ |
 | 10 | AAA + Access Control | TACACS+, Radius, 802.1X, privilege levels, parser views | ⬜ |
 | 11 | QoS | MQC, DSCP marking, NBAR, priority queuing, voice VLAN | ⬜ |

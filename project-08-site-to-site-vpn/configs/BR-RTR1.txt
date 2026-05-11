@@ -1,0 +1,97 @@
+! ============================================================
+! DEVICE: BR-RTR1 | PROJECT: 08 — Site-to-Site VPN
+! Role: Branch router — GRE/IPsec tunnel peer
+! Builds on: Projects 01-07 baseline config
+! ============================================================
+
+! ============================================================
+! PHASE 1 — GRE Tunnel (no encryption)
+! ============================================================
+
+interface Tunnel0
+ description GRE-TO-HQ-RTR1-TUN0-P08
+ ip address 10.0.100.2 255.255.255.252
+ ip mtu 1400
+ ! WHY: Reduce MTU to 1400 to account for GRE (24 bytes) and IPsec transport
+ ! overhead. Prevents fragmentation of full-size Ethernet frames inside the tunnel.
+ ip tcp adjust-mss 1360
+ ! WHY: Clamp TCP MSS so hosts never send segments that would require tunnel fragmentation.
+ ip ospf 1 area 0
+ ip ospf network point-to-point
+ ! WHY: Point-to-point suppresses DR/BDR election on a two-router tunnel — faster adjacency.
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ! WHY: MD5 authentication on the tunnel interface prevents rogue OSPF injection
+ ! through the GRE tunnel.
+ ip ospf cost 5
+ ! WHY: Cost 5 makes Tunnel0 the lowest-cost path to HQ (metric 15 total).
+ ! Physical direct link costs 100, WAN-RTR1 path costs 10 — tunnel is always preferred.
+ tunnel source Ethernet0/1
+ tunnel destination 10.0.0.1
+ tunnel mode gre ip
+ no shutdown
+
+router ospf 1
+ no passive-interface Tunnel0
+ ! WHY: OSPF must send hellos on Tunnel0 to form the encrypted adjacency.
+
+! ============================================================
+! PHASE 2 — IKEv2/IPsec Encryption for GRE Tunnel
+! ============================================================
+
+! --- IKEv2 Proposal ---
+! WHY: Must match HQ-RTR1 exactly. A mismatch here is the Phase 4 break/fix fault:
+! the GRE tunnel interface can stay up while IKEv2/IPsec fails to negotiate.
+crypto ikev2 proposal P08-IKEV2-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+
+! --- IKEv2 Policy ---
+! WHY: Makes the proposal available to the IKEv2 negotiation engine.
+! IOL requires a numeric priority — named policies are not accepted.
+crypto ikev2 policy 10
+ proposal P08-IKEV2-PROP
+
+! --- IKEv2 Keyring ---
+! WHY: Identifies HQ-RTR1 by its physical WAN IP (10.0.0.1).
+! IKE/IPsec sessions form between the GRE outer endpoints, not the Tunnel0 IPs.
+crypto ikev2 keyring P08-IKEV2-KEYRING
+ peer HQ-RTR1
+  address 10.0.0.1
+  pre-shared-key local P08IKEV2LabKey2026
+  pre-shared-key remote P08IKEV2LabKey2026
+
+! --- IKEv2 Profile ---
+! WHY: Binds peer identity matching, authentication method, keyring, and DPD
+! into a single named object referenced by the IPsec profile.
+crypto ikev2 profile P08-IKEV2-PROFILE
+ match identity remote address 10.0.0.1 255.255.255.255
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local P08-IKEV2-KEYRING
+ dpd 10 3 periodic
+ ! WHY: DPD liveness probes every 10 seconds, peer declared dead after 3 failures.
+
+! --- IPsec Transform Set ---
+! WHY: Defines ESP data-plane encryption/authentication for the GRE payload.
+crypto ipsec transform-set P08-IPSEC-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+ ! WHY: Transport mode for GRE over IPsec. GRE already creates the overlay;
+ ! transport mode encrypts without a redundant outer IP tunnel header.
+
+! --- IPsec Profile ---
+! WHY: Packages the transform set and IKEv2 profile for Tunnel0 tunnel protection.
+crypto ipsec profile P08-IPSEC-PROFILE
+ set transform-set P08-IPSEC-TS
+ set ikev2-profile P08-IKEV2-PROFILE
+ set pfs group14
+ ! WHY: PFS group14 forces a fresh DH exchange on each IPsec rekey.
+ ! Note: IOL platform shows PFS (Y/N): N in show crypto ipsec sa (SA level),
+ ! but show crypto ipsec profile P08-IPSEC-PROFILE correctly shows PFS (Y/N): Y.
+
+! --- Apply IPsec Protection to Tunnel0 ---
+interface Tunnel0
+ tunnel protection ipsec profile P08-IPSEC-PROFILE
+ ! WHY: Encrypts every GRE packet between 10.0.0.2 (Branch) and 10.0.0.1 (HQ)
+ ! using AES-256/SHA-256 without changing the Tunnel0 addressing or OSPF design.

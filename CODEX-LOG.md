@@ -289,3 +289,21 @@ show crypto ipsec profile P08-IPSEC-PROFILE
 ```
 
 **Left off at:** Project 8 build/verify/break/fix phases are complete. Remaining work is final screenshot capture, PFS profile follow-up, and final GitHub documentation handoff.
+
+---
+
+## 2026-05-11 — Project 8 complete, pushed to GitHub
+
+**Project:** P08 — Site-to-Site VPN
+**Status:** COMPLETE — all phases verified, documentation pushed to GitHub
+**Claude compiled and pushed:** yes
+**GitHub folder:** `project-08-site-to-site-vpn/`
+
+### PFS follow-up resolved
+- `show running-config | section crypto ipsec profile` confirmed `set pfs group14` present on both routers.
+- `show crypto ipsec profile P08-IPSEC-PROFILE` confirmed `PFS (Y/N): Y, DH group: group14`.
+- IOL platform limitation documented in decision-log.md (DL-05) and TROUBLESHOOTING-LOG.md (P08-T02).
+
+**Left off at:** Project 8 is closed. Next project is Project 9 — Monitoring and Visibility (Syslog, SNMPv3, NetFlow, NTP auth, EEM, config archive). Read the project spec in `.agents/skills/cml-enterprise-labs/references/projects-02-13.md` at the start of the next session.
+
+<!-- Codex appends new session entries below this line — Project 09 and beyond -->
