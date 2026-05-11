@@ -229,3 +229,24 @@ show crypto ipsec profile P08-IPSEC-PROFILE
 ```
 
 **Left off at:** Phase 3 complete. Next step is Project 8 Phase 4 break/fix challenge, after confirming or resolving the PFS profile follow-up.
+
+---
+
+## 2026-05-11 — Project 8 Phase 4 break/fix plan prepared
+
+**Project:** P08 — Site-to-Site VPN
+**Phase prepared this session:** Phase 4 — deliberate IKEv2 proposal mismatch break/fix
+**Configs applied to CML by:** not yet; plan only
+**Plan saved to Windows session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-read-workflow-reference-md\project-08\verification-outputs\phase4-breakfix-ikev2-mismatch-plan.md`
+
+### Planned fault
+- On BR-RTR1 only, change `P08-IKEV2-PROP` from AES-256 to AES-128.
+- Clear crypto SAs to force renegotiation so the mismatch appears immediately.
+- Expected symptom: IKEv2/IPsec does not cleanly rebuild; Tunnel0 OSPF may drop or traffic over the protected GRE tunnel may fail.
+
+### Planned fix
+- Restore BR-RTR1 proposal to AES-256.
+- Clear failed crypto state if needed.
+- Verify `show crypto session` returns `UP-ACTIVE`, `show crypto ikev2 sa` returns `READY`, OSPF returns `FULL/-` over Tunnel0, and traceroute again uses the Tunnel0 next hop.
+
+**Left off at:** Ready to execute Phase 4 break/fix in CML. Capture pre-fault, broken-state, diagnosis, fix, and post-fix proof.
