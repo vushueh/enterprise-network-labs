@@ -131,3 +131,23 @@ show ip ospf neighbor detail
 - Existing physical OSPF adjacencies remain present as fallback paths.
 
 **Left off at:** Project 8 Phase 1 complete. Next step is Phase 2: propose IKEv2/IPsec encryption for the GRE tunnel in `[CODEX-PROPOSED]` format, have Claude review it, then apply only after approval.
+
+---
+
+## 2026-05-11 — Project 8 Phase 2 proposed for Claude review
+
+**Project:** P08 — Site-to-Site VPN
+**Phase proposed this session:** Phase 2 — IKEv2/IPsec encryption on the GRE tunnel
+**Claude reviewed:** pending
+**Config saved to Windows session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-read-workflow-reference-md\project-08\configs\phase2-ikev2-ipsec-proposed.md`
+
+### What was proposed
+- IKEv2 proposal using AES-256, SHA-256, DH group 14.
+- Matching IKEv2 policy on HQ-RTR1 and BR-RTR1.
+- IKEv2 keyring with HQ physical endpoint `10.0.0.1` and Branch physical endpoint `10.0.0.2`.
+- IKEv2 profile using pre-shared-key authentication and DPD.
+- IPsec transform set using ESP AES-256 and ESP SHA-256 HMAC in transport mode.
+- IPsec profile bound to the IKEv2 profile, with PFS group 14.
+- `tunnel protection ipsec profile P08-IPSEC-PROFILE` under Tunnel0 on both routers.
+
+**Left off at:** Phase 2 config is proposed but not approved. Next step is to have Claude review `phase2-ikev2-ipsec-proposed.md` before applying anything to CML.
