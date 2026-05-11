@@ -109,3 +109,25 @@ show ip ospf neighbor detail
 ---
 
 <!-- Codex appends new session entries below this line -->
+
+## 2026-05-11 — Project 8 Phase 1 GRE tunnel verified
+
+**Project:** P08 — Site-to-Site VPN
+**Phase completed this session:** Phase 1 — GRE tunnel without encryption
+**Claude reviewed:** yes — Phase 1 config was already approved in `CLAUDE-REVIEW.md`
+**Configs applied to CML by:** Leonel
+**Verification saved to Windows session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-read-workflow-reference-md\project-08\verification-outputs\phase1-gre-tunnel-verification.md`
+
+### What was verified
+- HQ-RTR1 Tunnel0 is up/up with `10.0.100.1/30`.
+- BR-RTR1 Tunnel0 is up/up with `10.0.100.2/30`.
+- OSPF is FULL over Tunnel0 in both directions.
+- Tunnel0 OSPF network type is POINT_TO_POINT on both routers.
+- Tunnel0 OSPF cost is 5 on both routers.
+- HQ-RTR1 now reaches `10.2.0.0/16` via `10.0.100.2` over Tunnel0 with metric 15.
+- BR-RTR1 now reaches `10.1.0.0/16` via `10.0.100.1` over Tunnel0 with metric 15.
+- Traceroute HQ to Branch shows first hop `10.0.100.2`.
+- Traceroute Branch to HQ shows first hop `10.0.100.1`.
+- Existing physical OSPF adjacencies remain present as fallback paths.
+
+**Left off at:** Project 8 Phase 1 complete. Next step is Phase 2: propose IKEv2/IPsec encryption for the GRE tunnel in `[CODEX-PROPOSED]` format, have Claude review it, then apply only after approval.
