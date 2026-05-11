@@ -45,6 +45,58 @@ Claude appends entries below. Status meanings:
 
 ---
 
+## [OPEN] Project 08 / Phase 2 / HQ-RTR1 + BR-RTR1 — IKEv2/IPsec
+
+**Reviewed by:** Claude Code
+**Date:** 2026-05-11
+**Status:** OPEN — one correction required before applying to CML
+
+### What is correct — do not change
+
+- Peer IPs in keyring (`10.0.0.2` on HQ-RTR1, `10.0.0.1` on BR-RTR1) — correct, IKE forms between physical WAN IPs not tunnel IPs
+- AES-256 / SHA-256 / DH group 14 — exactly per spec
+- `mode transport` in transform set — correct for GRE over IPsec
+- `set pfs group14` in IPsec profile — good addition, keep it
+- `dpd 10 3 periodic` in IKEv2 profile — good addition beyond spec, keep it
+- `tunnel protection ipsec profile P08-IPSEC-PROFILE` on Tunnel0 — correct
+- All verification commands — correct
+
+### Correction required — BOTH routers
+
+**Problem:** `crypto ikev2 policy` uses a name instead of a required priority number.
+
+IOL (IOS) syntax requires an integer `<1-65535>`, not a name. Using a name causes
+`Invalid input detected at '^' marker` — the policy silently fails to create,
+the IKEv2 proposal never activates, and the IPsec SA never forms.
+
+**What Codex wrote:**
+```
+crypto ikev2 policy P08-IKEV2-POLICY
+ proposal P08-IKEV2-PROP
+```
+
+**Corrected version — apply to BOTH HQ-RTR1 and BR-RTR1:**
+```
+crypto ikev2 policy 10
+ proposal P08-IKEV2-PROP
+```
+
+Replace the policy block only. Everything else in the proposed config is unchanged.
+
+### Operational note — apply to both routers before testing
+
+Configure `tunnel protection ipsec profile P08-IPSEC-PROFILE` on both routers
+before running any verification. If only one side has it, the SA negotiation fails
+and OSPF adjacency may drop during the retry loop.
+
+Expected post-apply sequence:
+1. `show crypto session` → UP-ACTIVE (allow 10–15 seconds)
+2. `show crypto ikev2 sa` → READY state
+3. `show ip ospf neighbor` → BR-RTR1 still FULL/- over Tunnel0
+4. `show crypto ipsec sa` → encaps/decaps counters incrementing
+
+---
+
 ## [INFO] Project 08 / Phase 1 / HQ-RTR1 + BR-RTR1 — GRE Tunnel Baseline
 
 **Reviewed by:** Claude Code (independent review against committed configs)
