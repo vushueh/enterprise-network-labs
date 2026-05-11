@@ -199,3 +199,33 @@ show crypto ipsec profile P08-IPSEC-PROFILE
 ```
 
 **Left off at:** Phase 2 core encryption is working. Verify whether `set pfs group14` is present/effective before calling the PFS portion complete or moving to final Phase 2 screenshots.
+
+---
+
+## 2026-05-11 — Project 8 Phase 3 route preference verified
+
+**Project:** P08 — Site-to-Site VPN
+**Phase verified this session:** Phase 3 — verify OSPF prefers tunnel, physical WAN stays as fallback
+**Configs applied to CML by:** no new config; verification phase only
+**Verification saved to Windows session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-read-workflow-reference-md\project-08\verification-outputs\phase3-route-preference-verification.md`
+
+### What was verified
+- HQ-RTR1 and BR-RTR1 both have OSPF `FULL/-` adjacency over Tunnel0.
+- Physical direct adjacency over Ethernet0/1 remains present on both routers with OSPF cost 100.
+- WAN-RTR1 adjacency over Ethernet0/2 remains present on both routers with OSPF cost 10.
+- Tunnel0 remains OSPF point-to-point with cost 5 on both routers.
+- HQ-RTR1 route to `10.2.0.0/16` prefers `10.0.100.2` via Tunnel0 with metric 15.
+- BR-RTR1 route to `10.1.0.0/16` prefers `10.0.100.1` via Tunnel0 with metric 15.
+- HQ traceroute to Branch first hop is `10.0.100.2`.
+- Branch traceroute to HQ first hop is `10.0.100.1`.
+- IPsec ESP counters remain active in both directions with zero send/receive errors.
+
+### Follow-up still open
+`show crypto ipsec sa` still shows `PFS (Y/N): N, DH group: none`. Before final documentation, verify the running IPsec profile on both routers:
+
+```text
+show running-config | section crypto ipsec profile
+show crypto ipsec profile P08-IPSEC-PROFILE
+```
+
+**Left off at:** Phase 3 complete. Next step is Project 8 Phase 4 break/fix challenge, after confirming or resolving the PFS profile follow-up.
