@@ -496,7 +496,7 @@ CODEX SESSION FOLDER (auto-created — you do nothing):
 | 05 | Internet + NAT | ✅ Complete |
 | 06 | Security Hardening | ✅ Complete |
 | 07 | ASAv Firewall | ✅ Complete |
-| 08 | Site-to-Site VPN | 🔄 In Progress |
+| 08 | Site-to-Site VPN | ✅ Complete |
 | 09 | Monitoring | ⬜ |
 | 10 | AAA + Access Control | ⬜ |
 | 11 | QoS | ⬜ |

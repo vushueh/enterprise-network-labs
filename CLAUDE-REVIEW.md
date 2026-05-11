@@ -43,7 +43,9 @@ Claude appends entries below. Status meanings:
 
 <!-- Claude appends persistent review entries below this line -->
 
----
+<!-- ============================================================ -->
+<!-- PROJECT 08 ARCHIVED — all items RESOLVED, project pushed ✅  -->
+<!-- ============================================================ -->
 
 ## [RESOLVED] Project 08 / Phase 2 / HQ-RTR1 + BR-RTR1 — IKEv2/IPsec
 
