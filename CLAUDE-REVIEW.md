@@ -45,55 +45,32 @@ Claude appends entries below. Status meanings:
 
 ---
 
-## [OPEN] Project 08 / Phase 2 / HQ-RTR1 + BR-RTR1 — IKEv2/IPsec
+## [RESOLVED] Project 08 / Phase 2 / HQ-RTR1 + BR-RTR1 — IKEv2/IPsec
 
 **Reviewed by:** Claude Code
 **Date:** 2026-05-11
-**Status:** OPEN — one correction required before applying to CML
+**Status:** RESOLVED — Phase 2 fully verified and complete
 
-### What is correct — do not change
+### Correction applied
+`crypto ikev2 policy P08-IKEV2-POLICY` → `crypto ikev2 policy 10` on both routers.
+Codex applied this from CLAUDE-REVIEW.md. IKEv2 SA formed correctly after fix.
 
-- Peer IPs in keyring (`10.0.0.2` on HQ-RTR1, `10.0.0.1` on BR-RTR1) — correct, IKE forms between physical WAN IPs not tunnel IPs
-- AES-256 / SHA-256 / DH group 14 — exactly per spec
-- `mode transport` in transform set — correct for GRE over IPsec
-- `set pfs group14` in IPsec profile — good addition, keep it
-- `dpd 10 3 periodic` in IKEv2 profile — good addition beyond spec, keep it
-- `tunnel protection ipsec profile P08-IPSEC-PROFILE` on Tunnel0 — correct
-- All verification commands — correct
+### Phase 2 verified
+- IKEv2 SA: READY, AES-CBC-256, SHA256, DH Grp 14, PSK both sides
+- IPsec SA: transport mode, esp-256-aes esp-sha256-hmac, ACTIVE(ACTIVE)
+- GRE protocol 47 protected between 10.0.0.1 ↔ 10.0.0.2
+- encaps/decaps counters incrementing after traceroute
+- OSPF stayed FULL over encrypted Tunnel0
+- Traceroute first hop still 10.0.100.2 / 10.0.100.1
 
-### Correction required — BOTH routers
-
-**Problem:** `crypto ikev2 policy` uses a name instead of a required priority number.
-
-IOL (IOS) syntax requires an integer `<1-65535>`, not a name. Using a name causes
-`Invalid input detected at '^' marker` — the policy silently fails to create,
-the IKEv2 proposal never activates, and the IPsec SA never forms.
-
-**What Codex wrote:**
-```
-crypto ikev2 policy P08-IKEV2-POLICY
- proposal P08-IKEV2-PROP
-```
-
-**Corrected version — apply to BOTH HQ-RTR1 and BR-RTR1:**
-```
-crypto ikev2 policy 10
- proposal P08-IKEV2-PROP
-```
-
-Replace the policy block only. Everything else in the proposed config is unchanged.
-
-### Operational note — apply to both routers before testing
-
-Configure `tunnel protection ipsec profile P08-IPSEC-PROFILE` on both routers
-before running any verification. If only one side has it, the SA negotiation fails
-and OSPF adjacency may drop during the retry loop.
-
-Expected post-apply sequence:
-1. `show crypto session` → UP-ACTIVE (allow 10–15 seconds)
-2. `show crypto ikev2 sa` → READY state
-3. `show ip ospf neighbor` → BR-RTR1 still FULL/- over Tunnel0
-4. `show crypto ipsec sa` → encaps/decaps counters incrementing
+### Platform caveat — PFS on IOL (document in project notes)
+`set pfs group14` is correctly present in the running IPsec profile on both routers.
+However IOL's crypto engine accepts the command but does not perform the additional
+Diffie-Hellman exchange during CREATE_CHILD_SA. `show crypto ipsec sa` reports
+`PFS (Y/N): N` even after `clear crypto session`. This is an IOL platform limitation,
+not a configuration error. On real hardware or IOS XE, this would negotiate correctly
+and display `PFS (Y/N): Y, DH group: DH Group 14`. Config is correct — document the
+caveat in decision-log.md when pushing the project.
 
 ---
 
