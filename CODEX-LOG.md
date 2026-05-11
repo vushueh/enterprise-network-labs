@@ -168,3 +168,34 @@ show ip ospf neighbor detail
 - `set pfs group14`, `dpd 10 3 periodic`, and `tunnel protection ipsec profile P08-IPSEC-PROFILE` remain correct.
 
 **Left off at:** Use the corrected Phase 2 config with numeric IKEv2 policy `10`. Apply to both routers before testing, then verify `show crypto session`, `show crypto ikev2 sa`, `show ip ospf neighbor`, and `show crypto ipsec sa`.
+
+---
+
+## 2026-05-11 — Project 8 Phase 2 IKEv2/IPsec encryption verified with PFS follow-up
+
+**Project:** P08 — Site-to-Site VPN
+**Phase verified this session:** Phase 2 — IKEv2/IPsec encryption on the GRE tunnel
+**Configs applied to CML by:** Leonel
+**Verification saved to Windows session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-read-workflow-reference-md\project-08\verification-outputs\phase2-ikev2-ipsec-verification.md`
+
+### What was verified
+- `show crypto session` shows `UP-ACTIVE` on both HQ-RTR1 and BR-RTR1.
+- `show crypto ikev2 sa` shows `READY` on both routers.
+- IKEv2 negotiated AES-CBC 256, PRF SHA256, Hash SHA256, DH group 14, and PSK authentication.
+- `show crypto ipsec sa` shows active ESP SAs in transport mode using `esp-256-aes esp-sha256-hmac`.
+- IPsec protects GRE protocol 47 between physical endpoints `10.0.0.1` and `10.0.0.2`.
+- ESP encaps/decaps counters increased after traceroute in both directions.
+- `show interface Tunnel0` shows tunnel protection via `P08-IPSEC-PROFILE`.
+- OSPF stayed `FULL/-` over Tunnel0.
+- Traceroute HQ to Branch first hop is `10.0.100.2`.
+- Traceroute Branch to HQ first hop is `10.0.100.1`.
+
+### Follow-up before final documentation
+Both routers currently report `PFS (Y/N): N, DH group: none` in `show crypto ipsec sa`, even though the intended profile includes `set pfs group14`. Next check is to verify the running IPsec profile:
+
+```text
+show running-config | section crypto ipsec profile
+show crypto ipsec profile P08-IPSEC-PROFILE
+```
+
+**Left off at:** Phase 2 core encryption is working. Verify whether `set pfs group14` is present/effective before calling the PFS portion complete or moving to final Phase 2 screenshots.
