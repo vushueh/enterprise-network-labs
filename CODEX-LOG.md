@@ -250,3 +250,42 @@ show crypto ipsec profile P08-IPSEC-PROFILE
 - Verify `show crypto session` returns `UP-ACTIVE`, `show crypto ikev2 sa` returns `READY`, OSPF returns `FULL/-` over Tunnel0, and traceroute again uses the Tunnel0 next hop.
 
 **Left off at:** Ready to execute Phase 4 break/fix in CML. Capture pre-fault, broken-state, diagnosis, fix, and post-fix proof.
+
+---
+
+## 2026-05-11 — Project 8 Phase 4 break/fix verified
+
+**Project:** P08 — Site-to-Site VPN
+**Phase verified this session:** Phase 4 — deliberate IKEv2 proposal mismatch break/fix
+**Configs applied to CML by:** Leonel
+**Verification saved to Windows session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-10\project-8-read-workflow-reference-md\project-08\verification-outputs\phase4-breakfix-ikev2-mismatch-verification.md`
+
+### Fault injected
+- On BR-RTR1 only, changed `P08-IKEV2-PROP` from AES-256 to AES-128.
+- Cleared IKEv2/IPsec SAs to force immediate renegotiation.
+
+### Broken symptoms verified
+- Tunnel0 line protocol changed to down.
+- OSPF neighbor over Tunnel0 dropped from `FULL` to `DOWN`.
+- `show crypto session` showed `Session status: DOWN`.
+- `show crypto ikev2 sa` showed no active IKEv2 SA.
+- `show crypto ipsec sa` showed `Active SAs: 0`, no inbound ESP SAs, and no outbound ESP SAs.
+- BR-RTR1 running config showed the injected root cause: `encryption aes-cbc-128` while HQ-RTR1 remained expected AES-256.
+
+### Fix verified
+- Restored BR-RTR1 proposal to AES-256.
+- IKEv2 returned to `READY` with AES-CBC 256, SHA256, and DH group 14.
+- Crypto session returned to `UP-ACTIVE` with two active SAs.
+- IPsec ESP SAs returned active in transport mode.
+- OSPF returned `FULL/-` over Tunnel0.
+- Branch-to-HQ traceroute again first-hopped to `10.0.100.1` over Tunnel0.
+
+### Follow-up still open
+`show crypto ipsec sa` still shows `PFS (Y/N): N, DH group: none`. Before final project documentation, verify the running IPsec profile on both routers:
+
+```text
+show running-config | section crypto ipsec profile
+show crypto ipsec profile P08-IPSEC-PROFILE
+```
+
+**Left off at:** Project 8 build/verify/break/fix phases are complete. Remaining work is final screenshot capture, PFS profile follow-up, and final GitHub documentation handoff.
