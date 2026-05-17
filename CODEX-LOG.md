@@ -307,3 +307,59 @@ show crypto ipsec profile P08-IPSEC-PROFILE
 **Left off at:** Project 8 is closed. Next project is Project 9 — Monitoring and Visibility (Syslog, SNMPv3, NetFlow, NTP auth, EEM, config archive). Read the project spec in `.agents/skills/cml-enterprise-labs/references/projects-02-13.md` at the start of the next session.
 
 <!-- Codex appends new session entries below this line — Project 09 and beyond -->
+
+## 2026-05-17 — Project 9 Phase 1 Syslog Infrastructure complete
+
+**Project:** P09 — Monitoring and Visibility
+**Phase completed:** Phase 1 — Syslog Infrastructure
+**Claude reviewed:** yes — Phase 1 config approved, timestamps fix flagged and resolved
+**Configs applied to CML by:** Leonel
+**Session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-16\title-it-something-like-project-9\project-09\`
+**Verification saved to:** `verification-outputs\phase1-complete-summary.md`
+
+### What was verified
+
+- syslog-ng collector (HQ-SYSLOG, 10.1.99.51) receiving from all 10 in-scope devices.
+- Source interfaces: `Loopback0` on routers, `Vlan999` on switches.
+- Severity tiers: `warnings` on core/distribution/firewall, `informational` on access switches.
+- Timestamps (`service timestamps log datetime msec localtime show-timezone`) and sequence numbers on all devices.
+- `service timestamps debug` typo on switches corrected and verified.
+- ISP-RTR1 excluded — represents outside/ISP boundary of ASA.
+- Collector proof confirmed for all 10 devices via `send log 4` on warning-tier devices and live log stream on informational-tier devices.
+
+### Non-blocking follow-up carried forward
+
+`ACL-VLAN100-IN` on HQ-RTR1 denies unicast DHCP renewals from VLAN 100 clients. Fix before Phase 7 correlation exercise.
+
+**Left off at:** Phase 1 complete. Next is Phase 2 — SNMP Monitoring.
+
+---
+
+## 2026-05-17 — Project 9 Phase 2 SNMP Monitoring complete
+
+**Project:** P09 — Monitoring and Visibility
+**Phase completed:** Phase 2 — SNMP Monitoring
+**Claude reviewed:** yes — Phase 2 config approved, SNMPv3 syntax and ASAv SNMP syntax verified
+**Configs applied to CML by:** Leonel
+**Session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-16\title-it-something-like-project-9\project-09\`
+**Verification saved to:** `verification-outputs\phase2-complete-summary.md`
+
+### What was verified
+
+- SNMPv2c RO community `P09V2CRO2026` + `ACL-SNMP-MANAGERS` (permit 10.1.99.51) on all 10 in-scope devices.
+- SNMPv3 authPriv (SHA + AES128) on HQ-RTR1, BR-RTR1, WAN-RTR1 — confirmed via `show snmp user` on all three.
+- IOL supports AES128 privacy — no DES fallback observed (contrast with P08 PFS limitation).
+- Trap source `Loopback0` on routers, `Vlan999` on switches — matches Phase 1 syslog source design.
+- `snmp-server ifindex persist` on all devices.
+- Trap destination 10.1.99.51 registered on all devices — `SNMP logging: enabled, Logging to 10.1.99.51.162` confirmed.
+- HQ-FW1 ASAv: `snmp-server host inside 10.1.99.51 community ***** version 2c`, 1 Trap PDU sent (coldstart).
+
+### Platform limitation documented
+
+HQ-SYSLOG is a syslog-ng-only node (P07 build) with no CLI, no snmptrapd, and no net-snmp tools.
+SNMP trap collector-side proof and snmpwalk not possible in current CML topology.
+Full documentation in `LIMITATIONS-AND-HOMELAB-EXPANSION.md`.
+
+**Left off at:** Phase 2 complete. Next is Phase 3 — NetFlow Traffic Analysis.
+
+---
