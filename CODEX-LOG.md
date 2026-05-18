@@ -363,3 +363,148 @@ Full documentation in `LIMITATIONS-AND-HOMELAB-EXPANSION.md`.
 **Left off at:** Phase 2 complete. Next is Phase 3 — NetFlow Traffic Analysis.
 
 ---
+
+## 2026-05-17 — Project 9 Phase 3 NetFlow Traffic Analysis complete
+
+**Project:** P09 — Monitoring and Visibility
+**Phase completed:** Phase 3 — NetFlow Traffic Analysis
+**Claude reviewed:** yes — classic NetFlow syntax approved, Tunnel0 inclusion confirmed correct
+**Configs applied to CML by:** Leonel
+**Session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-16\title-it-something-like-project-9\project-09\`
+**Verification saved to:** `verification-outputs\phase3-netflow-verification-summary.md`
+
+### What was verified
+
+- NetFlow v9 configured on HQ-RTR1 with `ip flow-export destination 10.1.99.51 2055`.
+- Export source Loopback0 (10.0.255.1), active cache timeout 1 min, inactive 15 sec.
+- `ip flow ingress` on 8 interfaces: Ethernet0/0.100, .200, .300, .999, Ethernet0/1, Ethernet0/2, Ethernet0/3, Tunnel0.
+- `show ip flow export`: 54+ flows exported, 0 export failures, 0 FIB/adjacency/fragmentation drops.
+- `show ip cache flow`: ICMP Tunnel0 return flow captured after `ping 10.2.100.1 source 10.1.100.1 repeat 20`.
+- IOL platform limitation documented: `show ip flow interface` and `show ip flow top-talkers` unsupported — use `show ip cache flow`.
+
+### Collector limitation
+
+HQ-SYSLOG has no NetFlow collector. Device-side export health is the success criterion. Documented in `LIMITATIONS-AND-HOMELAB-EXPANSION.md`.
+
+**Left off at:** Phase 3 complete. Next is Phase 4 — NTP Synchronization.
+
+---
+
+## 2026-05-17 — Project 9 Phase 4 NTP Synchronization complete
+
+**Project:** P09 — Monitoring and Visibility
+**Phase completed:** Phase 4 — NTP Synchronization
+**Claude reviewed:** yes — NTP MD5 auth design approved
+**Configs applied to CML by:** Leonel
+**Session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-16\title-it-something-like-project-9\project-09\`
+**Verification saved to:** `verification-outputs\phase4-complete-summary.md`
+
+### What was verified
+
+- HQ-RTR1 configured as `ntp master 3` — stratum 3, reference 127.127.1.1, NTP auth key 9 MD5.
+- BR-RTR1, WAN-RTR1, BR-DSW1, BR-ASW1: `*~10.0.255.1`, reach 377, stratum 4.
+- HQ-DSW1, HQ-DSW2, HQ-ASW1, HQ-ASW2: `*~10.0.255.1`, reach 77+, stratum 4 — after routing fix.
+- HQ-FW1: `*~10.0.255.1`, reach 177, stratum 4.
+
+### Issue found and fixed during this phase
+
+HQ switches could not reach 10.0.255.1. Root cause: IOL-L2 requires `ip routing` + `ip route 0.0.0.0 0.0.0.0 10.1.99.1` for management-plane routing to remote subnets. `ip default-gateway` alone is insufficient. Fix applied on DSW1, DSW2, ASW1, ASW2. Full detail in `TROUBLESHOOTING-LOG.md` (P09-T01).
+
+**Left off at:** Phase 4 complete. Next is Phase 5 — EEM Automated Alerting.
+
+---
+
+## 2026-05-17 — Project 9 Phase 5 EEM complete
+
+**Project:** P09 — Monitoring and Visibility
+**Phase completed:** Phase 5 — EEM Automated Alerting
+**Claude reviewed:** yes — EEM applet syntax approved, IOL-L2 limitation expected
+**Configs applied to CML by:** Leonel
+**Session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-16\title-it-something-like-project-9\project-09\`
+**Verification saved to:** `verification-outputs\phase5-eem-complete-summary.md`
+
+### What was verified
+
+- IOL-L2 (HQ-ASW1) confirmed as not supporting EEM — `event manager applet` rejected.
+- Phase moved to HQ-RTR1 with Loopback99 as the safe test trigger.
+- First EEM pattern (`"Interface Loopback99, changed state to administratively down"`) did not fire — wording mismatch.
+- Corrected to `"Line protocol on Interface Loopback99, changed state to down"` — EEM fired in 3ms.
+- `show event manager history events`: `Actv success Sun May17 18:06:42 2026`.
+- EEM alert marker forwarded to HQ-SYSLOG via syslog and confirmed in collector stream.
+
+### Platform issues documented
+
+- IOL-L2 no EEM → detailed in `TROUBLESHOOTING-LOG.md` (P09-T02)
+- EEM literal pattern matching → detailed in `TROUBLESHOOTING-LOG.md` (P09-T03)
+
+**Left off at:** Phase 5 complete. Next is Phase 6 — Configuration Archive.
+
+---
+
+## 2026-05-17 — Project 9 Phase 6 Config Archive complete
+
+**Project:** P09 — Monitoring and Visibility
+**Phase completed:** Phase 6 — Config Archive and Rollback
+**Claude reviewed:** yes — unix: path correction flagged and applied pre-CML
+**Configs applied to CML by:** Leonel
+**Session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-16\title-it-something-like-project-9\project-09\`
+**Verification saved to:** `verification-outputs\phase6-complete-summary.md`
+
+### What was verified
+
+- All 9 IOS/IOL devices configured with `archive path unix:/P09-ARCHIVE-$h-` + `maximum 5` + `write-memory`.
+- CML IOL/IOL-L2 has no flash: — unix: path confirmed via `show file systems`.
+- HQ-RTR1 rollback practice: injected bad description on Loopback99, restored via `configure replace unix:/P09-ARCHIVE-HQ-RTR1--May-17-23-30-15.736-UTC-1 force`.
+- Rollback result: `Total number of passes: 1 / Rollback Done` — `%SYS-5-CONFIG_R: Config Replace is Done`.
+
+**Left off at:** Phase 6 complete. Next is Phase 7 — Monitoring Verification Exercise.
+
+---
+
+## 2026-05-17 — Project 9 Phase 7 Monitoring Verification complete
+
+**Project:** P09 — Monitoring and Visibility
+**Phase completed:** Phase 7 — Monitoring Verification Exercise (controlled failure correlation)
+**Claude reviewed:** yes — verification plan approved, known collector limitations documented
+**Configs applied to CML by:** Leonel
+**Session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-16\title-it-something-like-project-9\project-09\`
+**Verification saved to:** `verification-outputs\phase7-complete-summary.md`
+
+### What was verified
+
+- Controlled event: Loopback99 shutdown on HQ-RTR1 at `23:44:16.407 UTC May 17 2026`.
+- Local syslog: LINEPROTO down at :407, EEM fired at :410 (3ms later), LINEPROTO up at 23:44:45.
+- EEM history: `Actv success Sun May17 23:44:16 2026` (second successful run — EEM applet confirmed persistent).
+- HQ-SYSLOG collector: EEM marker received at 23:44:17 from 10.0.255.1 — 1 second propagation.
+- SNMP device-side: trap counters increased from 6 to 10 sent, 0 dropped.
+- NetFlow device-side: 5727 flows, 0 failures, 0 drops — export healthy throughout event.
+
+### Collector-side limitations
+
+HQ-SYSLOG has no snmptrapd or NetFlow collector. SNMP and NetFlow proof is device-side only. Full detail in `LIMITATIONS-AND-HOMELAB-EXPANSION.md`.
+
+**Left off at:** Phase 7 complete. Next is Phase 8 — CDP/LLDP Topology Discovery.
+
+---
+
+## 2026-05-17 — Project 9 Phase 8 CDP/LLDP Topology Discovery complete
+
+**Project:** P09 — Monitoring and Visibility
+**Phase completed:** Phase 8 — CDP/LLDP Topology Discovery
+**Claude reviewed:** yes — proposal reviewed, verification confirms complete
+**Configs applied to CML by:** Leonel
+**Session folder:** `C:\Users\CHONGONG\Documents\Codex\2026-05-16\title-it-something-like-project-9\project-09\`
+**Verification saved to:** `verification-outputs\phase8-cdp-lldp-topology-summary.md`
+
+### What was verified
+
+- `cdp run` + `lldp run` confirmed on all 9 IOS/IOL devices.
+- HQ-FW1 (ASAv): CDP/LLDP commands rejected (`% Invalid input detected`) — documented as discovery-limited.
+- 25 neighbor relationships documented in a complete neighbor table.
+- Topology confirms all expected adjacencies from the lab design: HQ-RTR1 ↔ HQ-DSW1/BR-RTR1/WAN-RTR1, HQ-DSW1/DSW2 ↔ HQ-ASW1/HQ-ASW2, HQ-DSW1↔HQ-DSW2 LACP pair, BR topology.
+- Endpoint-facing ports (server and PC ports) correctly show no CDP/LLDP neighbors.
+
+**Left off at:** Phase 8 complete. Project 09 is complete. All phases verified. Claude to compile final documentation and push to GitHub.
+
+<!-- PROJECT 09 COMPLETE — Project 10 separator below -->
+---

@@ -728,3 +728,74 @@ Ping returned 100%. Syslog messages began appearing on HQ-SYSLOG immediately.
 **Diagnosis:** `show crypto ikev2 sa` returning empty (not just traffic down — no IKE SA at all). `show running-config | section crypto ikev2 proposal` on both routers confirmed mismatch. No debug needed.
 **Fix:** Restored BR-RTR1 proposal to AES-256. Cleared failed crypto state. VPN recovered in under 2 seconds; OSPF reconverged in under 1 second.
 **Lesson:** Empty `show crypto ikev2 sa` output means the IKEv2 control-plane negotiation itself failed. Compare proposals on both peers first — this resolves the majority of site-to-site VPN outages without any debug.
+
+---
+
+## Project 09 — Monitoring and Visibility
+
+### Issue P09-T01 — IOL-L2 management plane cannot reach remote subnets via ip default-gateway alone
+
+**Date:** 2026-05-17
+**Phase:** Phase 4 — NTP Synchronization
+**Symptom:** HQ-DSW1, HQ-DSW2, HQ-ASW1, HQ-ASW2 had `ip default-gateway 10.1.99.1` configured but `show ip route` showed no gateway of last resort and the switches could not ping 10.0.255.1 (HQ-RTR1 Loopback0). NTP sync failed with reach 0 and stratum 16.
+**Root cause:** IOL-L2 does not forward management-plane traffic to remote subnets using only `ip default-gateway`. `ip routing` must be enabled and a real routing table entry (static default route) must exist for the management plane to route toward non-directly-connected destinations. Physical Cisco Catalyst switches in Layer-2-only mode behave differently in this regard.
+**Fix:** Applied `ip routing` + `ip route 0.0.0.0 0.0.0.0 10.1.99.1` on all four HQ switches. All switches then pinged 10.0.255.1 5/5 and selected HQ-RTR1 as their NTP peer.
+**Lesson:** On CML IOL-L2, never rely on `ip default-gateway` for management traffic to remote subnets. Always verify reachability with a ping from the management VLAN interface before assuming NTP, syslog, or SNMP will work.
+
+---
+
+### Issue P09-T02 — EEM not supported on IOL-L2 (HQ-ASW1)
+
+**Date:** 2026-05-17
+**Phase:** Phase 5 — EEM Automated Alerting
+**Symptom:** `event manager applet` command on HQ-ASW1 returned `% Invalid input detected at '^' marker.` Phase 5 could not be demonstrated on a switch.
+**Root cause:** IOL-L2 images do not implement the EEM subsystem. The command is simply not supported on this image type.
+**Fix:** Moved the EEM pilot to HQ-RTR1, which fully supports `event manager`. Used Loopback99 as the test trigger interface — no production link interrupted.
+**Lesson:** EEM on switches requires real IOS XE Catalyst images (9000v or physical). In CML, assume EEM is only available on IOL router images. Plan EEM deployments around routers when using CML.
+
+---
+
+### Issue P09-T03 — EEM syslog pattern did not match on first attempt
+
+**Date:** 2026-05-17
+**Phase:** Phase 5 — EEM Automated Alerting
+**Symptom:** First EEM pattern `"Interface Loopback99, changed state to administratively down"` was configured but the applet never fired when Loopback99 was shut down.
+**Root cause:** EEM `event syslog pattern` does a literal substring match against the actual syslog message emitted. When a loopback is shut, IOS generates two messages:
+- `%LINK-5-CHANGED: Interface Loopback99, changed state to administratively down`
+- `%LINEPROTO-5-UPDOWN: Line protocol on Interface Loopback99, changed state to down`
+The first pattern matched neither message literally. The working pattern `"Line protocol on Interface Loopback99, changed state to down"` matches the LINEPROTO message.
+**Fix:** Updated the EEM applet pattern to `"Line protocol on Interface Loopback99, changed state to down"`. Second attempt succeeded — EEM fired in 3ms and `show event manager history events` showed `Actv success`.
+**Lesson:** Always verify the exact syslog message wording with `show logging` before writing an EEM pattern. The LINEPROTO and LINK messages for the same event have different wording. Use the shortest unambiguous literal substring.
+
+---
+
+### Issue P09-T04 — Config archive path flash: unavailable on CML IOL/IOL-L2
+
+**Date:** 2026-05-17
+**Phase:** Phase 6 — Config Archive
+**Symptom:** Proposed archive config used `path flash:P09-ARCHIVE-$h-`. When applied, the command was rejected or the archive path was non-functional on all CML IOL and IOL-L2 devices. `show file systems` did not show a usable `flash:` volume.
+**Root cause:** CML IOL and IOL-L2 images do not expose a persistent `flash:` filesystem. The only writable local filesystem on these images is `unix:`.
+**Fix:** Changed archive path to `unix:/P09-ARCHIVE-$h-` on all 9 devices. Archive files confirmed created via `archive config` and visible in `show archive`.
+**Lesson:** On CML IOL/IOL-L2, always use `unix:` for any local file storage (archive, Tcl scripts, etc.). On real IOS or IOS XE hardware, `flash:` is the correct path. Document the distinction clearly in any CML-based lab guide.
+
+---
+
+### Issue P09-T05 — SNMP trap receiver not running on HQ-SYSLOG (ICMP port unreachable on UDP/162)
+
+**Date:** 2026-05-17
+**Phase:** Phase 2 — SNMP Monitoring
+**Symptom:** HQ-FW1 sent a coldstart SNMP trap to 10.1.99.51:162 but received ICMP type 3 code 3 (destination port unreachable) in return. The ASA logged: `%ASA-3-106014: Deny inbound icmp src inside:10.1.99.51 dst nlp_int_tap:10.0.0.14 (type 3, code 3)`.
+**Root cause:** HQ-SYSLOG is a minimal syslog-ng-only node from the Project 07 build. No `snmptrapd` process is running, so UDP/162 is closed. The ICMP port-unreachable response actually confirms the ASA's SNMP trap configuration is correct — the problem is the receiver.
+**Fix (in CML):** No fix — documented as platform limitation. Device-side `show snmp` counters (`10 sent, 0 dropped`) confirm the device side is working correctly. Full resolution requires a monitoring VM with `snmptrapd` configured.
+**Lesson:** An ICMP port-unreachable on a UDP service means the host is reachable but the service is not running. This is actually useful diagnostic information — it distinguishes "no route to host" (routing problem) from "host reachable but service absent" (receiver problem).
+
+---
+
+### Issue P09-T06 — ASAv (HQ-FW1) rejects CDP/LLDP commands — not supported on this image
+
+**Date:** 2026-05-17
+**Phase:** Phase 8 — CDP/LLDP Topology Discovery
+**Symptom:** `show cdp neighbors`, `show lldp neighbors`, `show running-config cdp`, `show running-config lldp` all returned `ERROR: % Invalid input detected at '^' marker.` on HQ-FW1.
+**Root cause:** The ASAv image running in CML does not implement CDP or LLDP. These are not supported features on ASA software — only IOS/IOS XE devices support them.
+**Fix:** Documented HQ-FW1 as discovery-limited. Used `show nameif` and `show ip address` to capture interface state. The HQ-RTR1 Ethernet0/3 interface description (`HQ-RTR1 Ethernet0/3 -> HQ-FW1 GigabitEthernet0/0 inside`) provides the topology link documentation.
+**Lesson:** When building a CDP/LLDP neighbor table in a mixed-platform topology, expect ASA/FTD devices to be discovery-limited. Document the link from the IOS side using interface descriptions. Palo Alto and other third-party firewalls are similarly limited for CDP.
