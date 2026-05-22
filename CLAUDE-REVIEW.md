@@ -234,3 +234,146 @@ Do NOT proceed until all items below are resolved:
 | FreeRADIUS listening on UDP/1812 | `ss -ulnp` returns result |
 | Local fallback user on all in-scope devices | `show run \| include ^username` not empty |
 
+
+## [CLAUDE-REVIEW] Project 10 / Phase 1 / HQ-RTR1 TACACS+ Pilot Config
+
+**Reviewed by:** Claude Code
+**Date:** 2026-05-22
+**Status:** OPEN — three required fixes before applying; close all items below before Phase B
+
+---
+
+### OPEN Item P10-05 — Split apply into Phase A (AAA config) and Phase B (vty lines). Test between them.
+
+The proposed config bundles AAA + method lists + vty line changes in one block. If TACACS is not responding after Phase A, the vty lines are already committed to the failing method list. Split the apply.
+
+**Phase A — apply first:**
+```
+aaa new-model
+
+tacacs server HQ-TACACS
+ address ipv4 10.1.99.52
+ key tacacs123
+ source-interface Loopback0
+ exit
+
+aaa authentication login default group tacacs+ local
+aaa authorization exec default group tacacs+ local
+aaa accounting commands 15 default start-stop group tacacs+
+aaa accounting exec default start-stop group tacacs+
+
+end
+```
+
+**Gate test — run before Phase B:**
+```
+test aaa group tacacs+ tacadmin admin123 new-code
+test aaa group tacacs+ tacoper oper123 new-code
+```
+
+Both must return `User was successfully authenticated` before continuing.
+
+**Phase B — only if both tests pass:**
+```
+configure terminal
+line vty 0 4
+ login authentication default
+ authorization exec default
+ transport input ssh
+ exit
+end
+write memory
+```
+
+**Resolution:** Phase A applied, both test aaa commands pass, Phase B applied with a new SSH session confirmed.
+
+---
+
+### OPEN Item P10-06 — Verify ping 10.1.99.52 source Loopback0 before Phase A
+
+Reachability was tested from `source 10.1.99.1` (VLAN 999 subinterface). With `source-interface Loopback0`, TACACS connections originate from 10.0.255.1. Must verify this path specifically:
+
+```
+ping 10.1.99.52 source Loopback0 repeat 5
+```
+
+If this fails while source 10.1.99.1 succeeds, check tac-plus.conf for per-client IP restrictions.
+
+**Resolution:** ping 10.1.99.52 source Loopback0 returns 5/5.
+
+---
+
+### OPEN Item P10-07 — Verify SSH keys exist on HQ-RTR1 before Phase B applies transport input ssh
+
+Phase B adds `transport input ssh` to vty 0-4, which blocks Telnet. If SSH keys are not configured, vty lines become unreachable.
+
+```
+show running-config | include ^hostname|^ip domain|^crypto key
+ip ssh version 2
+```
+
+If crypto keys are absent:
+```
+configure terminal
+ip domain-name lab.local
+crypto key generate rsa modulus 2048
+ip ssh version 2
+end
+```
+
+**Resolution:** SSH keys confirmed present before Phase B.
+
+---
+
+### OPEN Item P10-08 — Verify HQ-RTR1 local fallback user and tac-plus.conf exec block
+
+Two sub-items:
+
+**A — Local user on HQ-RTR1:**
+```
+show running-config | include ^username
+```
+Must show at least one `username X privilege 15 secret Y`. WAN-RTR1 was confirmed (P10 session files). HQ-RTR1 is unconfirmed.
+
+If missing: `username p10admin privilege 15 secret P10LocalFallback2026`
+
+**B — tac-plus.conf exec authorization block:**
+Confirm tac-plus.conf has `service = exec { priv-lvl = X }` inside each group. The `test aaa group tacacs+` output will reveal this — `User was not successfully authorized` (not authentication) means the exec service block is missing or returning FAIL.
+
+If missing from tac-plus.conf, add `default service = permit` to the group and ensure:
+```
+group = netadmin {
+    default service = permit
+    service = exec {
+        priv-lvl = 15
+    }
+}
+```
+
+**Resolution:** Both confirmed before Phase A.
+
+---
+
+### Architecture Decisions Recorded
+
+**Source interface: Loopback0 is correct.** Matches P09 monitoring design. HQ-TACACS has gateway 10.1.99.1, which routes back to 10.0.255.1. tac-plus global key accepts any client IP with correct key.
+
+**Command authorization: NOT in Phase 1.** Proposed config correctly uses `aaa accounting commands 15` (non-blocking logging) without `aaa authorization commands` (TACACS must permit each command). Command authorization is Phase 2+ after TACACS is proven stable.
+
+**Accounting `start-stop` is correct.** Commands execute even if TACACS accounting START acknowledgment is delayed or missing. Non-blocking.
+
+**Rollback improvement (use this version):**
+```
+configure terminal
+no aaa new-model
+line vty 0 4
+ login local
+ transport input all
+ no authorization exec default
+end
+write memory
+```
+`transport input all` restores Telnet as emergency recovery path. Narrow back to SSH only after stable.
+
+**Note:** Perform rollback from console if possible. Do not close the current VTY session until a new session confirms login works after Phase B.
+
