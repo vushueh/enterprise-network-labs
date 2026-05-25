@@ -377,3 +377,46 @@ write memory
 
 **Note:** Perform rollback from console if possible. Do not close the current VTY session until a new session confirms login works after Phase B.
 
+
+---
+
+## Project 10 — Phase 3 Review (Parser Views)
+
+### OPEN Item P10-09 — `ping` in parser views may need `include all ping` on IOL
+
+`commands exec include ping` may not expose the full ping command tree on IOL images. If `ping` is unavailable or incomplete inside `NOC-VIEW`, change the line to:
+
+```ios
+commands exec include all ping
+```
+
+Stop and document the error output if ping behaves unexpectedly inside the view.
+
+### OPEN Item P10-10 — Run `show parser view all` immediately after configuring NOC-VIEW
+
+Before testing `enable view NOC-VIEW`, run:
+
+```ios
+show parser view all
+```
+
+This confirms the view was accepted and lists every permitted command. If the view is missing or empty, stop before testing.
+
+### OPEN Item P10-11 — Confirm `enable secret` exists on HQ-RTR1 before applying Phase 3
+
+Parser views require `enable secret` (not just `enable password`). Run this pre-check first:
+
+```ios
+show running-config | include ^enable secret
+```
+
+If no `enable secret` is shown, configure one before proceeding:
+
+```ios
+configure terminal
+enable secret P10Enable2026
+end
+write memory
+```
+
+Do not proceed to `enable view` without confirming this.
