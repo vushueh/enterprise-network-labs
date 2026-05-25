@@ -382,7 +382,7 @@ write memory
 
 ## Project 10 — Phase 3 Review (Parser Views)
 
-### OPEN Item P10-09 — `ping` in parser views may need `include all ping` on IOL
+### ~~RESOLVED~~ Item P10-09 — `ping` in parser views may need `include all ping` on IOL
 
 `commands exec include ping` may not expose the full ping command tree on IOL images. If `ping` is unavailable or incomplete inside `NOC-VIEW`, change the line to:
 
@@ -392,7 +392,7 @@ commands exec include all ping
 
 Stop and document the error output if ping behaves unexpectedly inside the view.
 
-### OPEN Item P10-10 — Run `show parser view all` immediately after configuring NOC-VIEW
+### ~~RESOLVED~~ Item P10-10 — Run `show parser view all` immediately after configuring NOC-VIEW
 
 Before testing `enable view NOC-VIEW`, run:
 
@@ -402,7 +402,7 @@ show parser view all
 
 This confirms the view was accepted and lists every permitted command. If the view is missing or empty, stop before testing.
 
-### OPEN Item P10-11 — Confirm `enable secret` exists on HQ-RTR1 before applying Phase 3
+### ~~RESOLVED~~ Item P10-11 — Confirm `enable secret` exists on HQ-RTR1 before applying Phase 3
 
 Parser views require `enable secret` (not just `enable password`). Run this pre-check first:
 
@@ -420,3 +420,33 @@ write memory
 ```
 
 Do not proceed to `enable view` without confirming this.
+
+---
+
+## Project 10 — Phase 4 Review (802.1X)
+
+### OPEN Item P10-12 — IOL-L2 may not support 802.1X — check before applying anything
+
+`dot1x system-auth-control` and `authentication port-control auto` may be rejected on the IOL-L2 image. The `show dot1x all` pre-check in Step 2 exists to catch this. If either command returns an error or `Invalid input`, stop completely and document the output. Do not proceed to Steps 4 or 5 if the platform does not support dot1x.
+
+### OPEN Item P10-13 — No 802.1X supplicant in CML — add `authentication open` before `port-control auto`
+
+The endpoint on `Ethernet0/2` is a CML IOL device and cannot act as an 802.1X supplicant. With `authentication port-control auto` alone, the port goes unauthorized and blocks all traffic permanently.
+
+Add `authentication open` to the pilot port config before applying `port-control auto`:
+
+```ios
+configure terminal
+interface Ethernet0/2
+ authentication open
+ authentication port-control auto
+ dot1x pae authenticator
+end
+write memory
+```
+
+`authentication open` allows traffic through even when authentication is incomplete. The port stays up while 802.1X runs in the background — which is the only way to observe dot1x behavior without a real supplicant.
+
+### OPEN Item P10-14 — Check `clients.conf` before restarting HQ-RADIUS
+
+If `clients.conf` already has a wildcard entry covering `10.0.0.0/8`, HQ-ASW1 (`10.1.99.13`) is already permitted and no file change is needed. Only restart HQ-RADIUS if the file was actually changed. Unnecessary restarts cause ARP stale entry issues (same problem seen in Phase 2 — required `clear arp 10.1.99.52` to recover).
