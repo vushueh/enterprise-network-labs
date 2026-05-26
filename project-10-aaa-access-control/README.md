@@ -641,3 +641,119 @@ Total Packets Recv: 133
 4. **Test before committing VTY lines** — `test aaa group tacacs+` before `transport input ssh` on vty lines. Once SSH-only is committed and TACACS is broken, VTY is inaccessible.
 
 5. **Source interface must match the management path** — TACACS packets must originate from the same IP that the server's client list permits. `ip tacacs source-interface Loopback0` ensures all devices use their stable Loopback0 address.
+
+---
+
+## Troubleshooting
+
+### P10-T01: HQ-TACACS and HQ-RADIUS Unreachable — Nodes Missing from CML
+
+**Symptom:** `ping 10.1.99.52` and `ping 10.1.99.53` from HQ-RTR1 returned incomplete ARP. VLAN 999 MAC table on HQ-DSW1 was empty.
+
+**Root Cause:** HQ-TACACS and HQ-RADIUS nodes had not been added to the CML topology. The switch had no connected devices on those ports.
+
+**Fix:** Added TacPlus and RADIUS Linux nodes in CML, cabled to HQ-DSW1 Ethernet1/2 and Ethernet1/3, configured those switchports as VLAN 999 access ports. Updated boot.sh on each node with correct IPs.
+
+---
+
+### P10-T02: WAN-RTR1 SSH Disabled — No Domain Name, No RSA Keys
+
+**Symptom:** Phase B `transport input ssh` committed on WAN-RTR1 but SSH connections failed:
+
+```
+SSH Disabled - version 2.0
+Please create EC or RSA keys to enable SSH
+IOS Keys in SECSH format(ssh-rsa, base64 encoded): NONE
+```
+
+**Root Cause:** WAN-RTR1 had no `ip domain name` configured so RSA keys were never generated.
+
+**Fix:**
+
+```ios
+configure terminal
+ip domain name lab.local
+crypto key generate rsa general-keys modulus 2048
+ip ssh version 2
+end
+write memory
+```
+
+---
+
+### P10-T03: Console Lockout After `aaa new-model`
+
+**Symptom:** After enabling `aaa new-model`, console login required TACACS credentials. Local `admin` console login failed even when TACACS was reachable, because `admin` was not yet in tac-plus.conf.
+
+**Root Cause:** `aaa new-model` changes the console to use the `default` method list which includes `group tacacs+`. If TACACS is reachable and rejects the user (user not in TACACS), IOS does not fall through to local.
+
+**Fix:** Applied on all devices before Phase B:
+
+```ios
+configure terminal
+aaa authentication login CONSOLE local
+line con 0
+ login authentication CONSOLE
+end
+write memory
+```
+
+This keeps console authentication permanently on the local database regardless of TACACS state.
+
+---
+
+### P10-T04: IOL Rejects `source-interface Loopback0` Inside `tacacs server` Block
+
+**Symptom:** IOS rejected the command when entered inside the `tacacs server HQ-TACACS` configuration block:
+
+```
+tacacs server HQ-TACACS
+ source-interface Loopback0
+         ^
+% Invalid input detected at '^' marker.
+```
+
+**Root Cause:** IOL platform does not support per-server source-interface in the new-style `tacacs server` block.
+
+**Fix:** Used the global command instead:
+
+```ios
+ip tacacs source-interface Loopback0
+```
+
+---
+
+### P10-T05: HQ-TACACS ARP Stale After Node Restart
+
+**Symptom:** After HQ-TACACS was restarted, `ping 10.1.99.52` failed. `show tacacs` showed `Failed Connect Attempts` increasing. `show arp` showed an incomplete entry for 10.1.99.52.
+
+**Root Cause:** CML node restart assigned a new MAC address. HQ-RTR1 ARP cache held the old MAC from before the restart.
+
+**Fix:**
+
+```ios
+clear arp 10.1.99.52
+ping 10.1.99.52 source Loopback0 repeat 5
+```
+
+---
+
+### P10-T06: 802.1X `show dot1x all` Rejected on IOL-L2
+
+**Symptom:** All 802.1X operational verification commands were rejected on HQ-ASW1:
+
+```
+HQ-ASW1#show dot1x all
+                 ^
+% Invalid input detected at '^' marker.
+
+HQ-ASW1#show authentication sessions
+                ^
+% Invalid input detected at '^' marker.
+```
+
+Configuration syntax (`dot1x system-auth-control`, `authentication port-control auto`) was accepted, but no operational show commands were available.
+
+**Root Cause:** IOL-L2 implements 802.1X configuration syntax but not the authentication manager operational commands. This is a platform limitation of the IOL-L2 image.
+
+**Fix:** Phase 4 was not applied. Documented as a platform limitation. IOSvL2 image required for proper 802.1X verification (`show dot1x all`, `show authentication sessions`, `show authentication sessions interface GigabitEthernetX/X detail`).
