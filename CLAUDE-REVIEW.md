@@ -450,3 +450,43 @@ write memory
 ### OPEN Item P10-14 — Check `clients.conf` before restarting HQ-RADIUS
 
 If `clients.conf` already has a wildcard entry covering `10.0.0.0/8`, HQ-ASW1 (`10.1.99.13`) is already permitted and no file change is needed. Only restart HQ-RADIUS if the file was actually changed. Unnecessary restarts cause ARP stale entry issues (same problem seen in Phase 2 — required `clear arp 10.1.99.52` to recover).
+
+---
+
+## Project 10 — Phase 4 Closed (Platform Limitation)
+
+Phase 4 802.1X is documented as not completed. IOSvL2 is not available in this CML installation. All alternative show commands were tested and rejected on IOL-L2. No configuration was applied. This is the correct and honest outcome.
+
+**Future completion path:** Repeat Phase 4 when a CML image supporting `show dot1x all` and `show authentication sessions` is available.
+
+---
+
+## Project 10 — Phase 5 Review (AAA Accounting)
+
+### OPEN Item P10-15 — `show tacacs` packet counter increase is weak evidence for accounting
+
+TACACS counters increase for authentication, authorization, and accounting combined. Counter increase proves TACACS is communicating — not that accounting specifically is working. The accounting log file on HQ-TACACS is the only valid primary evidence for Phase 5.
+
+### OPEN Item P10-16 — Close the SSH session fully before checking the accounting log
+
+`start-stop` accounting sends START on session open and STOP on session close. Check the log only after the SSH session has fully exited and disconnected. A log with START but no STOP means the session is still open or the STOP record failed.
+
+### OPEN Item P10-17 — Read the accounting log directly from HQ-TACACS console
+
+On the HQ-TACACS CML node console:
+
+```bash
+cat /var/log/tacplus-acct.log
+```
+
+If the file is empty or not found:
+
+```bash
+ls -la /var/log/tacplus*
+```
+
+Some tac_plus builds use a different path or filename. Identify the actual file before concluding the log is missing.
+
+### OPEN Item P10-18 — Per-command accounting may not appear on IOL — exec records are sufficient to pass
+
+`aaa accounting commands 15` may not produce individual command records on IOL. Exec START/STOP records for the admin session are sufficient evidence for Phase 5 to pass. Document which record types are present — do not fail the phase if exec records appear but command records do not.
