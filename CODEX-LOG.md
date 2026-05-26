@@ -508,3 +508,42 @@ HQ-SYSLOG has no snmptrapd or NetFlow collector. SNMP and NetFlow proof is devic
 
 <!-- PROJECT 09 COMPLETE — Project 10 separator below -->
 ---
+
+---
+<!-- PROJECT 10 — AAA and Network Access Control -->
+
+## Project 10 — Phase 1: TACACS+ Rollout
+
+Session: 2026-05-16 to 2026-05-22
+
+Enrolled 7/9 IOS/IOL devices with TACACS+ (HQ-ASW2 and BR-ASW1 deferred). Phase A (AAA method lists) applied and tested with `test aaa group tacacs+` before Phase B (vty lines). Console safeguard (`aaa authentication login CONSOLE local`) applied on all devices. WAN-RTR1 required SSH key generation before Phase B. HQ-TACACS and HQ-RADIUS nodes were missing from CML initially — added and cabled to HQ-DSW1. IOL requires `ip tacacs source-interface Loopback0` as a global command. All 7 enrolled devices confirmed: `test aaa` both users authenticated, SSH verified at priv 15 and priv 1.
+
+## Project 10 — Phase 2: Privilege Separation
+
+Session: 2026-05-22
+
+Added `admin` user to tac-plus.conf (member of netadmin, priv 15, password: chongong). All three users (admin, tacadmin, tacoper) authenticate via TACACS. SSH privilege separation confirmed on HQ-RTR1 and HQ-DSW1 — admin gets priv 15, tacoper gets priv 1 and is denied `configure terminal`. Per-device tacoper retest on remaining 5 devices deferred — server-side group config is the same for all.
+
+## Project 10 — Phase 3: Parser Views
+
+Session: 2026-05-22
+
+Created NOC-VIEW parser view on HQ-RTR1. Prerequisites: `aaa new-model` active, `enable secret 9` confirmed, root view entry successful. Eight permitted commands configured (`commands exec include all ping` for full ping support). All 8 permitted commands verified inside NOC-VIEW. Three restricted commands (configure terminal, show running-config, reload) all denied. `show parser view all` confirmed view present. TACACS integration deliberately deferred — local view proven first.
+
+## Project 10 — Phase 4: 802.1X Port Authentication
+
+Session: 2026-05-22
+
+Not completed — IOL-L2 platform limitation. HQ-ASW1 accepts 802.1X config syntax but rejects all operational verification commands (`show dot1x all`, `show authentication sessions`, and all alternatives). IOSvL2 not available in this CML installation. No configuration applied. Documented as platform limitation — future completion requires compatible switch image.
+
+## Project 10 — Phase 5: AAA Accounting
+
+Session: 2026-05-25
+
+Accounting already configured in Phase 1 (`aaa accounting exec default start-stop group tacacs+` and `aaa accounting commands 15 default start-stop group tacacs+`). Fresh SSH session generated from HQ-DSW1 to HQ-RTR1 as admin, ran read-only commands, exited cleanly. TACACS counters: 95/95 packets, 0 errors. Server-side auth/authz log confirmed accepted admin session at priv 15. Accounting log file (`/var/log/tacplus-acct.log`) inaccessible from TacPlus CML node console — documented limitation.
+
+## Project 10 — Phase 6: AAA Failover / Break-Fix
+
+Session: 2026-05-25
+
+Part A: Changed TACACS address to unused IP (10.1.99.250), SSH from HQ-DSW1 to HQ-RTR1 succeeded at priv 15 via local fallback. TACACS restored and re-verified. Part B: Wrong key (P10-WRONG-KEY) introduced — `test aaa` returned `User rejected` and `Continous Authc fail count: 1`. Correct key restored, `User successfully authenticated`, saved. Key distinction proven: unreachable server triggers local fallback, reachable server rejection does not.

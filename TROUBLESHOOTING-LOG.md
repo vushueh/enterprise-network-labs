@@ -799,3 +799,72 @@ The first pattern matched neither message literally. The working pattern `"Line 
 **Root cause:** The ASAv image running in CML does not implement CDP or LLDP. These are not supported features on ASA software — only IOS/IOS XE devices support them.
 **Fix:** Documented HQ-FW1 as discovery-limited. Used `show nameif` and `show ip address` to capture interface state. The HQ-RTR1 Ethernet0/3 interface description (`HQ-RTR1 Ethernet0/3 -> HQ-FW1 GigabitEthernet0/0 inside`) provides the topology link documentation.
 **Lesson:** When building a CDP/LLDP neighbor table in a mixed-platform topology, expect ASA/FTD devices to be discovery-limited. Document the link from the IOS side using interface descriptions. Palo Alto and other third-party firewalls are similarly limited for CDP.
+
+---
+
+## Project 10 Troubleshooting Entries
+
+### P10-T01: HQ-TACACS and HQ-RADIUS Unreachable — Nodes Missing from CML
+
+**Symptom:** `ping 10.1.99.52` and `ping 10.1.99.53` from HQ-RTR1 returned incomplete ARP. VLAN 999 MAC table on HQ-DSW1 was empty.
+
+**Root Cause:** HQ-TACACS and HQ-RADIUS nodes had not been added to the CML topology. The switch had no connected devices on those ports.
+
+**Fix:** Added TacPlus and RADIUS Linux nodes in CML, cabled to HQ-DSW1 Ethernet1/2 and Ethernet1/3, configured those switchports as VLAN 999 access ports. Updated boot.sh on each node with correct IPs.
+
+### P10-T02: WAN-RTR1 SSH Disabled — No Domain Name, No RSA Keys
+
+**Symptom:** Phase B `transport input ssh` committed on WAN-RTR1, but SSH connections failed: `SSH Disabled - version 2.0 / Please create EC or RSA keys to enable SSH`.
+
+**Root Cause:** WAN-RTR1 had no `ip domain name` configured, so RSA keys were never generated.
+
+**Fix:**
+```ios
+ip domain name lab.local
+crypto key generate rsa general-keys modulus 2048
+ip ssh version 2
+```
+
+### P10-T03: Console Lockout After `aaa new-model`
+
+**Symptom:** After enabling `aaa new-model`, console login required TACACS credentials. Local `admin` console login failed when TACACS was healthy (TACACS was reachable but `admin` was not yet in tac-plus.conf).
+
+**Root Cause:** `aaa new-model` changes the console to use the `default` method list which includes `group tacacs+`. If TACACS rejects the user (user not in TACACS), IOS does not fall through to local.
+
+**Fix:** Applied on all devices before Phase B:
+```ios
+aaa authentication login CONSOLE local
+line con 0
+ login authentication CONSOLE
+```
+
+### P10-T04: IOL Rejects `source-interface Loopback0` Inside `tacacs server` Block
+
+**Symptom:** IOS rejected `source-interface Loopback0` when entered inside the `tacacs server HQ-TACACS` configuration block.
+
+**Root Cause:** IOL platform does not support per-server source-interface in the new-style `tacacs server` block.
+
+**Fix:** Used the global command instead:
+```ios
+ip tacacs source-interface Loopback0
+```
+
+### P10-T05: HQ-TACACS ARP Stale After Node Restart
+
+**Symptom:** After HQ-TACACS was restarted, `ping 10.1.99.52` failed and `show tacacs` showed `Failed Connect Attempts` increasing. `show arp` showed an incomplete ARP entry for 10.1.99.52.
+
+**Root Cause:** CML node restart assigned a new MAC address. HQ-RTR1 ARP cache still held the old MAC.
+
+**Fix:**
+```ios
+clear arp 10.1.99.52
+ping 10.1.99.52 source Loopback0 repeat 5
+```
+
+### P10-T06: 802.1X `show dot1x all` Rejected on IOL-L2
+
+**Symptom:** `show dot1x all` returned `% Invalid input detected`. All alternative operational commands also rejected.
+
+**Root Cause:** IOL-L2 implements 802.1X configuration syntax but not the operational verification commands. The authentication manager framework show commands are not present in this IOS image.
+
+**Fix:** Phase 4 not applied. Documented as platform limitation. IOSvL2 image required for proper 802.1X verification.
