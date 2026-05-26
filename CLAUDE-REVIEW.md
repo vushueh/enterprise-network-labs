@@ -490,3 +490,32 @@ Some tac_plus builds use a different path or filename. Identify the actual file 
 ### OPEN Item P10-18 — Per-command accounting may not appear on IOL — exec records are sufficient to pass
 
 `aaa accounting commands 15` may not produce individual command records on IOL. Exec START/STOP records for the admin session are sufficient evidence for Phase 5 to pass. Document which record types are present — do not fail the phase if exec records appear but command records do not.
+
+---
+
+## Project 10 — Phase 6 Review (AAA Failover / Break-Fix)
+
+### OPEN Item P10-19 — Confirm local `admin` password before Part A
+
+Part A uses `ssh -l admin / chongong` as the fallback test. The local `username admin privilege 15 secret ...` was set before Phase 1 — the local plaintext may differ from the TACACS password. If it differs, fallback appears broken when it is not.
+
+Run this from the HQ-RTR1 console before introducing any fault:
+
+```ios
+test aaa local auth default admin chongong
+```
+
+If this returns `User successfully authenticated`, proceed. If it fails, identify the correct local password first and update the Part A test credentials accordingly.
+
+### OPEN Item P10-20 — Capture `show tacacs` immediately after the Part A SSH test
+
+Before restoring the correct TACACS address after Part A, run `show tacacs`. The output must show non-zero `Socket Timeouts` or `Failed Connect Attempts` to prove IOS attempted TACACS and timed out before using the local fallback. Without this, there is no evidence that TACACS was tried at all.
+
+Expected after Part A unreachable test:
+```
+Socket Timeouts:          X   <- non-zero
+Failed Connect Attempts:  X   <- non-zero
+Server Status: Dead
+```
+
+Capture and include this in the Phase 6 evidence file.
