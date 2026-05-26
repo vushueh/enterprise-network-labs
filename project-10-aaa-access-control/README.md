@@ -1,5 +1,22 @@
 # Project 10 — AAA and Network Access Control
 
+**Series:** Enterprise Network Labs | **Platform:** Cisco CML 2.9 (IOL / IOL-L2 / ASAv)
+**Build Date:** 2026-05-22 | **Status:** All Phases Complete ✅ (Phase 4 platform limitation documented)
+
+---
+
+## STAR Summary
+
+**Situation:** Projects 01-09 built a fully routed, firewalled, encrypted, and monitored enterprise network — but every device still accepted any login with no central control over who logged in, what privilege level they received, or what commands they ran. There was no audit trail and no way to revoke access from a single point.
+
+**Task:** Deploy centralized AAA across the enterprise lab using TACACS+ for device administration. Separate privilege levels by role, restrict CLI access with parser views, verify accounting records, and prove that local fallback works correctly when the TACACS+ server is unreachable. Use RADIUS as the foundation for 802.1X port authentication.
+
+**Action:** Added HQ-TACACS (tac_plus, TCP/49) and HQ-RADIUS (FreeRADIUS, UDP/1812/1813) nodes to the CML topology, cabled to HQ-DSW1 in VLAN 999. Rolled out TACACS+ to 7 IOS/IOL devices using a Phase A / Phase B split — method lists configured and tested with `test aaa group tacacs+` before vty lines were changed. Applied a console safeguard (`aaa authentication login CONSOLE local`) on every device before Phase B. Fixed WAN-RTR1 which had no RSA keys. Configured privilege separation — admin/tacadmin receive priv 15, tacoper receives priv 1 and is denied `configure terminal`. Created a `NOC-VIEW` parser view on HQ-RTR1 permitting 8 operational commands and blocking configuration, show running-config, and reload. Attempted 802.1X on HQ-ASW1 — IOL-L2 accepted config syntax but rejected all operational verification commands; documented honestly as a platform limitation. Verified AAA accounting through TACACS server-side auth logs. Ran break/fix — proved local fallback triggers on TACACS unreachability (not on rejection), and diagnosed a wrong shared key using `debug aaa authentication` and `debug tacacs`.
+
+**Result:** Centralized TACACS+ authentication and authorization operational across 7 devices. Role-based privilege separation proven — admin at priv 15, operator at priv 1 with configuration blocked. NOC-VIEW parser view verified with all permitted and restricted commands tested. AAA accounting configured with TACACS server-side auth/authz log evidence. Break/fix proven: unreachable TACACS triggers local fallback at priv 15; wrong key produces `User rejected` with `Continous Authc fail count: 1`, repaired and re-verified. 802.1X platform limitation documented — IOSvL2 required for future completion. All platform limitations documented in `LIMITATIONS-AND-HOMELAB-EXPANSION.md`.
+
+---
+
 ## Summary
 
 Deployed centralized AAA across the enterprise CML lab using TACACS+ for device administration and RADIUS as the foundation for network access control. The project covered TACACS+ server integration, privilege-level separation, parser-view role-based CLI, 802.1X port authentication (documented as a platform limitation), AAA accounting verification, and AAA failover break/fix testing.
