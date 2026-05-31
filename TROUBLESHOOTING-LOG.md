@@ -868,3 +868,74 @@ ping 10.1.99.52 source Loopback0 repeat 5
 **Root Cause:** IOL-L2 implements 802.1X configuration syntax but not the operational verification commands. The authentication manager framework show commands are not present in this IOS image.
 
 **Fix:** Phase 4 not applied. Documented as platform limitation. IOSvL2 image required for proper 802.1X verification.
+
+---
+
+## Project 11 - QoS Traffic Management
+
+### P11-T01: NBAR Counters Stay At Zero Despite Live HTTP And DNS Traffic
+
+**Symptom:** `show policy-map interface Ethernet0/0.100` showed all NBAR class counters (P11-BULK-DATA, P11-NETWORK-CONTROL) at zero even after generating HTTP traffic from PC-ENG1 (10.1.100.194) to the nginx server at 10.1.40.10 and DNS queries to 10.1.99.50.
+
+**Investigation:** Confirmed traffic reached HQ-RTR1 — ACL-VLAN100-IN hit counts increased (83 matches for HTTP, 12 for DNS). `show ip nbar protocol-discovery` was accepted. `show class-map` confirmed all class-maps had correct match statements (not empty).
+
+**Root Cause:** IOL NBAR PDL (Protocol Description Library) limitation. IOL accepts NBAR syntax and creates valid class-maps, but does not perform live deep packet inspection on traffic. `match protocol http` and `match protocol dns` are syntactically correct but functionally inactive on this image.
+
+**Fix:** ACL-based classification used as fallback:
+```ios
+ip access-list extended P11-HTTP-TRAFFIC
+ permit tcp host 10.1.100.194 host 10.1.40.10 eq www
+class-map match-any P11-BULK-DATA-ACL
+ match access-group name P11-HTTP-TRAFFIC
+policy-map P11-MARK-IN
+ class P11-BULK-DATA-ACL
+  set dscp af11
+```
+Result: 54 packets matched, 54 marked AF11. Phase 5 pass condition met.
+
+**Lesson:** On IOL, always verify NBAR with an ACL counter backup. If NBAR counters stay zero while ACL counters increase, NBAR PDL is not classifying the traffic. ACL-based classification is a valid production alternative for controlled traffic flows.
+
+---
+
+### P11-T02: Empty Class-Map Causes All Traffic To Hit class-default
+
+**Symptom:** After deliberately removing the match statement from P11-BULK-DATA-ACL (`no match access-group name P11-HTTP-TRAFFIC`), HTTP traffic from PC-ENG1 stopped incrementing the P11-BULK-DATA-ACL counter and instead appeared in class-default. The ACL `P11-HTTP-TRAFFIC` still incremented — confirming the traffic was reaching HQ-RTR1.
+
+**Investigation:**
+```ios
+show class-map P11-BULK-DATA-ACL
+  Match none
+```
+Root cause visible immediately.
+
+**Root Cause:** A class-map with no match criteria (`Match none`) matches zero packets. IOS does not warn when a policy-map references a class-map that is empty. The policy-map structure looks correct in `show policy-map`, but the class effectively does not exist from a matching perspective.
+
+**Fix:**
+```ios
+configure terminal
+class-map match-any P11-BULK-DATA-ACL
+ match access-group name P11-HTTP-TRAFFIC
+end
+write memory
+```
+Result: P11-BULK-DATA-ACL counter resumed incrementing, class-default stopped increasing.
+
+**Lesson:** When a QoS class is not matching expected traffic, run `show class-map <name>` first. A policy-map reference is valid even when the class-map is empty. Always check the class-map directly, not just the policy-map.
+
+---
+
+### P11-T03: WAN Output DSCP Counters Stay At Zero After Marking Confirmed
+
+**Symptom:** P11-DSCP-BULK counter on Ethernet0/1 stayed at zero even after confirming 54 HTTP packets were marked AF11 on Ethernet0/0.100 inbound.
+
+**Investigation:**
+```ios
+show ip route 10.1.40.10
+  Known via "static", next-hop 10.0.0.14
+```
+
+**Root Cause:** Traffic to 10.1.40.10 (nginx) exits via the firewall path (10.0.0.14), not toward BR-RTR1 (10.0.0.2) via Ethernet0/1. Marked packets leave via a different interface and never hit the WAN queue.
+
+**Fix:** No config change needed. Understanding confirmed — the WAN queue on Ethernet0/1 only sees traffic destined to branch and WAN-RTR1 subnets. The inbound marking on Ethernet0/0.100 is correct; the egress point for this test traffic is different.
+
+**Lesson:** Verify the egress interface for test traffic before concluding a QoS policy is broken. `show ip route <destination>` is the first check when output queue counters stay at zero.

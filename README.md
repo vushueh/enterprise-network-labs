@@ -29,7 +29,7 @@ Each project follows the **Build → Verify → Break → Fix** method — every
 | 08 | [Site-to-Site VPN](project-08-site-to-site-vpn/) | GRE/IPsec, IKEv2, tunnel OSPF, DPD, PFS | ✅ |
 | 09 | [Monitoring and Visibility](project-09-monitoring-visibility/) | Syslog, SNMPv3, NetFlow, NTP auth, EEM, config archive, CDP/LLDP | ✅ |
 | 10 | [AAA + Access Control](project-10-aaa-access-control/) | TACACS+, privilege levels, parser views, AAA accounting, AAA failover | ✅ |
-| 11 | QoS | MQC, DSCP marking, NBAR, priority queuing, voice VLAN | ⬜ |
+| 11 | [QoS Traffic Management](project-11-qos-traffic-management/) | MQC, DSCP marking, NBAR, HQoS shaping/queuing, voice VLAN, ACL classification | ✅ |
 | 12 | Disaster Recovery | 90-min timed rebuild, triage, documentation test | ⬜ |
 | 13 | Network Automation | Python/Netmiko, Ansible, automated deployment | ⬜ |
 

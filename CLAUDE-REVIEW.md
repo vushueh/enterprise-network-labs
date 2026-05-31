@@ -519,3 +519,90 @@ Server Status: Dead
 ```
 
 Capture and include this in the Phase 6 evidence file.
+
+---
+
+## Project 11 — Phase 1 Review (NBAR Classification — HQ-RTR1 Pilot)
+
+**Reviewed by:** Claude Code
+**Date:** 2026-05-31
+**Status:** APPROVED WITH ADVISORY — two items to address before marking Phase 1 complete
+
+### Review Summary
+
+The four class-maps are structurally correct. `match-any` is the right qualifier. Naming convention (`P11-` prefix) is consistent. Description lines are present. Rollback is correct. Classification-only means zero operational impact — no service-policy is applied, so no traffic is marked, queued, or shaped.
+
+### ADVISORY Item P11-01 — Test `match protocol rtp` and `match protocol ospf` syntax before applying
+
+Phase 0 confirmed only `match protocol http` is accepted on IOL. The PDL (Protocol Description Library) may not include all protocols in the Phase 1 class-maps. Test these two before applying the full config — they are the least standard for NBAR:
+
+```ios
+configure terminal
+class-map match-any P11-PRECHECK-RTP
+ match protocol rtp
+ exit
+class-map match-any P11-PRECHECK-OSPF
+ match protocol ospf
+ exit
+no class-map match-any P11-PRECHECK-RTP
+no class-map match-any P11-PRECHECK-OSPF
+end
+```
+
+If `match protocol rtp` is accepted → apply P11-VOICE-LIKE as written.
+If `match protocol ospf` is rejected → remove `match protocol ospf` from P11-NETWORK-CONTROL and document as platform limitation. DNS alone is sufficient to demonstrate NETWORK-CONTROL classification.
+
+Classification-only means a rejected protocol statement prevents the class-map from being entered, not just from matching — so this must be verified before applying.
+
+### ADVISORY Item P11-02 — Verify `show class-map` output matches config after applying
+
+After applying all four class-maps, run:
+
+```ios
+show class-map
+show running-config | section class-map
+```
+
+Confirm each class-map shows the expected match statements. `match protocol http` must appear under P11-BULK-DATA, `match protocol rtp` under P11-VOICE-LIKE, etc. If a class-map appears empty, the match statement was silently rejected.
+
+### Safe to apply to CML: YES — run P11-01 precheck first, then apply Phase 1 config
+
+---
+
+## Project 11 — Phase 2 Review (DSCP Marking — HQ-RTR1)
+
+**Reviewed by:** Claude Code
+**Date:** 2026-05-31
+**Status:** COMPLETE — no open items
+
+Phase 2 applied `P11-MARK-IN` inbound on `Ethernet0/0.100`. DSCP values: EF (voice), CS3 (signaling), CS2 (network-control), AF11 (bulk). VLAN 100 hosts confirmed reachable. Policy counters active. `class-default` saw traffic (16 packets). NBAR class counters at zero because no test traffic was generated — expected and acceptable for Phase 2.
+
+---
+
+## Project 11 — Phase 3 Review (WAN Edge Queuing — HQ-RTR1 Pilot)
+
+**Reviewed by:** Claude Code
+**Date:** 2026-05-31
+**Status:** APPROVED WITH ADVISORY — one item to watch during Phase 3A precheck
+
+### Review Summary
+
+Phase 3 design is correct. Parent shaper (`P11-WAN-SHAPE-1M`, 1 Mbps) nesting child LLQ policy (`P11-WAN-QUEUE`) is standard IOS HQoS for WAN edge. DSCP-matching class-maps are the correct egress counterpart to Phase 2's NBAR-matching ingress class-maps. Bandwidth allocation: 30+10+5+15 = 60% committed, class-default retains 40%. Applied outbound on `Ethernet0/1` (WAN-TO-BR-RTR1). Rollback is correctly ordered — removes service-policy from interface before removing policy-maps.
+
+### ADVISORY Item P11-03 — `fair-queue` under class-default may be rejected on IOL
+
+IOL does not always support `fair-queue` (WFQ) inside a policy-map class when LLQ (`priority`) is also present. The Phase 3A precheck will reveal this. Watch for an error on this line:
+
+```ios
+class class-default
+  fair-queue
+```
+
+If `fair-queue` is rejected:
+- Remove it from `class-default` in `P11-WAN-QUEUE` — leave the class bare
+- IOS defaults class-default to fair queuing when no explicit queuing action is configured
+- Document as platform limitation in the Phase 3 verification output
+
+The rest of the policy (priority, bandwidth percent, shape average, nested service-policy) should be accepted without issue.
+
+### Safe to apply to CML: YES — run Phase 3A precheck first, watch the fair-queue line

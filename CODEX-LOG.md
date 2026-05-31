@@ -547,3 +547,63 @@ Accounting already configured in Phase 1 (`aaa accounting exec default start-sto
 Session: 2026-05-25
 
 Part A: Changed TACACS address to unused IP (10.1.99.250), SSH from HQ-DSW1 to HQ-RTR1 succeeded at priv 15 via local fallback. TACACS restored and re-verified. Part B: Wrong key (P10-WRONG-KEY) introduced — `test aaa` returned `User rejected` and `Continous Authc fail count: 1`. Correct key restored, `User successfully authenticated`, saved. Key distinction proven: unreachable server triggers local fallback, reachable server rejection does not.
+
+<!-- PROJECT 10 COMPLETE — Project 11 separator below -->
+---
+
+---
+<!-- PROJECT 11 — QoS Traffic Management -->
+
+## Project 11 — Phase 0: QoS Readiness Check
+
+Session: 2026-05-31
+
+Confirmed OSPF FULL adjacencies on HQ-RTR1, BR-RTR1, and WAN-RTR1. NBAR syntax (`match protocol http`) accepted on all three routers. No active MQC policy-maps on any pilot router. Baseline latency captured: HQ↔Branch ~2ms avg, HQ↔WAN-RTR1 ~1ms avg. Temporary test class-maps removed cleanly.
+
+## Project 11 — Phase 1: NBAR Classification
+
+Session: 2026-05-31
+
+Precheck confirmed `match protocol rtp` and `match protocol ospf` accepted by IOL. Four class-maps applied on HQ-RTR1: P11-VOICE-LIKE (RTP), P11-SIGNALING (SIP), P11-BULK-DATA (FTP+HTTP), P11-NETWORK-CONTROL (OSPF+DNS). `show class-map` confirmed all match statements present. Saved with `write memory`.
+
+## Project 11 — Phase 2: DSCP Marking
+
+Session: 2026-05-31
+
+Policy-map P11-MARK-IN applied inbound on HQ-RTR1 Ethernet0/0.100. DSCP values: RTP→EF, SIP→CS3, OSPF/DNS→CS2, FTP/HTTP→AF11. VLAN 100 hosts (10.1.100.170, 10.1.100.194) confirmed reachable. class-default saw 16 packets confirming policy is active. Saved.
+
+## Project 11 — Phase 3: WAN Edge Queuing And Shaping
+
+Session: 2026-05-31
+
+Hierarchical QoS policy applied outbound on HQ-RTR1 Ethernet0/1. Parent P11-WAN-SHAPE-1M shapes to 1 Mbps, nests child P11-WAN-QUEUE. Child policy: LLQ priority 30% (EF), bandwidth 10% (CS3), 5% (CS2), 15% (AF11), class-default fair-queue. `show policy-map interface Ethernet0/1` confirmed nested structure. Pings 10/10 post-policy. Saved.
+
+## Project 11 — Phase 4: Policy Map Verification
+
+Session: 2026-05-31
+
+Deep verification of both applied policies. Input policy (Ethernet0/0.100): all classes visible, class-default 16 packets. Output policy (Ethernet0/1): parent shaper CIR 1 Mbps, child nested, class-default 1568 packets, zero drops. `show interfaces Ethernet0/1` confirmed `Queueing strategy: Class-based queueing`.
+
+## Project 11 — Phase 5: Traffic Generation And ACL Fallback
+
+Session: 2026-05-31
+
+HTTP confirmed to nginx at 10.1.40.10 from PC-ENG1 (10.1.100.194). NBAR did not classify live HTTP or DNS traffic on IOL (PDL limitation). ACL-based fallback class P11-BULK-DATA-ACL created with `match access-group name P11-HTTP-TRAFFIC`. Result: 54 packets matched, 54 marked AF11. Phase 5 pass condition met. Temporary DNS test ACL entries removed. Saved.
+
+## Project 11 — Phase 6: Voice VLAN Branch Pilot
+
+Session: 2026-05-31
+
+BR-RTR1 Ethernet0/0.500 (10.2.50.1) already up. VLAN 500 already on BR-DSW1 and BR-ASW1 trunks. Only change: `switchport voice vlan 500` added to BR-ASW1 Ethernet1/0 and Ethernet1/1. Data VLANs (100, 200) unchanged. `show interfaces switchport` confirmed Voice VLAN: 500 on both ports. VLAN 500 active with Et1/0 and Et1/1. Saved.
+
+## Project 11 — Phase 7: AutoQoS Platform Limitation
+
+Session: 2026-05-31
+
+`auto qos`, `show auto qos`, and `show mls qos` all returned `% Invalid input` on BR-ASW1 IOL-L2. No configuration applied. Manual MQC from earlier phases confirmed as the working design. Platform limitation documented.
+
+## Project 11 — Break/Fix: Empty Class-Map
+
+Session: 2026-05-31
+
+Removed match statement from P11-BULK-DATA-ACL to create `Match none` condition. Traffic fell to class-default. Diagnosed with `show class-map P11-BULK-DATA-ACL` → Match none. Restored `match access-group name P11-HTTP-TRAFFIC`. Post-fix: 66 packets in class, 66 marked, class-default flat. Saved. Project 11 complete.
