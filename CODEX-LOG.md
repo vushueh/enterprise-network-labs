@@ -607,3 +607,51 @@ Session: 2026-05-31
 Session: 2026-05-31
 
 Removed match statement from P11-BULK-DATA-ACL to create `Match none` condition. Traffic fell to class-default. Diagnosed with `show class-map P11-BULK-DATA-ACL` → Match none. Restored `match access-group name P11-HTTP-TRAFFIC`. Post-fix: 66 packets in class, 66 marked, class-default flat. Saved. Project 11 complete.
+
+<!-- PROJECT 11 COMPLETE — Project 12 separator below -->
+---
+
+---
+<!-- PROJECT 12 — Disaster Recovery -->
+
+## Project 12 — Phase 0: Pre-Disaster Baseline
+
+Session: 2026-05-31
+
+Captured complete operational baseline — OSPF FULL on all 3 routers (3 paths), IKEv2 QM_IDLE with encaps 8241/decaps 8197, TACACS+ both users authenticated, QoS P11-MARK-IN and P11-WAN-SHAPE-1M active, all VLANs confirmed on HQ-DSW1, syslog 412 messages to 10.1.99.11, VLAN 100 hosts 5/5, Voice VLAN 500 at branch. All 8 baseline checks confirmed.
+
+## Project 12 — Phase 1: Disaster Injection
+
+Session: 2026-05-31
+
+Startup configs erased on HQ-RTR1 and HQ-DSW1, both reloaded to factory default. HQ-FW1 received partial fault (clear configure nat + clear configure access-list). Confirmed from BR-RTR1: HQ-RTR1 neighbor gone from OSPF table, ping 10.0.255.1 → 0/5. HQ-DSW1 confirmed all ports in VLAN 1 default. 90-minute timer started at T+00:00.
+
+## Project 12 — Phase 2: Timed Rebuild — HQ-RTR1
+
+Session: 2026-05-31
+
+HQ-RTR1 rebuilt from factory default: hostname/SSH/local user (T+04:48), all interface IPs including 3 subinterfaces + Tunnel0 (T+11:55), OSPF FULL on all 3 paths (T+17:40), IKEv2/IPsec profile on Tunnel0 (T+27:12), TACACS+ AAA with Phase A/B split and test aaa confirmed (T+34:05), full QoS policy (9 class-maps, 3 policy-maps, 2 service-policies) (T+49:30), syslog/SNMP/write memory (T+58:32). HQ-RTR1 complete at T+58:32.
+
+## Project 12 — Phase 3: Timed Rebuild — HQ-DSW1
+
+Session: 2026-05-31
+
+HQ-DSW1 rebuilt: hostname/ip routing/SSH (T+61:15), VLANs 100/200/300/500/999/1000 (T+63:00), LACP Po1 to HQ-DSW2 (T+66:20), trunks to HQ-RTR1/HQ-ASW1/HQ-ASW2 (T+70:05), Vlan999 SVI + default gateway (T+74:30), spanning tree priority 4096 + AAA + write memory (T+78:14). HQ-DSW1 complete at T+78:14.
+
+## Project 12 — Phase 4: Post-Recovery Verification
+
+Session: 2026-05-31
+
+All 8 post-recovery checks passed at T+87:10: OSPF 3/3 FULL, VPN encaps/decaps incrementing, TACACS both users authenticated, VLANs/trunks/root bridge confirmed, QoS policies active with 0 drops, syslog 28 messages, VLAN 100 hosts 5/5. Final timer: T+87:10 — PASS (target 90 minutes).
+
+## Project 12 — Phase 5: Runbook And Lessons Learned
+
+Session: 2026-05-31
+
+Condensed rebuild runbook written with timing targets per step and critical dependency table. Key lessons: QoS is the longest step (15 min, needs pre-staged blocks); test aaa before Phase B always; ip routing first on IOL-L2 before SVIs; write memory explicitly after recovery.
+
+## Project 12 — Break/Fix: OSPF Area Mismatch
+
+Session: 2026-05-31
+
+Injected area mismatch: `network 10.0.0.0 0.0.0.3 area 1` (should be area 0) on HQ-RTR1 Ethernet0/1. Symptom: INIT state local, no neighbor remote (asymmetric). Diagnosed with `show ip ospf interface Ethernet0/1` → Area 1. Fixed by correcting network statement area. FULL adjacency reformed in 15 seconds. Project 12 complete.

@@ -939,3 +939,62 @@ show ip route 10.1.40.10
 **Fix:** No config change needed. Understanding confirmed — the WAN queue on Ethernet0/1 only sees traffic destined to branch and WAN-RTR1 subnets. The inbound marking on Ethernet0/0.100 is correct; the egress point for this test traffic is different.
 
 **Lesson:** Verify the egress interface for test traffic before concluding a QoS policy is broken. `show ip route <destination>` is the first check when output queue counters stay at zero.
+
+---
+
+## Project 12 - Disaster Recovery
+
+### P12-T01: OSPF Stuck In INIT State After Rebuild (Area Mismatch)
+
+**Symptom:** `show ip ospf neighbor` shows a neighbor in `INIT` state on the local router, but that same neighbor table on the far-end shows no entry at all. HQ LAN unreachable from branch.
+
+**Investigation:** Ran `show ip ospf interface Ethernet0/1` — Area field showed `Area 1`. Network statement had been typed as `network 10.0.0.0 0.0.0.3 area 1` during a rushed rebuild (should be `area 0`). BR-RTR1 Ethernet0/1 showed `Area 0` — confirmed mismatch.
+
+**Root Cause:** OSPF area number typo during rebuild. Area mismatch produces an asymmetric symptom — local router receives hellos (INIT) but far-end silently discards hellos with unexpected area number (no neighbor entry).
+
+**Fix:**
+```ios
+configure terminal
+router ospf 1
+ no network 10.0.0.0 0.0.0.3 area 1
+ network 10.0.0.0 0.0.0.3 area 0
+end
+```
+Adjacency reformed to FULL within 15 seconds. Branch LAN reachability restored.
+
+---
+
+### P12-T02: VTY Locked Out After AAA Restore During Rebuild
+
+**Symptom:** After applying `login authentication default` to vty lines during HQ-RTR1 rebuild, SSH returned `Permission denied`. Console access remained.
+
+**Root Cause:** The `test aaa group tacacs+` step was skipped to save time. TACACS+ was not yet reachable at the time vty lines were changed — the service-interface Loopback0 was configured but the route to 10.1.99.52 via HQ-DSW1 had not yet converged. The method list fell to `local` but the local user had not yet been configured at that point.
+
+**Fix:** From console:
+```ios
+configure terminal
+line vty 0 4
+ login local
+end
+```
+Confirmed local user existence (`show run | include username`), confirmed TACACS reachability (`ping 10.1.99.52 source Loopback0`), then re-applied `login authentication default`.
+
+**Lesson:** Never skip `test aaa group tacacs+` before Phase B vty changes — even during a timed rebuild. The 2 minutes saved by skipping the test cost 8 minutes in recovery from the lockout.
+
+---
+
+### P12-T03: HQ-DSW1 SVI Not Routing After Rebuild
+
+**Symptom:** `interface Vlan999` configured with `ip address 10.1.99.11 255.255.255.0`, but `ping 10.1.99.1` returned `Network is unreachable`.
+
+**Root Cause:** `ip routing` was not configured. IOL-L2 factory default disables IP routing (`no ip routing`). Without `ip routing`, SVIs are configured but cannot route — they appear administratively up but produce `Network is unreachable` for any routed destination.
+
+**Fix:**
+```ios
+configure terminal
+ip routing
+end
+```
+SVI began routing immediately. Ping to 10.1.99.1 returned 5/5.
+
+**Lesson:** The first command on any IOL-L2 rebuild that needs inter-VLAN routing is `ip routing`. Check with `show ip route` — if the routing table shows `Default gateway is 10.1.99.1` instead of a full route table, ip routing is disabled.
