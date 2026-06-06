@@ -606,3 +606,23 @@ If `fair-queue` is rejected:
 The rest of the policy (priority, bandwidth percent, shape average, nested service-policy) should be accepted without issue.
 
 ### Safe to apply to CML: YES — run Phase 3A precheck first, watch the fair-queue line
+
+---
+
+## [OPEN] S01 — Review cml-evidence-documentation skill
+
+Claude created `skills/cml-evidence-documentation/SKILL.md` — a new evidence/portfolio
+documentation skill for the CML Enterprise Labs family.
+
+**Codex: review this file for:**
+1. Does the folder structure match what enterprise-network-labs actually uses?
+   (configs/, verification-outputs/, decision-log.md — check vs actual project folders)
+2. Are the show commands per project correct for the CML lab's device types (IOL, IOL-L2, ASAv)?
+3. Does the screenshot naming convention work with the existing project structure?
+4. Is the break/fix log template consistent with troubleshooting/ folder usage here?
+5. Does the completed project README template match the existing P01-P12 README format?
+
+**Patch any issues directly in `skills/cml-evidence-documentation/SKILL.md`**
+**Log changes in CODEX-LOG.md**
+**Mark this item [RESOLVED] when done**
+**Do NOT push — Claude handles all pushes**
