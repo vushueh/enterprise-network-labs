@@ -609,20 +609,13 @@ The rest of the policy (priority, bandwidth percent, shape average, nested servi
 
 ---
 
-## [OPEN] S01 — Review cml-evidence-documentation skill
+## [RESOLVED] S01 — Review cml-evidence-documentation skill
 
 Claude created `skills/cml-evidence-documentation/SKILL.md` — a new evidence/portfolio
 documentation skill for the CML Enterprise Labs family.
 
-**Codex: review this file for:**
-1. Does the folder structure match what enterprise-network-labs actually uses?
-   (configs/, verification-outputs/, decision-log.md — check vs actual project folders)
-2. Are the show commands per project correct for the CML lab's device types (IOL, IOL-L2, ASAv)?
-3. Does the screenshot naming convention work with the existing project structure?
-4. Is the break/fix log template consistent with troubleshooting/ folder usage here?
-5. Does the completed project README template match the existing P01-P12 README format?
-
-**Patch any issues directly in `skills/cml-evidence-documentation/SKILL.md`**
-**Log changes in CODEX-LOG.md**
-**Mark this item [RESOLVED] when done**
-**Do NOT push — Claude handles all pushes**
+**Resolution (2026-06-06):** Claude applied S01 corrections directly:
+- Fixed Main README Update section: removed `projects/` prefix from all links; project folders are root-level in this repo.
+- Fixed break/fix link to use root-level `TROUBLESHOOTING-LOG.md` rather than a per-project troubleshooting folder.
+- All other items already addressed: root-level folder structure, adaptive evidence folder guidance, dual decision-log.md locations, separate show commands (no pipe-chaining), `show policy-map interface` / `show class-map` replacing `show queue`, adaptive README template links.
+**Do NOT push until Leonel reviews.**

@@ -308,6 +308,26 @@ show crypto ipsec profile P08-IPSEC-PROFILE
 
 <!-- Codex appends new session entries below this line — Project 09 and beyond -->
 
+## Session — 2026-06-06 (Claude — S01 cml-evidence-documentation patch)
+### What I did
+- Applied S01 corrections to `skills/cml-evidence-documentation/SKILL.md`.
+- Fixed Main README Update section: removed `projects/` prefix from all project folder links so they point to root-level folders (`project-03-ospf-dynamic-routing/` not `projects/project-03-ospf-dynamic-routing/`).
+- Fixed break/fix link in Main README Update to use `TROUBLESHOOTING-LOG.md` at project root instead of `troubleshooting/break-fix-log.md` (project-level troubleshooting folders are not universal in this repo).
+- Confirmed all other S01 items were already addressed in the current SKILL.md: root-level folder structure, adaptive evidence folder guidance, decision-log.md dual-location support, separate show commands (no pipe-chaining), `show queue` replaced with `show policy-map interface` / `show class-map`, README template links with adaptive comment.
+- Marked S01 [RESOLVED] in `CLAUDE-REVIEW.md`.
+
+### Files created/modified
+- `skills/cml-evidence-documentation/SKILL.md`
+- `CLAUDE-REVIEW.md`
+- `CODEX-LOG.md`
+
+### Architecture decisions made
+- Main README Update links use root-relative paths matching the actual repo structure (`project-NN-name/` at repo root, no `projects/` subdirectory).
+- Break/fix link uses `TROUBLESHOOTING-LOG.md` to match the single cross-project troubleshooting log this repo uses, with project-level alternatives only where they exist.
+
+### Open questions for Claude
+- None. Do not push until Leonel reviews.
+
 ## 2026-05-17 — Project 9 Phase 1 Syslog Infrastructure complete
 
 **Project:** P09 — Monitoring and Visibility

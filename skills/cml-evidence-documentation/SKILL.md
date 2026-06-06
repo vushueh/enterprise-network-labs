@@ -25,22 +25,26 @@ project was completed. The portfolio shows:
 
 ## Folder Structure Per Project
 
+This repo uses root-level project folders — not a `projects/` subdirectory.
+Evidence folders vary per project — use what already exists; create subfolders only when needed.
+
 ```
-projects/project-NN-name/
-├── README.md                    ← planning + STAR summary
-├── configs/                     ← startup configs per device
+project-01-campus-foundation/          ← root-level project folder
+├── README.md                          ← planning + STAR summary
+├── configs/                           ← startup configs per device
 │   ├── R1-startup.cfg
-│   ├── R2-startup.cfg
 │   ├── SW1-startup.cfg
 │   └── ASAv-startup.cfg
-├── verification-outputs/        ← show command outputs
-│   ├── project-NN-R1-show-ip-route.txt
-│   ├── project-NN-R1-show-ip-ospf-neighbor.txt
+├── verification-outputs/              ← show command outputs (some projects use verification/)
+│   ├── screenshots/                   ← create when you have screenshots
+│   ├── project-01-R1-show-ip-route.txt
 │   └── ...
-├── decision-log.md              ← why certain design choices were made
-└── troubleshooting/
-    └── break-fix-log.md
+├── decision-log.md                    ← at project root (or notes/decision-log.md if notes/ exists)
+└── TROUBLESHOOTING-LOG.md             ← root-level cross-project log (preferred)
+    OR troubleshooting/break-fix-log.md ← project-level log if folder exists
 ```
+
+**Rule:** Use the folder that already exists for that project. Check before creating new ones.
 
 ---
 
@@ -102,28 +106,44 @@ copy running-config startup-config
 
 ```cisco
 ! Run ALL verification commands from the project README
-! Key commands by project:
+! Key commands by project (run each separately — do not pipe):
 
 ! P01 Campus Foundation:
-show vlan brief | show interfaces trunk | show spanning-tree
+show vlan brief
+show interfaces trunk
+show spanning-tree
 
 ! P03 OSPF:
-show ip ospf neighbor | show ip route ospf | show ip ospf database
+show ip ospf neighbor
+show ip route ospf
+show ip ospf database
 
 ! P07 ASAv Firewall:
-show interface ip brief | show conn | show access-list | show route
+show interface ip brief
+show conn
+show access-list
+show route
 
 ! P08 VPN:
-show crypto isakmp sa | show crypto ipsec sa | show ip route
+show crypto isakmp sa
+show crypto ipsec sa
+show ip route
 
 ! P09 Monitoring:
-show logging | show snmp | show ntp status | show ip flow export
+show logging
+show snmp
+show ntp status
+show ip flow export
 
 ! P10 AAA:
-show aaa sessions | show tacacs | show privilege
+show aaa sessions
+show tacacs
+show privilege
 
 ! P11 QoS:
-show policy-map interface | show queue | show class-map
+show policy-map interface
+show class-map
+! Note: 'show queue' is platform-specific — use show policy-map interface for MQC verification
 ```
 
 Save all outputs: `verification-outputs/project-NN-<device>-<command>.txt`
@@ -216,7 +236,8 @@ Add to `decision-log.md`:
 **Result:** [2-3 sentences]
 
 ### Links
-[Configs](configs/) | [Verification outputs](verification-outputs/) | [Decision log](decision-log.md) | [Break/Fix](troubleshooting/break-fix-log.md)
+[Configs](configs/) | [Verification](verification-outputs/) | [Decision log](decision-log.md) | [Break/Fix log](TROUBLESHOOTING-LOG.md)
+<!-- Adjust links to match the actual folders in this project -->
 ```
 
 ---
@@ -224,19 +245,19 @@ Add to `decision-log.md`:
 ## Main README Update
 
 ```markdown
-| [P03](projects/project-03-ospf-dynamic-routing/) | OSPF Dynamic Routing | ✅ Complete |
+| [P03](project-03-ospf-dynamic-routing/) | OSPF Dynamic Routing | ✅ Complete |
 
 ## ✅ Project 03 — OSPF Dynamic Routing
 
-**Built:** YYYY-MM-DD | [Full detail →](projects/project-03-ospf-dynamic-routing/)
+**Built:** YYYY-MM-DD | [Full detail →](project-03-ospf-dynamic-routing/)
 
 Implemented single-area OSPFv2 across 4 routers. All adjacencies FULL.
 R1 injects default route via default-information originate. OSPFv3 added for IPv6.
 BFD and IP SLA configured for fast convergence.
 
-[→ Configs](projects/project-03-ospf-dynamic-routing/configs/) |
-[→ Verification](projects/project-03-ospf-dynamic-routing/verification-outputs/) |
-[→ Break/Fix](projects/project-03-ospf-dynamic-routing/troubleshooting/break-fix-log.md)
+[→ Configs](project-03-ospf-dynamic-routing/configs/) |
+[→ Verification](project-03-ospf-dynamic-routing/verification-outputs/) |
+[→ Break/Fix](project-03-ospf-dynamic-routing/TROUBLESHOOTING-LOG.md)
 ```
 
 ---
