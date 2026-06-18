@@ -675,3 +675,32 @@ Condensed rebuild runbook written with timing targets per step and critical depe
 Session: 2026-05-31
 
 Injected area mismatch: `network 10.0.0.0 0.0.0.3 area 1` (should be area 0) on HQ-RTR1 Ethernet0/1. Symptom: INIT state local, no neighbor remote (asymmetric). Diagnosed with `show ip ospf interface Ethernet0/1` → Area 1. Fixed by correcting network statement area. FULL adjacency reformed in 15 seconds. Project 12 complete.
+
+<!-- PROJECT 13 PLANNING HANDOFF — Network Automation -->
+---
+
+## 2026-06-18 — Project 13 Network Automation handoff prepared
+
+**Project:** P13 — Network Automation
+**Status:** Planning handoff ready for Claude implementation
+**Claude reviewed:** pending
+**Live CML changes:** none
+
+### What changed
+
+- Copied the original local Project 02-13 reference into the repo at `references/projects-02-13.md`.
+- Added `project-13-network-automation/CODEX-PROJECT13-CLAUDE-HANDOFF.md` with the actionable Project 13 strategy, phases, proposed configs, scripts, Ansible playbooks, safety gates, verification outputs, and completion criteria.
+- Added `.gitignore` entries to prevent local credentials and raw Project 13 backups from being committed.
+
+### Source of truth for Project 13
+
+Claude should read:
+
+1. `references/projects-02-13.md`
+2. `project-13-network-automation/CODEX-PROJECT13-CLAUDE-HANDOFF.md`
+
+The Project 13 section in `references/projects-02-13.md` is authoritative. It defines Project 13 as **Network Automation**, a DevNet-style portfolio piece with `AUTOMATION1`, Python/Netmiko, inventory management, read-only automation, configuration push, compliance checks, Ansible comparison, and wrong-SNMP-community break/fix.
+
+### Left off at
+
+Claude should pull latest, read the two files above, then implement Project 13. No Cuckoo/SNML files belong in this repo.
