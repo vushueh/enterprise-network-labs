@@ -704,3 +704,40 @@ The Project 13 section in `references/projects-02-13.md` is authoritative. It de
 ### Left off at
 
 Claude should pull latest, read the two files above, then implement Project 13. No Cuckoo/SNML files belong in this repo.
+
+---
+
+## 2026-06-18 — CML stale-container recovery guard added
+
+**Issue fixed live:** `Enterprise-network-labs` had three nodes failing to start:
+`HQ-TACACS`, `EXT-WEB1`, and `BR-DSW1`.
+
+**Root cause:** `HQ-TACACS` and `EXT-WEB1` were stale Docker runtime containers.
+CML API reported both nodes as `STOPPED`, but Docker still had running containers
+named after their node UUIDs. This caused the CML UI/API error
+`container already running`. `BR-DSW1` recovered with a targeted CML node
+stop/start and booted normally.
+
+**Live remediation performed:**
+- Used CML API to confirm node states and lab ID.
+- Used CML OS SSH on port `1122`; port `22` is the CML console server.
+- Stopped only the stale Docker containers for `HQ-TACACS` and `EXT-WEB1`.
+- Started both nodes again through the CML API.
+- Verified console server listed all three nodes afterward.
+
+**Prevention added:**
+- Added `scripts/cml-stale-container-guard.py`.
+- Added `docs/cml-stale-container-recovery.md`.
+- Installed guard on the CML controller as `/usr/local/sbin/cml-stale-container-guard`.
+
+**Safe use:** run check-only before lab work:
+
+```bash
+sudo /usr/local/sbin/cml-stale-container-guard --username leonel
+```
+
+Run repair only when stale containers are reported:
+
+```bash
+sudo /usr/local/sbin/cml-stale-container-guard --username leonel --fix
+```
