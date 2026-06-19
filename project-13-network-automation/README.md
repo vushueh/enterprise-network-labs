@@ -1,109 +1,135 @@
-# Project 13 — Network Automation
+# Project 13 - Network Automation
 
-**Status:** Complete with live findings and approval-gated change phases
-**Platform:** Cisco CML 2.9 enterprise lab
-**Focus:** Python/Netmiko automation first, Ansible comparison later
+## Goal
 
-## Objective
+I built Projects 1-12 by hand. Project 13 proves I can now use automation to
+manage that same network.
 
-This project proves that I can automate the enterprise network built in Projects
-01-12. The earlier projects show manual design, configuration, verification,
-break/fix, monitoring, security, QoS, AAA, VPN, firewalling, and disaster
-recovery. Project 13 turns that same network into a DevNet-style automation
-portfolio piece.
+The goal is not to create a new network. The goal is to show that I can:
 
-The implementation intentionally starts read-only. I want automation to prove
-inventory, reachability, collection, backup, reporting, and compliance before it
-is allowed to push configuration.
+- keep a clean device inventory;
+- log into routers and switches automatically;
+- collect show commands from many devices at once;
+- back up running configs safely;
+- check if devices follow my standards;
+- prepare safe config changes without blindly pushing them.
 
-## Current Live State
+No live device configs were changed during this first automation pass.
 
-| Item | State |
-|------|-------|
-| Automation workstation | `AUTOMATION1` on `10.1.99.54` |
-| CML edge | `CML-EDGE1` routes default traffic to Route10 over VLAN 160 |
-| Internal routes on AUTOMATION1 | `10.0.0.0/16`, `10.1.0.0/16`, `10.2.0.0/16` via `10.1.99.1` |
-| Default route on AUTOMATION1 | `10.1.99.254` |
-| Inventory reachability | 10 in-scope devices reachable from AUTOMATION1 |
-| Credential handling | Environment variables only; no passwords in inventory |
+## What This Project Built
 
-## Live Automation Results
+| Area | What It Means |
+|------|---------------|
+| Automation workstation | `AUTOMATION1` is the Linux node inside CML that runs Python/Netmiko. |
+| Inventory | A YAML file lists the devices, IPs, platforms, and roles. No passwords are stored in it. |
+| Read-only collection | Python logs into devices and collects show-command evidence. |
+| Redacted backups | Python collects running configs and hides secrets before saving them. |
+| Compliance check | Python checks the network against standards like SSHv2, syslog, NTP, SNMP, and archive. |
+| Safe config push | Python generates a harmless dry-run config marker. It does not apply unless approved. |
+| Ansible comparison | Ansible files show how the same idea would look in a declarative tool. |
 
-Evidence lives under [`verification-outputs/`](verification-outputs/).
+## Important Files
 
-| Phase | Result | What It Proved |
-|-------|--------|----------------|
-| Phase 1 — Workstation | Complete | `AUTOMATION1` has internet through `CML-EDGE1`, plus deterministic internal routes. |
-| Phase 2 — Inventory | Complete | 10 in-scope devices modeled with no credentials in YAML. |
-| Phase 3 — Read-only collection | 8/10 successful | Netmiko collected 9 commands per reachable IOS device. |
-| Phase 4 — Redacted backups | 8/10 successful | Running configs collected and redacted for reachable IOS devices. |
-| Phase 5 — Compliance | 8 non-compliant, 2 failed | Automation found real drift instead of rubber-stamping the lab. |
-| Phase 6 — Safe push | Dry-run complete | Generated a reversible, unused ACL marker; no live config was changed. |
-| Phase 7 — Ansible | Implemented as comparison | Inventory and playbooks show the declarative alternative. |
-| Phase 8 — Break/fix | Pilot documented | SNMP wrong-community test is ready but requires explicit approval. |
+| File Or Folder | Purpose |
+|----------------|---------|
+| [configs/inventory-devices.yml](configs/inventory-devices.yml) | Source-of-truth inventory for the lab devices. |
+| [scripts/](scripts/) | Python automation scripts. |
+| [ansible/playbooks/](ansible/playbooks/) | Ansible comparison playbooks. |
+| [verification-outputs/](verification-outputs/) | Proof from the live lab runs. |
+| [decision-log.md](decision-log.md) | Why I made the main design choices. |
+| [requirements.md](requirements.md) | What Project 13 needed to prove. |
 
-## Findings
+## Automation Scripts
 
-Automation found three important issues:
+| Script | What It Does | Live Outcome |
+|--------|--------------|--------------|
+| [collect_baseline.py](scripts/collect_baseline.py) | Logs into devices and runs read-only commands like `show cdp neighbors`, `show ip interface brief`, and `show version`. | Worked on 8 of 10 devices. |
+| [backup_configs.py](scripts/backup_configs.py) | Collects running configs and redacts secrets before saving them. | Worked on 8 of 10 devices. |
+| [compliance_check.py](scripts/compliance_check.py) | Checks whether devices follow standards for SSHv2, syslog, NTP, SNMP, archive, and password safety. | Found real configuration drift. |
+| [push_safe_config.py](scripts/push_safe_config.py) | Creates a safe dry-run config push using an unused ACL marker. | Dry-run only. No live config changed. |
+| [render_report.py](scripts/render_report.py) | Builds a short final report from the automation results. | Created the final Project 13 report. |
 
-1. `WAN-RTR1` is reachable on TCP/22 but rejects the documented credentials,
-   including console login attempts. This is AAA/local-login drift from the
-   Project 10 baseline.
-2. `HQ-FW1` is reachable by IP but refuses TCP/22 from `AUTOMATION1`; ASA SSH
-   management needs a separate platform-specific fix.
-3. The 8 reachable IOS devices are missing explicit `ip ssh version 2` in
-   running config. `HQ-RTR1` also lacks the expected NTP line. The lab works,
-   but compliance correctly flags missing hardening intent.
+## Live Results
 
-## In-Scope Devices
+| Phase | Evidence | Result |
+|-------|----------|--------|
+| Phase 1 - Workstation routing | [phase1-automation1-routing.md](verification-outputs/phase1-automation1-routing.md) | `AUTOMATION1` has the correct internal and internet routing. |
+| Phase 2 - Inventory validation | [phase2-inventory-validation.md](verification-outputs/phase2-inventory-validation.md) | 10 devices are listed in the inventory. |
+| Phase 3 - Read-only collection | [summary.md](verification-outputs/phase3-read-only/summary.md) | 8 of 10 devices succeeded. |
+| Phase 4 - Redacted backups | [summary.md](verification-outputs/phase4-redacted-backups/summary.md) | 8 of 10 devices succeeded. |
+| Phase 5 - Compliance check | [summary.md](verification-outputs/phase5-compliance/summary.md) | 8 devices are reachable but non-compliant; 2 devices failed. |
+| Phase 6 - Safe config dry-run | [summary.md](verification-outputs/phase6-safe-config/summary.md) | Safe config was generated only. Nothing was applied. |
+| Final report | [project13-final-report.md](verification-outputs/project13-final-report.md) | Final automation summary. |
 
-| Device | IP | Platform | Role |
-|--------|----|----------|------|
-| `HQ-RTR1` | `10.0.255.1` | IOS | Core/HQ router |
-| `BR-RTR1` | `10.0.255.2` | IOS | Branch router |
-| `WAN-RTR1` | `10.0.255.3` | IOS | WAN router |
-| `HQ-DSW1` | `10.1.99.11` | IOS | HQ distribution switch |
-| `HQ-DSW2` | `10.1.99.12` | IOS | HQ distribution switch |
-| `HQ-ASW1` | `10.1.99.13` | IOS | HQ access switch |
-| `HQ-ASW2` | `10.1.99.14` | IOS | HQ access switch |
-| `BR-DSW1` | `10.2.99.2` | IOS | Branch distribution switch |
-| `BR-ASW1` | `10.2.99.3` | IOS | Branch access switch |
-| `HQ-FW1` | `10.0.0.14` | ASA | Firewall |
+## What The Automation Found
 
-## Phase Plan
+The automation worked, and it also found problems that need fixing.
 
-| Phase | Scope | Status |
-|-------|-------|--------|
-| 1 | Automation workstation setup | Complete |
-| 2 | Structured inventory | Complete |
-| 3 | Read-only Netmiko collection | Complete with findings |
-| 4 | Config backup and redaction | Complete with findings |
-| 5 | Compliance checker | Complete with findings |
-| 6 | Gated safe config push | Dry-run complete; live apply approval-gated |
-| 7 | Ansible comparison | Complete |
-| 8 | Controlled break/fix | Designed; live injection approval-gated |
+1. `WAN-RTR1` is reachable on SSH, but login fails.
+   - Meaning: the device is online, but AAA/local credentials do not match the documented baseline.
 
-## How To Run
+2. `HQ-FW1` is reachable by ping, but SSH port 22 is refused.
+   - Meaning: the ASA firewall needs a separate SSH management fix.
 
-From `AUTOMATION1`:
+3. The 8 reachable IOS devices are missing explicit `ip ssh version 2`.
+   - Meaning: SSH works, but the config does not clearly show the hardening standard.
+
+4. `HQ-RTR1` is missing the expected NTP line.
+   - Meaning: time configuration needs cleanup on that router.
+
+## Why This Matters
+
+This project shows that I can use automation like a network engineer:
+
+- I did not hardcode device logins into scripts.
+- I did not store passwords in Git.
+- I did not push changes before collecting evidence.
+- I let automation report failures honestly.
+- I separated read-only checks from live config changes.
+
+That is the real DevNet lesson: automation should make network operations safer,
+more repeatable, and easier to audit.
+
+## What Needs Approval Before Changing Devices
+
+The next steps would change live configs, so they need approval first:
+
+1. Fix `WAN-RTR1` AAA/local login.
+2. Fix `HQ-FW1` ASA SSH management.
+3. Add explicit `ip ssh version 2` to IOS devices.
+4. Add the missing NTP config on `HQ-RTR1`.
+5. Apply the safe marker config to one pilot device.
+6. Run the SNMP break/fix pilot on one access switch.
+
+## How To Run The Scripts
+
+Run from `AUTOMATION1`:
 
 ```bash
 cd ~/netauto
 source .venv/bin/activate
+
 export NETLAB_USERNAME='<username>'
 export NETLAB_PASSWORD='<password>'
 export NETLAB_SECRET='<enable-secret>'
 export NETLAB_SNMP_RO_COMMUNITY='<standard-snmp-community>'
-python scripts/collect_baseline.py --inventory inventory/devices.yml
 ```
 
-For inventory-only validation:
+Validate the inventory:
 
 ```bash
 python scripts/collect_baseline.py --inventory inventory/devices.yml --check-inventory-only
 ```
 
-For redacted backups:
+Collect read-only evidence:
+
+```bash
+python scripts/collect_baseline.py \
+  --inventory inventory/devices.yml \
+  --output-dir outputs/phase3-read-only
+```
+
+Back up redacted configs:
 
 ```bash
 python scripts/backup_configs.py \
@@ -111,7 +137,7 @@ python scripts/backup_configs.py \
   --output-dir outputs/phase4-redacted-backups
 ```
 
-For compliance:
+Run compliance:
 
 ```bash
 python scripts/compliance_check.py \
@@ -119,7 +145,7 @@ python scripts/compliance_check.py \
   --output-dir outputs/phase5-compliance
 ```
 
-For a dry-run safe config push:
+Generate the safe config dry-run:
 
 ```bash
 python scripts/push_safe_config.py \
@@ -127,57 +153,8 @@ python scripts/push_safe_config.py \
   --output-dir outputs/phase6-safe-config
 ```
 
-To apply the safe marker after approval:
+## Simple Summary
 
-```bash
-python scripts/push_safe_config.py \
-  --inventory inventory/devices.yml \
-  --output-dir outputs/phase6-safe-config \
-  --apply \
-  --confirm APPLY_SAFE_CONFIG
-```
-
-Outputs are written under:
-
-```text
-outputs/
-```
-
-The same script is stored in this repo under:
-
-```text
-project-13-network-automation/scripts/collect_baseline.py
-```
-
-## Ansible Comparison
-
-Ansible files are included under:
-
-```text
-configs/ansible.cfg
-configs/ansible-inventory.yml
-ansible/playbooks/
-```
-
-Netmiko remains the primary implementation because it demonstrates Python
-control flow, exception handling, redaction, report writing, and safe gates.
-Ansible is the comparison path for declarative collection and deployment.
-
-## Next Approved Changes
-
-These are intentionally not applied automatically:
-
-- recover `WAN-RTR1` AAA/local login from console and rerun Phase 3-5;
-- enable/fix `HQ-FW1` ASA SSH management from the inside path;
-- explicitly configure `ip ssh version 2` on the IOS fleet;
-- add the missing NTP line on `HQ-RTR1`;
-- apply and roll back the safe marker ACL on one pilot device;
-- run the SNMP break/fix pilot on one access switch.
-
-## Safety Rules
-
-- Do read-only collection before any config push.
-- Do not store credentials in git.
-- Do not let one failed device stop the whole run.
-- Redact sensitive-looking command output before saving it.
-- Treat config push and break/fix as separate approval-gated phases.
+Project 13 proves I can automate my enterprise CML network with Python and
+Netmiko, compare that approach with Ansible, collect evidence from the live lab,
+find real configuration drift, and avoid unsafe config pushes.
