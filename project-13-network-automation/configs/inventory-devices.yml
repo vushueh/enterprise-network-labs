@@ -104,6 +104,15 @@ devices:
     netmiko: true
     ansible: true
 
+  - name: CML-EDGE1
+    host: 10.1.99.254
+    platform: cisco_ios
+    role: cml_edge_router
+    source_interface: Ethernet0/1
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
   - name: HQ-FW1
     host: 10.0.0.14
     platform: cisco_asa

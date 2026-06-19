@@ -16,7 +16,8 @@ The goal is not to create a new network. The goal is to show that I can:
 
 The first automation pass was read-only/dry-run. After Wazuh was prepared to
 accept the CML source ranges, I used the same gated automation pattern to apply
-the Wazuh syslog target to the reachable IOS devices.
+the Wazuh syslog target to the reachable IOS devices. I later fixed the two
+remaining IOS gaps, `WAN-RTR1` and `CML-EDGE1`, from the CML console.
 
 ## What This Project Built
 
@@ -30,6 +31,19 @@ the Wazuh syslog target to the reachable IOS devices.
 | Safe config push | Python generates a harmless dry-run config marker. It does not apply unless approved. |
 | Wazuh syslog push | Python can add Wazuh as a second syslog target after the Wazuh receiver allow-list is ready. |
 | Ansible comparison | Ansible files show how the same idea would look in a declarative tool. |
+
+## Current Live Status
+
+As of June 19, 2026, all 10 in-scope CML IOS devices have direct syslog evidence
+in Wazuh:
+
+`HQ-RTR1`, `BR-RTR1`, `WAN-RTR1`, `HQ-DSW1`, `HQ-DSW2`, `HQ-ASW1`, `HQ-ASW2`,
+`BR-DSW1`, `BR-ASW1`, and `CML-EDGE1`.
+
+`HQ-FW1` is still separate because it is ASA, not IOS. It needs an ASA-specific
+SSH/syslog procedure. `ISP-RTR1` is also separate by design because Project 09
+treated it as the outside/ISP side; I should only onboard it through a deliberate
+out-of-band management or firewall/NAT design.
 
 ## Important Files
 
@@ -69,7 +83,7 @@ details for someone who wants to inspect the code or proof.
 | [backup_configs.py](scripts/backup_configs.py) | Collects running configs and redacts secrets before saving them. | Worked on 8 of 10 devices. |
 | [compliance_check.py](scripts/compliance_check.py) | Checks whether devices follow standards for SSHv2, syslog, NTP, SNMP, archive, and password safety. | Found real configuration drift. |
 | [push_safe_config.py](scripts/push_safe_config.py) | Creates a safe dry-run config push using an unused ACL marker. | Dry-run only. No live config changed. |
-| [push_wazuh_syslog.py](scripts/push_wazuh_syslog.py) | Adds Wazuh `192.168.10.156` as a syslog target on IOS devices while keeping the existing lab syslog server. | Dry-run ready. Apply only after Wazuh allows the CML source subnets. |
+| [push_wazuh_syslog.py](scripts/push_wazuh_syslog.py) | Adds Wazuh `192.168.10.156` as a syslog target on IOS devices while keeping the existing lab syslog server. | 10 in-scope IOS devices now have direct Wazuh syslog proof. |
 | [render_report.py](scripts/render_report.py) | Builds a short final report from the automation results. | Created the final Project 13 report. |
 
 ## Live Results
@@ -82,20 +96,20 @@ details for someone who wants to inspect the code or proof.
 | Phase 4 - Redacted backups | [summary.md](verification-outputs/phase4-redacted-backups/summary.md) | 8 of 10 devices succeeded. |
 | Phase 5 - Compliance check | [summary.md](verification-outputs/phase5-compliance/summary.md) | 8 devices are reachable but non-compliant; 2 devices failed. |
 | Phase 6 - Safe config dry-run | [summary.md](verification-outputs/phase6-safe-config/summary.md) | Safe config was generated only. Nothing was applied. |
-| Wazuh syslog onboarding | [summary.md](verification-outputs/wazuh-syslog/summary.md) | 8 IOS devices now send syslog to Wazuh. |
+| Wazuh syslog onboarding | [summary.md](verification-outputs/wazuh-syslog/summary.md) and [2026-06-19 update](verification-outputs/wazuh-syslog/2026-06-19-wan-cml-edge-update.md) | 10 in-scope IOS devices now send direct syslog to Wazuh. |
 | Final report | [project13-final-report.md](verification-outputs/project13-final-report.md) | Final automation summary. |
 
 ## What The Automation Found
 
 The automation worked, and it also found problems that need fixing.
 
-1. `WAN-RTR1` is reachable on SSH, but login fails.
-   - Meaning: the device is online, but AAA/local credentials do not match the documented baseline.
+1. `WAN-RTR1` originally failed automation login.
+   - Current state: fixed from CML console on June 19, 2026. Its local fallback was reset, Wazuh syslog was added, and Wazuh indexed a fresh config-change alert.
 
 2. `HQ-FW1` is reachable by ping, but SSH port 22 is refused.
    - Meaning: the ASA firewall needs a separate SSH management fix.
 
-3. The 8 reachable IOS devices are missing explicit `ip ssh version 2`.
+3. The original 8 reachable IOS devices were missing explicit `ip ssh version 2`.
    - Meaning: SSH works, but the config does not clearly show the hardening standard.
 
 4. `HQ-RTR1` is missing the expected NTP line.
@@ -114,17 +128,22 @@ This project shows that I can use automation like a network engineer:
 That is the real DevNet lesson: automation should make network operations safer,
 more repeatable, and easier to audit.
 
-## What Needs Approval Before Changing Devices
+## Completed After The First Automation Pass
+
+- `WAN-RTR1` AAA/local login is fixed.
+- `WAN-RTR1` direct Wazuh syslog is proven.
+- `CML-EDGE1` SSH and direct Wazuh syslog are proven.
+
+## What Needs Approval Before Changing More Devices
 
 The next steps would change live configs, so they need approval first:
 
-1. Fix `WAN-RTR1` AAA/local login.
-2. Fix `HQ-FW1` ASA SSH management.
-3. Add explicit `ip ssh version 2` to IOS devices.
-4. Add the missing NTP config on `HQ-RTR1`.
-5. Apply the safe marker config to one pilot device.
-6. Run the SNMP break/fix pilot on one access switch.
-7. Build a dedicated CML-node Cisco dashboard filter after more lab-node logs accumulate.
+1. Fix `HQ-FW1` ASA SSH management.
+2. Add explicit `ip ssh version 2` to the IOS devices that still lack it.
+3. Add the missing NTP config on `HQ-RTR1`.
+4. Apply the safe marker config to one pilot device.
+5. Run the SNMP break/fix pilot on one access switch.
+6. Add Wazuh logging for support/service nodes such as `AUTOMATION1`, `HQ-TACACS`, `HQ-RADIUS`, `HQ-DHCP-DNS`, and `HQ-SYSLOG`.
 
 ## How To Run The Scripts
 

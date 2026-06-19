@@ -130,11 +130,20 @@ data.cisco.mnemonic:LOGIN_SUCCESS
 The CML dashboard remains for controller/lab lifecycle logs such as node boot,
 node stop, and lab state heartbeats.
 
+## 2026-06-19 Update
+
+`WAN-RTR1` and `CML-EDGE1` are now fixed and proven in Wazuh. See:
+
+- [2026-06-19-wan-cml-edge-update.md](2026-06-19-wan-cml-edge-update.md)
+
+Current direct IOS syslog coverage is 10 of 10 in-scope CML IOS devices.
+
 ## Remaining Gaps
 
-- `WAN-RTR1` is still excluded because SSH authentication does not match the
-  working Project 13 credential set.
 - `HQ-FW1` is still excluded because ASA SSH is refused and ASA syslog syntax is
   a separate platform workflow.
-- A future dashboard improvement should add a lab-node Cisco filter so CML node
-  syslog can be viewed beside controller lifecycle events.
+- `ISP-RTR1` is intentionally outside this monitoring scope because it
+  represents the simulated ISP side. Add it later only through a deliberate
+  out-of-band management or firewall/NAT design.
+- Linux/service nodes should be onboarded next with rsyslog or Wazuh agents:
+  `AUTOMATION1`, `HQ-TACACS`, `HQ-RADIUS`, `HQ-DHCP-DNS`, and `HQ-SYSLOG`.
