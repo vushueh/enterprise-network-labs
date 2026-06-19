@@ -39,6 +39,25 @@ No live device configs were changed during this first automation pass.
 | [decision-log.md](decision-log.md) | Why I made the main design choices. |
 | [requirements.md](requirements.md) | What Project 13 needed to prove. |
 
+## If You Want The Details
+
+The README stays simple on purpose. These links point to the deeper technical
+details for someone who wants to inspect the code or proof.
+
+| Question | Link |
+|----------|------|
+| What Python code did I write? | [scripts/](scripts/) |
+| What does each script do? | [Automation Scripts](#automation-scripts) |
+| What devices are automated? | [configs/inventory-devices.yml](configs/inventory-devices.yml) |
+| How are credentials kept out of Git? | [configs/.env.example](configs/.env.example) |
+| What did the live lab prove? | [verification-outputs/](verification-outputs/) |
+| What did the compliance check find? | [Phase 5 compliance summary](verification-outputs/phase5-compliance/summary.md) |
+| What configs were backed up safely? | [Phase 4 redacted backups](verification-outputs/phase4-redacted-backups/) |
+| What is the safe config push? | [configs/safe-standard-config-template.md](configs/safe-standard-config-template.md) |
+| What would the break/fix look like? | [configs/snmp-breakfix-pilot.md](configs/snmp-breakfix-pilot.md) |
+| How would Ansible do this? | [ansible/playbooks/](ansible/playbooks/) |
+| Why did I make these choices? | [decision-log.md](decision-log.md) |
+
 ## Automation Scripts
 
 | Script | What It Does | Live Outcome |
