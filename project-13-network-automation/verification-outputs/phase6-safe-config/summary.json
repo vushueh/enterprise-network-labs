@@ -1,0 +1,141 @@
+[
+  {
+    "name": "HQ-RTR1",
+    "host": "10.0.255.1",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on HQ-RTR1",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "BR-RTR1",
+    "host": "10.0.255.2",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on BR-RTR1",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "WAN-RTR1",
+    "host": "10.0.255.3",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on WAN-RTR1",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-DSW1",
+    "host": "10.1.99.11",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on HQ-DSW1",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-DSW2",
+    "host": "10.1.99.12",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on HQ-DSW2",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-ASW1",
+    "host": "10.1.99.13",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on HQ-ASW1",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-ASW2",
+    "host": "10.1.99.14",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on HQ-ASW2",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "BR-DSW1",
+    "host": "10.2.99.2",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on BR-DSW1",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "BR-ASW1",
+    "host": "10.2.99.3",
+    "platform": "cisco_ios",
+    "mode": "deploy",
+    "applied": false,
+    "status": "planned",
+    "commands": [
+      "ip access-list standard P13-AUTOMATION-MARKER",
+      " remark Project 13 automation safe marker on BR-ASW1",
+      " remark ACL is intentionally unused and has no packet-forwarding effect"
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-FW1",
+    "host": "10.0.0.14",
+    "platform": "cisco_asa",
+    "mode": "deploy",
+    "applied": false,
+    "status": "skipped",
+    "commands": [
+      "! ASA safe-push intentionally skipped in Project 13 v1",
+      "! ASA syntax and SSH reachability are handled as a separate platform exception"
+    ],
+    "error": ""
+  }
+]

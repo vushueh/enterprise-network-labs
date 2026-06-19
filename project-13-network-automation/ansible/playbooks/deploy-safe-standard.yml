@@ -1,0 +1,22 @@
+---
+- name: Project 13 deploy unused safe marker ACL
+  hosts: ios
+  gather_facts: false
+  tasks:
+    - name: Deploy unused safe marker ACL
+      cisco.ios.ios_config:
+        lines:
+          - remark Project 13 automation safe marker on {{ inventory_hostname }}
+          - remark ACL is intentionally unused and has no packet-forwarding effect
+        parents: ip access-list standard P13-AUTOMATION-MARKER
+        save_when: modified
+
+    - name: Confirm marker exists
+      cisco.ios.ios_command:
+        commands:
+          - show running-config | section P13-AUTOMATION-MARKER
+      register: marker_check
+
+    - name: Show marker check
+      ansible.builtin.debug:
+        var: marker_check.stdout_lines

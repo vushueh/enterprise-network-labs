@@ -741,3 +741,47 @@ Run repair only when stale containers are reported:
 ```bash
 sudo /usr/local/sbin/cml-stale-container-guard --username leonel --fix
 ```
+
+---
+
+## 2026-06-19 - Project 13 Network Automation completed with live findings
+
+**Project:** P13 - Network Automation
+**Status:** Complete with documented exceptions and approval-gated change phases
+**Live CML changes:** No device config push applied
+
+### What changed
+
+- Completed `project-13-network-automation/` as a portfolio-ready automation project.
+- Added Netmiko scripts for read-only collection, redacted backups, compliance checks, safe dry-run config push, and final report rendering.
+- Added Ansible comparison inventory and playbooks.
+- Added safe config push template and SNMP break/fix pilot plan.
+- Captured live evidence under `project-13-network-automation/verification-outputs/`.
+- Updated root `README.md` to mark Project 13 complete.
+
+### Live results
+
+- Phase 3 read-only collection: 8/10 successful.
+- Phase 4 redacted config backups: 8/10 successful.
+- Phase 5 compliance: 8 reachable IOS devices non-compliant, 2 devices failed.
+- Phase 6 safe config push: dry-run complete; no live config applied.
+
+### Findings
+
+- `WAN-RTR1` is reachable on TCP/22 but rejects documented credentials, including console login attempts. Treat as AAA/local-login drift.
+- `HQ-FW1` is reachable by IP but refuses TCP/22 from `AUTOMATION1`. Treat as ASA SSH management exception.
+- The reachable IOS fleet is missing explicit `ip ssh version 2`; `HQ-RTR1` also lacks the expected NTP line.
+
+### Security guardrails
+
+- No plaintext device passwords committed.
+- SNMP community was moved out of committed inventory and is now supplied with `NETLAB_SNMP_RO_COMMUNITY`.
+- Generated outputs were scanned for known secret values before commit staging.
+
+### Next approval-gated actions
+
+1. Recover `WAN-RTR1` AAA/local login from console.
+2. Enable/fix `HQ-FW1` ASA SSH management from the inside path.
+3. Apply explicit IOS SSHv2 hardening and `HQ-RTR1` NTP correction.
+4. Apply and roll back the safe marker ACL on one pilot device.
+5. Run the SNMP break/fix pilot on one access switch.

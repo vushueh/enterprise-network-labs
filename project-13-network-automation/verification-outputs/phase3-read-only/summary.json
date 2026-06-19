@@ -1,0 +1,92 @@
+[
+  {
+    "name": "HQ-RTR1",
+    "host": "10.0.255.1",
+    "platform": "cisco_ios",
+    "status": "ok",
+    "commands_ok": 9,
+    "commands_total": 9,
+    "error": ""
+  },
+  {
+    "name": "BR-RTR1",
+    "host": "10.0.255.2",
+    "platform": "cisco_ios",
+    "status": "ok",
+    "commands_ok": 9,
+    "commands_total": 9,
+    "error": ""
+  },
+  {
+    "name": "WAN-RTR1",
+    "host": "10.0.255.3",
+    "platform": "cisco_ios",
+    "status": "failed",
+    "commands_ok": 0,
+    "commands_total": 9,
+    "error": "NetmikoAuthenticationException: Authentication to device failed.\n\nCommon causes of this problem are:\n1. Invalid username and password\n2. Incorrect SSH-key file\n3. Connecting to the wrong device\n\nDevice settings: cisco_ios 10.0.255.3:22\n\n\nAuthentication failed."
+  },
+  {
+    "name": "HQ-DSW1",
+    "host": "10.1.99.11",
+    "platform": "cisco_ios",
+    "status": "ok",
+    "commands_ok": 9,
+    "commands_total": 9,
+    "error": ""
+  },
+  {
+    "name": "HQ-DSW2",
+    "host": "10.1.99.12",
+    "platform": "cisco_ios",
+    "status": "ok",
+    "commands_ok": 9,
+    "commands_total": 9,
+    "error": ""
+  },
+  {
+    "name": "HQ-ASW1",
+    "host": "10.1.99.13",
+    "platform": "cisco_ios",
+    "status": "ok",
+    "commands_ok": 9,
+    "commands_total": 9,
+    "error": ""
+  },
+  {
+    "name": "HQ-ASW2",
+    "host": "10.1.99.14",
+    "platform": "cisco_ios",
+    "status": "ok",
+    "commands_ok": 9,
+    "commands_total": 9,
+    "error": ""
+  },
+  {
+    "name": "BR-DSW1",
+    "host": "10.2.99.2",
+    "platform": "cisco_ios",
+    "status": "ok",
+    "commands_ok": 9,
+    "commands_total": 9,
+    "error": ""
+  },
+  {
+    "name": "BR-ASW1",
+    "host": "10.2.99.3",
+    "platform": "cisco_ios",
+    "status": "ok",
+    "commands_ok": 9,
+    "commands_total": 9,
+    "error": ""
+  },
+  {
+    "name": "HQ-FW1",
+    "host": "10.0.0.14",
+    "platform": "cisco_asa",
+    "status": "failed",
+    "commands_ok": 0,
+    "commands_total": 6,
+    "error": "NetmikoTimeoutException: TCP connection to device failed.\n\nCommon causes of this problem are:\n1. Incorrect hostname or IP address.\n2. Wrong TCP port.\n3. Intermediate firewall blocking access.\n\nDevice settings: cisco_asa 10.0.0.14:22\n\n"
+  }
+]

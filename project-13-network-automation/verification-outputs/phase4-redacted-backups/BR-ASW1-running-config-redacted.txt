@@ -1,0 +1,214 @@
+! Project 13 redacted running-config backup
+! Device: BR-ASW1
+! Host: 10.2.99.3
+! Platform: cisco_ios
+! Collected UTC: 2026-06-19T06:02:11.381734+00:00
+!
+Building configuration...
+
+Current configuration : 5368 bytes
+!
+! Last configuration change at 22:26:12 UTC Thu Jun 18 2026
+!
+version 17.16
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service sequence-numbers
+!
+hostname BR-ASW1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 32768 informational
+logging console warnings
+logging monitor warnings
+no aaa new-model
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip audit notify log
+ip audit po max-events 100
+ip domain name lab.local
+ip cef
+login on-success log
+no ipv6 cef
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-131184654
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-131184654
+ revocation-check none
+ rsakeypair TP-self-signed-131184654
+ hash sha512
+!
+!
+crypto pki certificate chain TP-self-signed-131184654
+ certificate self-signed 01
+  3082032E 30820216 A0030201 02020101 300D0609 2A864886 F70D0101 0D050030
+  30312E30 2C060355 04030C25 494F532D 53656C66 2D536967 6E65642D 43657274
+  69666963 6174652D 31333131 38343635 34301E17 0D323630 36313832 32323633
+  325A170D 33363036 31373232 32363332 5A303031 2E302C06 03550403 0C25494F
+  532D5365 6C662D53 69676E65 642D4365 72746966 69636174 652D3133 31313834
+  36353430 82012230 0D06092A 864886F7 0D010101 05000382 010F0030 82010A02
+  82010100 9CE6E131 C384BB34 3F5DC353 29E35744 A8F119EF 7A459EC0 6F4BF9EF
+  31C6C6EB 9066888B F0E429FB 1ECB488D C1950C5A CAB19975 B49D6769 C1EB27E0
+  45F194DF 5320FBD5 A315BD62 D970B77D 21618DE6 022A543C EC40B4D6 8F351B7D
+  B823708B 3F46B1E1 20941C25 36020476 A84CEECE 041A9259 B69125F0 B5FA685E
+  270A5769 E1D8D06A C43BDD83 EC86260F CC630A52 E3C6EFAA 958BB558 42F6547B
+  001BD308 63D33E36 17D4001E 9EC558CC 7BD197A8 4BC3C900 F89CA331 65346A30
+  47511B23 AB7CD067 4DAF50FA D1786B21 19160141 057E0ABA D935A1BB 77E32EEF
+  2D395D27 07DFC489 70D2CA3E 7CE58EC8 5C6E34A4 80DE23F6 887EFD63 03C1B950
+  97D37F7D 02030100 01A35330 51301D06 03551D0E 04160414 14729836 767F157D
+  7D2EBF6C B9DAEC59 B243B312 301F0603 551D2304 18301680 14147298 36767F15
+  7D7D2EBF 6CB9DAEC 59B243B3 12300F06 03551D13 0101FF04 05300301 01FF300D
+  06092A86 4886F70D 01010D05 00038201 01003DEE 91A1AAA7 A5F67BC2 C5E11DF1
+  8541F635 4C6F95A5 B9E4825F 807977D2 723243CF FE029800 C9150EDF 2D8D8735
+  44994592 7B12DC9F ED2A89DB 85CE9258 736E66C1 90ABCA7E AF0B9AE9 B05C7133
+  A2084A6A 9B045595 F0300A10 6E4740FC 8AE2B39E 3939148E 46654185 93E37E1A
+  17906E96 2D7443D8 7FE40BCD 56704F1B 1B9FF612 E9DE77E8 962B7B5A 66EC5F4F
+  58992BD0 3E95D812 37411CF8 2FE8DC73 B4EA8409 9D57D8BF CB855549 182735CB
+  C65B7A2F C74770D2 093954C9 E26097C5 CB26163C 7F942406 0DC81690 FC058061
+  7C19E3D2 F3557D8A E4AF515A 5050BCFC B360CD7B 3BA21C23 4D6CC17D 71BDC590
+  1B24DF8C E0AA03DA 62EE923F 66A21B9F 01A1
+	quit
+!
+!
+archive
+ path unix:/P09-ARCHIVE-$h-
+ maximum 5
+ write-memory
+memory free low-watermark processor 79497
+!
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+enable secret 9 [REDACTED]
+!
+secret 9 [REDACTED]
+!
+vlan internal allocation policy ascending
+!
+lldp run
+!
+!
+!
+!
+interface Ethernet0/0
+ description TRUNK-TO-BR-DSW1-E0/1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,500,999,1000
+ switchport mode trunk
+!
+interface Ethernet0/1
+ description UNUSED
+ shutdown
+!
+interface Ethernet0/2
+ description UNUSED
+ shutdown
+!
+interface Ethernet0/3
+ description UNUSED
+ shutdown
+!
+interface Ethernet1/0
+ description ACCESS-PC-BR1-VLAN100-VOICE500
+ switchport access vlan 100
+ switchport mode access
+ switchport nonegotiate
+ switchport voice vlan 500
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+!
+interface Ethernet1/1
+ description ACCESS-PC-BR2-VLAN200-VOICE500
+ switchport access vlan 200
+ switchport mode access
+ switchport nonegotiate
+ switchport voice vlan 500
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+!
+interface Ethernet1/2
+ description UNUSED
+ shutdown
+!
+interface Ethernet1/3
+ description UNUSED
+ shutdown
+!
+interface Vlan999
+ description MGMT-SVI-BR-ASW1
+ ip address 10.2.99.3 255.255.255.0
+!
+ip forward-protocol nd
+ip forward-protocol udp
+!
+!
+ip http server
+ip http secure-server
+ip ssh bulk-mode 131072
+ip ssh time-out 60
+ip route 0.0.0.0 0.0.0.0 10.2.99.1
+!
+ip access-list standard ACL-SNMP-MANAGERS
+ 10 permit 10.1.99.51
+!
+no logging btrace
+logging source-interface Vlan999
+logging host 10.1.99.51
+snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server trap-source Vlan999
+snmp-server location P09-CML-LAB-ACCESS
+snmp-server contact Leonel - Enterprise Network Labs
+snmp-server chassis-id P09-CML-ASW
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server host 10.1.99.51 version 2c [REDACTED]
+!
+!
+!
+control-plane
+!
+!
+banner motd ^C
+==========================================================
+ BR-ASW1 | Branch Access Switch | Authorized Access Only
+==========================================================
+^C
+!
+line con 0
+ logging synchronous
+ login local
+line aux 0
+line vty 0 4
+ logging synchronous
+ login local
+ transport input ssh
+!
+
+ntp authenticate
+ntp trusted-key 9
+ntp source Vlan999
+ key [REDACTED]
+!
+end

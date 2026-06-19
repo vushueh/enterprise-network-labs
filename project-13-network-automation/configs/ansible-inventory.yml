@@ -1,0 +1,44 @@
+---
+all:
+  children:
+    ios:
+      hosts:
+        HQ-RTR1:
+          ansible_host: 10.0.255.1
+        BR-RTR1:
+          ansible_host: 10.0.255.2
+        WAN-RTR1:
+          ansible_host: 10.0.255.3
+        HQ-DSW1:
+          ansible_host: 10.1.99.11
+        HQ-DSW2:
+          ansible_host: 10.1.99.12
+        HQ-ASW1:
+          ansible_host: 10.1.99.13
+        HQ-ASW2:
+          ansible_host: 10.1.99.14
+        BR-DSW1:
+          ansible_host: 10.2.99.2
+        BR-ASW1:
+          ansible_host: 10.2.99.3
+      vars:
+        ansible_network_os: cisco.ios.ios
+        ansible_connection: ansible.netcommon.network_cli
+        ansible_user: "{{ lookup('env', 'NETLAB_USERNAME') }}"
+        ansible_password: "{{ lookup('env', 'NETLAB_PASSWORD') }}"
+        ansible_become: true
+        ansible_become_method: enable
+        ansible_become_password: "{{ lookup('env', 'NETLAB_SECRET') | default(lookup('env', 'NETLAB_PASSWORD'), true) }}"
+
+    asa:
+      hosts:
+        HQ-FW1:
+          ansible_host: 10.0.0.14
+      vars:
+        ansible_network_os: cisco.asa.asa
+        ansible_connection: ansible.netcommon.network_cli
+        ansible_user: "{{ lookup('env', 'NETLAB_ASA_USERNAME') | default(lookup('env', 'NETLAB_USERNAME'), true) }}"
+        ansible_password: "{{ lookup('env', 'NETLAB_ASA_PASSWORD') | default(lookup('env', 'NETLAB_PASSWORD'), true) }}"
+        ansible_become: true
+        ansible_become_method: enable
+        ansible_become_password: "{{ lookup('env', 'NETLAB_ASA_SECRET') | default(lookup('env', 'NETLAB_SECRET'), true) }}"

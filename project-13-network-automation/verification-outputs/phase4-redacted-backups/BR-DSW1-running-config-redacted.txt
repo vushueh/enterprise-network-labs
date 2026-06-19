@@ -1,0 +1,210 @@
+! Project 13 redacted running-config backup
+! Device: BR-DSW1
+! Host: 10.2.99.2
+! Platform: cisco_ios
+! Collected UTC: 2026-06-19T06:02:09.418173+00:00
+!
+Building configuration...
+
+Current configuration : 5482 bytes
+!
+! Last configuration change at 18:29:15 UTC Thu Jun 18 2026
+!
+version 17.16
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service sequence-numbers
+!
+hostname BR-DSW1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 32768 informational
+logging console warnings
+logging monitor warnings
+aaa new-model
+!
+!
+aaa authentication login default group tacacs+ local
+aaa authentication login CONSOLE local
+aaa authorization exec default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+!
+!
+aaa session-id common
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip audit notify log
+ip audit po max-events 100
+no ip domain lookup
+ip domain name lab.local
+ip cef
+login on-success log
+no ipv6 cef
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-131184655
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-131184655
+ revocation-check none
+ rsakeypair TP-self-signed-131184655
+ hash sha512
+!
+!
+crypto pki certificate chain TP-self-signed-131184655
+ certificate self-signed 01
+  3082032E 30820216 A0030201 02020101 300D0609 2A864886 F70D0101 0D050030
+  30312E30 2C060355 04030C25 494F532D 53656C66 2D536967 6E65642D 43657274
+  69666963 6174652D 31333131 38343635 35301E17 0D323630 36313831 38323933
+  365A170D 33363036 31373138 32393336 5A303031 2E302C06 03550403 0C25494F
+  532D5365 6C662D53 69676E65 642D4365 72746966 69636174 652D3133 31313834
+  36353530 82012230 0D06092A 864886F7 0D010101 05000382 010F0030 82010A02
+  82010100 A96C9690 781D4C08 CE76989F 39D35C8E 640EDF54 D3CB7536 3DDB48F8
+  91EA2C05 B721CFBE 3F743C5E 7CC1567E C81FE422 3828AD6F D7D0EF36 E0C428B5
+  991204E8 38BB55C1 F5AB296F F391E957 C7C0569B 4417D230 3B1B9CF5 43AB6F77
+  EF4E7585 CE9200B7 419ADA85 3BBCC5ED 150E5454 4DD49FF3 7C751090 A947F4D6
+  07FD7F7F 33B29E97 7CBC29A7 CDDD8CF3 DB86B722 6D9DC593 0AACF098 5FBD5AA6
+  06F8C57D CD008039 DDCC6ECE 16AAA4CD E77F8076 F5A73929 56A99FAB F427EAE4
+  738787F3 37AF6730 7E744061 08B6358B DDA8B070 9241120B ADC27D84 A5117FB0
+  AEEDEFF5 BBFF5145 486BD26A 2ED07CB3 C4D29E1B 722190CA 5F77E44F A7A4912E
+  7F2C11A7 02030100 01A35330 51301D06 03551D0E 04160414 F6ECB52E 7A11B784
+  8CC77CDD ECF5118E E493857D 301F0603 551D2304 18301680 14F6ECB5 2E7A11B7
+  848CC77C DDECF511 8EE49385 7D300F06 03551D13 0101FF04 05300301 01FF300D
+  06092A86 4886F70D 01010D05 00038201 0100781D 252933B0 46D91D0D DF721D2C
+  FCD734A4 EF6A7B3C 41392F99 8735C128 6480AEDA 1CF1E471 AE0A54C8 66F7F045
+  BA50D61C 4757D0F5 36EEB814 5A5262E6 065A8E53 5F86B1C3 25938256 62702FDB
+  7CFD0A6E E39D0C2C 370378B7 CEEAFBD1 7A8F654C 34DD8DA8 D487EBB3 6BE12B2D
+  6ED4BB87 1A30B968 DB4C133D D656D42E 4722A000 B4BA3B1C FFA3F3FB 4AA90F91
+  D6FB8CFC 129F81D4 5DAE833B 036F6A7A 6C75E7EC 67DA7342 C13B7B43 36738F62
+  057FCFB8 53F88AEF 61CF80B2 12DCD12C BBF11BDF B547ACA3 17635633 A32C0056
+  D98D9BFD 576D3A51 3A4A126B A3B7D9AD 9FB4BE49 A991C73E 195EC4DB 5192DE7C
+  2C83A7A0 F3843D81 B86438A4 2D5E6691 018F
+	quit
+!
+!
+archive
+ path unix:/P09-ARCHIVE-$h-
+ maximum 5
+ write-memory
+memory free low-watermark processor 79497
+!
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+spanning-tree vlan 100,200,300,500,999-1000 priority 4096
+!
+enable secret 9 [REDACTED]
+!
+secret 9 [REDACTED]
+!
+vlan internal allocation policy ascending
+!
+lldp run
+!
+!
+!
+!
+interface Ethernet0/0
+ description TRUNK-TO-BR-RTR1-E0/0
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,500,999,1000
+ switchport mode trunk
+!
+interface Ethernet0/1
+ description TRUNK-TO-BR-ASW1-E0/0
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,500,999,1000
+ switchport mode trunk
+!
+interface Ethernet0/2
+ description UNUSED
+ shutdown
+!
+interface Ethernet0/3
+ description UNUSED
+ shutdown
+!
+interface Vlan999
+ description MGMT-SVI-BR-DSW1
+ ip address 10.2.99.2 255.255.255.0
+!
+ip forward-protocol nd
+ip forward-protocol udp
+!
+!
+ip http server
+ip http secure-server
+ip tacacs source-interface Vlan999
+ip ssh bulk-mode 131072
+ip ssh time-out 60
+ip route 0.0.0.0 0.0.0.0 10.2.99.1
+!
+ip access-list standard ACL-SNMP-MANAGERS
+ 10 permit 10.1.99.51
+!
+no logging btrace
+logging trap warnings
+logging source-interface Vlan999
+logging host 10.1.99.51
+snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server trap-source Vlan999
+snmp-server location P09-CML-LAB-DISTRIBUTION
+snmp-server contact Leonel - Enterprise Network Labs
+snmp-server chassis-id P09-CML-DSW
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server host 10.1.99.51 version 2c [REDACTED]
+!
+tacacs server HQ-TACACS
+ address ipv4 10.1.99.52
+ key 7 [REDACTED]
+!
+!
+!
+!
+control-plane
+!
+!
+banner motd ^C
+==========================================================
+ BR-DSW1 | Branch Distribution Switch | Authorized Access Only
+==========================================================
+^C
+!
+line con 0
+ logging synchronous
+ login authentication CONSOLE
+line aux 0
+line vty 0 4
+ logging synchronous
+ transport input ssh
+!
+
+ntp authenticate
+ntp trusted-key 9
+ntp source Vlan999
+ key [REDACTED]
+!
+end

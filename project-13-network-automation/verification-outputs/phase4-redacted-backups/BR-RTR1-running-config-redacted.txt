@@ -1,0 +1,343 @@
+! Project 13 redacted running-config backup
+! Device: BR-RTR1
+! Host: 10.0.255.2
+! Platform: cisco_ios
+! Collected UTC: 2026-06-19T06:01:10.809911+00:00
+!
+Building configuration...
+
+Current configuration : 8501 bytes
+!
+! No configuration change since last restart
+!
+version 17.16
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service sequence-numbers
+!
+hostname BR-RTR1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 32768 informational
+logging console warnings
+logging monitor warnings
+aaa new-model
+!
+!
+aaa authentication login default group tacacs+ local
+aaa authentication login CONSOLE local
+aaa authorization exec default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+!
+aaa session-id common
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip name-server 10.1.99.50
+ip domain name lab.local
+ip cef
+login on-success log
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-131184656
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-131184656
+ revocation-check none
+ rsakeypair TP-self-signed-131184656
+ hash sha512
+!
+!
+crypto pki certificate chain TP-self-signed-131184656
+ certificate self-signed 01
+  3082032E 30820216 A0030201 02020101 300D0609 2A864886 F70D0101 0D050030
+  30312E30 2C060355 04030C25 494F532D 53656C66 2D536967 6E65642D 43657274
+  69666963 6174652D 31333131 38343635 36301E17 0D323630 36313832 32323535
+  325A170D 33363036 31373232 32353532 5A303031 2E302C06 03550403 0C25494F
+  532D5365 6C662D53 69676E65 642D4365 72746966 69636174 652D3133 31313834
+  36353630 82012230 0D06092A 864886F7 0D010101 05000382 010F0030 82010A02
+  82010100 9F955765 06ECA6D9 DB2BC662 05D0659C B7FFF586 3353FA93 D0F26057
+  AE1C3929 FD488843 C8D8053C 523F3EAC BFBD6E48 C8CF8E49 88FAE81C DF5F23CC
+  66CCE6D5 9131587D A089B8E3 4DF8F0BA 891A0D1D 930D6962 D0296D1D 51B0A79D
+  BB1AF813 23DFCA8E 7F352A75 2059351A C1D73A70 A9D288E7 4BDA6683 4494E8CB
+  B08CD800 B8D09E24 800A46F3 4126261F 7C391671 FA7F10C0 0DD05652 2AC46072
+  58BD52E7 7B552A89 98B21883 EFC3817A 02C25AD3 6F6A4CD9 0A9458B2 41BE7CDD
+  825F8AAC E1906908 6DFD73A9 504FCFAF BB4A86D8 EF8F5B93 50E21CD0 33D993CD
+  13B2C70F 2574A20B 41A2550D D6F9A8F8 EF831DD4 FE3D1A10 7A546D13 79B11081
+  8F8B1A29 02030100 01A35330 51301D06 03551D0E 04160414 2B471B7B 6D56F52B
+  E17BA7F8 E4956DBC DF89D1E8 301F0603 551D2304 18301680 142B471B 7B6D56F5
+  2BE17BA7 F8E4956D BCDF89D1 E8300F06 03551D13 0101FF04 05300301 01FF300D
+  06092A86 4886F70D 01010D05 00038201 01006102 1D65ACDA B0C90C5B C128A70A
+  70016CF1 FCAC2A80 61A2E19E 52F1A60C 65EFCF09 345CB72F A3681886 127ECB26
+  33808BD5 3EDAF8C0 222C0A9D 2502AC1A 4B02076C 2ED4DA3C 4C4E3220 A6A03569
+  FF42B2F9 242B1452 FD8827FD FE6D2089 185FD48D BFDBE41A 966D35AE 5B1050A7
+  8EDE28C4 CFE55D20 07FD3A14 C25DF045 738CC5ED C649D8E1 3B145E3D B8AA1484
+  84900859 326E3972 3874F79D FDC430A7 6A23BD67 36F456CE 08888BF9 0C56C353
+  2812D9AD 24282E61 45E07650 11F03DD2 FDF6F493 734B7841 2FB1E3DB B435FDF9
+  BA36D3E7 4AFDC981 3CC577D4 61BA53B1 8B488244 7EF87E6C 075D8644 A16C1D2E
+  E451EE92 B69A6676 67902DA6 0475516B 670B
+	quit
+!
+!
+archive
+ path unix:/P09-ARCHIVE-$h-
+ maximum 5
+ write-memory
+memory free low-watermark processor 79983
+!
+!
+spanning-tree mode rapid-pvst
+!
+enable secret 9 [REDACTED]
+!
+secret 9 [REDACTED]
+!
+crypto ikev2 proposal P08-IKEV2-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy 10
+ proposal P08-IKEV2-PROP
+!
+crypto ikev2 keyring P08-IKEV2-KEYRING
+ peer HQ-RTR1
+  address 10.0.0.1
+pre-shared-key [REDACTED]
+pre-shared-key [REDACTED]
+ !
+!
+!
+crypto ikev2 profile P08-IKEV2-PROFILE
+ match identity remote address 10.0.0.1 255.255.255.255
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local P08-IKEV2-KEYRING
+ dpd 10 3 periodic
+!
+!
+!
+track 10 ip sla 10 reachability
+!
+lldp run
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto ipsec transform-set P08-IPSEC-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+!
+crypto ipsec profile P08-IPSEC-PROFILE
+ set transform-set P08-IPSEC-TS
+ set pfs group14
+ set ikev2-profile P08-IKEV2-PROFILE
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 10.0.255.2 255.255.255.255
+!
+interface Tunnel0
+ description GRE-TO-HQ-RTR1-TUN0-P08
+ ip address 10.0.100.2 255.255.255.252
+ ip mtu 1400
+ ip tcp adjust-mss 1360
+ ip ospf authentication message-digest
+
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf cost 5
+ tunnel source Ethernet0/1
+ tunnel destination 10.0.0.1
+ tunnel protection ipsec profile P08-IPSEC-PROFILE
+!
+interface Ethernet0/0
+ description TRUNK-TO-BR-DSW1-E0/0
+ no ip address
+!
+interface Ethernet0/0.100
+ description GATEWAY-VLAN100-ENGINEERING
+ encapsulation dot1Q 100
+ ip address 10.2.100.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ipv6 address 2001:DB8:2:100::1/64
+ ipv6 enable
+ ipv6 ospf 10 area 2
+!
+interface Ethernet0/0.200
+ description GATEWAY-VLAN200-SALES
+ encapsulation dot1Q 200
+ ip address 10.2.200.1 255.255.255.0
+ ip helper-address 10.1.99.50
+!
+interface Ethernet0/0.300
+ description GATEWAY-VLAN300-GUEST
+ encapsulation dot1Q 300
+ ip address 10.2.44.1 255.255.255.0
+ ip helper-address 10.1.99.50
+!
+interface Ethernet0/0.500
+ description GATEWAY-VLAN500-VOICE
+ encapsulation dot1Q 500
+ ip address 10.2.50.1 255.255.255.0
+ ip helper-address 10.1.99.50
+!
+interface Ethernet0/0.999
+ description GATEWAY-VLAN999-MGMT
+ encapsulation dot1Q 999
+ ip address 10.2.99.1 255.255.255.0
+!
+interface Ethernet0/0.1000
+ description NATIVE-VLAN1000-UNUSED
+ encapsulation dot1Q 1000 native
+!
+interface Ethernet0/1
+ description WAN-TO-HQ-RTR1-E0/1
+ bandwidth 1000
+ ip address 10.0.0.2 255.255.255.252
+ ip ospf authentication message-digest
+
+ ip ospf network point-to-point
+ ip ospf bfd
+ ip ospf cost 100
+ delay 1000
+ ipv6 address 2001:DB8:0:1::2/126
+ ipv6 enable
+ ipv6 ospf 10 area 0
+ ipv6 ospf network point-to-point
+ bfd interval 300 min_rx 300 multiplier 3
+!
+interface Ethernet0/2
+ description WAN-TO-WAN-RTR1-E0/1
+ ip address 10.0.0.10 255.255.255.252
+ ip ospf authentication message-digest
+
+ ip ospf network point-to-point
+ ip ospf bfd
+ ip ospf cost 10
+ bfd interval 300 min_rx 300 multiplier 3
+!
+interface Ethernet0/3
+ description UNUSED
+ no ip address
+ shutdown
+!
+router ospf 1
+ router-id 10.0.255.2
+ log-adjacency-changes detail
+ area 2 range 10.2.0.0 255.255.0.0
+ passive-interface default
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2
+ no passive-interface Tunnel0
+ network 10.0.0.0 0.0.0.3 area 0
+ network 10.0.0.8 0.0.0.3 area 0
+ network 10.0.255.2 0.0.0.0 area 0
+ network 10.2.44.0 0.0.0.255 area 2
+ network 10.2.50.0 0.0.0.255 area 2
+ network 10.2.99.0 0.0.0.255 area 2
+ network 10.2.100.0 0.0.0.255 area 2
+ network 10.2.200.0 0.0.0.255 area 2
+!
+ip forward-protocol nd
+ip forward-protocol udp
+!
+!
+ip http server
+ip http secure-server
+ip route 10.1.0.0 255.255.0.0 10.0.0.1 250 track 10
+ip tacacs source-interface Loopback0
+ip ssh bulk-mode 131072
+ip ssh time-out 60
+!
+ip access-list standard ACL-SNMP-MANAGERS
+ 10 permit 10.1.99.51
+ip sla 10
+ icmp-echo 10.0.0.1 source-ip 10.0.0.2
+  threshold 1000
+  timeout 1000
+  frequency 5
+ip sla schedule 10 life forever start-time now
+no logging btrace
+logging trap warnings
+logging source-interface Loopback0
+logging host 10.1.99.51
+ipv6 router ospf 10
+ router-id 10.0.255.2
+!
+!
+snmp-server group P09-SNMPV3-GROUP v3 priv access ACL-SNMP-MANAGERS
+snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server trap-source Loopback0
+snmp-server location P09-CML-LAB
+snmp-server contact Leonel - Enterprise Network Labs
+snmp-server chassis-id P09-CML-ROUTER
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server host 10.1.99.51 version 2c [REDACTED]
+snmp-server host 10.1.99.51 version 3 [REDACTED] p09snmpv3
+tacacs server HQ-TACACS
+ address ipv4 10.1.99.52
+ key 7 [REDACTED]
+!
+!
+!
+!
+control-plane
+!
+!
+banner motd ^C
+ BR-RTR1 | Branch Gateway Router | Authorized Access Only
+^C
+!
+line con 0
+ logging synchronous
+ login authentication CONSOLE
+line aux 0
+line vty 0 4
+ logging synchronous
+ transport input ssh
+!
+
+ntp authenticate
+ntp trusted-key 9
+ntp source Loopback0
+ key [REDACTED]
+!
+!
+!
+end

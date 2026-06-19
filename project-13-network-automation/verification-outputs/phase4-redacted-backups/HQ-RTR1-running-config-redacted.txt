@@ -1,0 +1,460 @@
+! Project 13 redacted running-config backup
+! Device: HQ-RTR1
+! Host: 10.0.255.1
+! Platform: cisco_ios
+! Collected UTC: 2026-06-19T06:00:59.060923+00:00
+!
+Building configuration...
+
+Current configuration : 11583 bytes
+!
+! No configuration change since last restart
+!
+version 17.16
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service sequence-numbers
+!
+hostname HQ-RTR1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 32768 informational
+logging console warnings
+logging monitor warnings
+aaa new-model
+!
+!
+aaa authentication login default group tacacs+ local
+aaa authentication login CONSOLE local
+aaa authorization exec default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+!
+aaa session-id common
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip flow-cache timeout active 1
+ip name-server 10.1.99.50
+ip domain name lab.local
+ip cef
+login block-for 120 attempts 3 within 60
+login on-failure log
+login on-success log
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+archive
+ path unix:/P09-ARCHIVE-$h-
+ maximum 5
+ write-memory
+memory free low-watermark processor 79983
+!
+!
+spanning-tree mode rapid-pvst
+!
+enable secret 9 [REDACTED]
+!
+secret 9 [REDACTED]
+!
+crypto ikev2 proposal P08-IKEV2-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy 10
+ proposal P08-IKEV2-PROP
+!
+crypto ikev2 keyring P08-IKEV2-KEYRING
+ peer BR-RTR1
+  address 10.0.0.2
+pre-shared-key [REDACTED]
+pre-shared-key [REDACTED]
+ !
+!
+!
+crypto ikev2 profile P08-IKEV2-PROFILE
+ match identity remote address 10.0.0.2 255.255.255.255
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local P08-IKEV2-KEYRING
+ dpd 10 3 periodic
+!
+!
+!
+track 10 ip sla 10 reachability
+!
+lldp run
+!
+class-map match-any P11-DSCP-VOICE
+ description P11 WAN queue match for DSCP EF
+ match dscp ef
+class-map match-any P11-DSCP-SIGNALING
+ description P11 WAN queue match for DSCP CS3
+ match dscp cs3
+class-map match-any P11-VOICE-LIKE
+ description P11 voice-like realtime traffic classification
+ match protocol rtp
+class-map match-any P11-SIGNALING
+ description P11 voice signaling and control traffic classification
+ match protocol sip
+class-map match-any P11-BULK-DATA-ACL
+ match access-group name P11-HTTP-TRAFFIC
+class-map match-any P11-DSCP-BULK
+ description P11 WAN queue match for DSCP AF11
+ match dscp af11
+class-map match-any P11-NETWORK-CONTROL
+ description P11 routing and infrastructure control traffic
+ match protocol ospf
+ match protocol dns
+class-map match-any P11-BULK-DATA
+ description P11 bulk and lower-priority application traffic
+ match protocol ftp
+ match protocol http
+class-map match-any P11-DSCP-NETWORK-CONTROL
+ description P11 WAN queue match for DSCP CS2
+ match dscp cs2
+!
+policy-map P11-MARK-IN
+ class P11-VOICE-LIKE
+  set dscp ef
+ class P11-SIGNALING
+  set dscp cs3
+ class P11-NETWORK-CONTROL
+  set dscp cs2
+ class P11-BULK-DATA
+  set dscp af11
+ class P11-BULK-DATA-ACL
+  set dscp af11
+policy-map P11-WAN-QUEUE
+ class P11-DSCP-VOICE
+  priority percent 30
+ class P11-DSCP-SIGNALING
+  bandwidth percent 10
+ class P11-DSCP-NETWORK-CONTROL
+  bandwidth percent 5
+ class P11-DSCP-BULK
+  bandwidth percent 15
+ class class-default
+  fair-queue
+policy-map P11-WAN-SHAPE-1M
+ class class-default
+  shape average 1000000
+  service-policy P11-WAN-QUEUE
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+crypto ipsec transform-set P08-IPSEC-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+!
+crypto ipsec profile P08-IPSEC-PROFILE
+ set transform-set P08-IPSEC-TS
+ set pfs group14
+ set ikev2-profile P08-IKEV2-PROFILE
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ description ROUTER-ID-LOOPBACK
+ ip address 10.0.255.1 255.255.255.255
+!
+interface Loopback99
+ description P09-PHASE5-EEM-TEST-INTERFACE
+ ip address 10.255.99.99 255.255.255.255
+!
+interface Tunnel0
+ description GRE-TO-BR-RTR1-TUN0-P08
+ ip flow ingress
+ ip address 10.0.100.1 255.255.255.252
+ ip mtu 1400
+ ip tcp adjust-mss 1360
+ ip ospf authentication message-digest
+
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf cost 5
+ tunnel source Ethernet0/1
+ tunnel destination 10.0.0.2
+ tunnel protection ipsec profile P08-IPSEC-PROFILE
+!
+interface Ethernet0/0
+ description TRUNK-TO-HQ-DSW1-E0/0
+ no ip address
+!
+interface Ethernet0/0.100
+ description GATEWAY-VLAN100-ENGINEERING
+ encapsulation dot1Q 100
+ ip flow ingress
+ ip address 10.1.100.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ip access-group ACL-VLAN100-IN in
+ ipv6 address 2001:DB8:1:100::1/64
+ ipv6 enable
+ ipv6 ospf 10 area 1
+ service-policy input P11-MARK-IN
+!
+interface Ethernet0/0.200
+ description GATEWAY-VLAN200-SALES
+ encapsulation dot1Q 200
+ ip flow ingress
+ ip address 10.1.200.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ip access-group ACL-VLAN200-IN in
+!
+interface Ethernet0/0.300
+ description GATEWAY-VLAN300-GUEST
+ encapsulation dot1Q 300
+ ip flow ingress
+ ip address 10.1.44.1 255.255.255.0
+ ip helper-address 10.1.99.50
+ ip access-group ACL-VLAN300-IN in
+!
+interface Ethernet0/0.400
+ description OLD-GATEWAY-VLAN400-MOVED-TO-HQ-FW1-DMZ
+ encapsulation dot1Q 400
+ ip address 10.1.40.1 255.255.255.0
+ ip access-group ACL-VLAN400-IN in
+ shutdown
+!
+interface Ethernet0/0.999
+ description GATEWAY-VLAN999-MANAGEMENT
+ encapsulation dot1Q 999
+ ip flow ingress
+ ip address 10.1.99.1 255.255.255.0
+!
+interface Ethernet0/1
+ description WAN-TO-BR-RTR1-E0/1
+ bandwidth 1000
+ ip flow ingress
+ ip address 10.0.0.1 255.255.255.252
+ ip ospf authentication message-digest
+
+ ip ospf network point-to-point
+ ip ospf bfd
+ ip ospf cost 100
+ delay 1000
+ ipv6 address 2001:DB8:0:1::1/126
+ ipv6 enable
+ ipv6 ospf 10 area 0
+ ipv6 ospf network point-to-point
+ bfd interval 300 min_rx 300 multiplier 3
+ service-policy output P11-WAN-SHAPE-1M
+!
+interface Ethernet0/2
+ description WAN-TO-WAN-RTR1-E0/0
+ ip flow ingress
+ ip address 10.0.0.5 255.255.255.252
+ ip ospf authentication message-digest
+
+ ip ospf network point-to-point
+ ip ospf bfd
+ ip ospf cost 10
+ bfd interval 300 min_rx 300 multiplier 3
+!
+interface Ethernet0/3
+ description INSIDE-TO-HQ-FW1-GI0/0
+ ip flow ingress
+ ip address 10.0.0.13 255.255.255.252
+ no cdp enable
+!
+router ospf 1
+ router-id 10.0.255.1
+ log-adjacency-changes detail
+ area 1 range 10.1.0.0 255.255.0.0
+ redistribute static route-map P07-REDIST-DMZ
+ passive-interface default
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2
+ no passive-interface Tunnel0
+ network 10.0.0.0 0.0.0.3 area 0
+ network 10.0.0.4 0.0.0.3 area 0
+ network 10.0.255.1 0.0.0.0 area 0
+ network 10.1.44.0 0.0.0.255 area 1
+ network 10.1.99.0 0.0.0.255 area 1
+ network 10.1.100.0 0.0.0.255 area 1
+ network 10.1.200.0 0.0.0.255 area 1
+ default-information originate
+!
+ip forward-protocol nd
+ip forward-protocol udp
+!
+ip flow-export source Loopback0
+ip flow-export version 9
+ip flow-export destination 10.1.99.51 2055
+ip flow-top-talkers
+ top 10
+ sort-by bytes
+!
+no ip http server
+no ip http secure-server
+ip route 10.2.0.0 255.255.0.0 10.0.0.2 250 track 10
+ip route 0.0.0.0 0.0.0.0 10.0.0.14
+ip route 10.1.40.0 255.255.255.0 10.0.0.14
+ip tacacs source-interface Loopback0
+ip ssh bulk-mode 131072
+ip ssh time-out 60
+!
+ip access-list standard ACL-SNMP-MANAGERS
+ 10 permit 10.1.99.51
+!
+ip access-list extended ACL-VLAN100-IN
+ 10 deny ip 10.1.100.0 0.0.0.255 10.1.99.0 0.0.0.255 log
+ 20 permit ip 10.1.100.0 0.0.0.255 10.1.200.0 0.0.0.255
+ 30 permit ip 10.1.100.0 0.0.0.255 10.1.40.0 0.0.0.255
+ 40 deny ip 10.1.100.0 0.0.0.255 10.1.44.0 0.0.0.255
+ 50 permit ip 10.1.100.0 0.0.0.255 any
+ip access-list extended ACL-VLAN200-IN
+ 5 permit udp 10.1.200.0 0.0.0.255 eq bootpc host 10.1.99.50 eq bootps
+ 6 permit udp 10.1.200.0 0.0.0.255 host 10.1.99.50 eq domain
+ 7 permit tcp 10.1.200.0 0.0.0.255 host 10.1.99.50 eq domain
+ 10 deny ip 10.1.200.0 0.0.0.255 10.1.99.0 0.0.0.255 log
+ 20 permit ip 10.1.200.0 0.0.0.255 10.1.100.0 0.0.0.255
+ 30 permit ip 10.1.200.0 0.0.0.255 10.1.40.0 0.0.0.255
+ 40 deny ip 10.1.200.0 0.0.0.255 10.1.44.0 0.0.0.255
+ 50 permit ip 10.1.200.0 0.0.0.255 any
+ip access-list extended ACL-VLAN300-IN
+ 10 deny ip 10.1.44.0 0.0.0.255 10.1.99.0 0.0.0.255 log
+ 20 deny ip 10.1.44.0 0.0.0.255 10.0.0.0 0.255.255.255
+ 30 permit ip 10.1.44.0 0.0.0.255 any
+ip access-list extended ACL-VLAN400-IN
+ 10 permit ip 10.1.40.0 0.0.0.255 10.1.99.0 0.0.0.255
+ 20 permit tcp 10.1.40.0 0.0.0.255 10.1.100.0 0.0.0.255 established
+ 30 permit tcp 10.1.40.0 0.0.0.255 10.1.200.0 0.0.0.255 established
+ 40 deny ip 10.1.40.0 0.0.0.255 10.1.100.0 0.0.0.255
+ 50 deny ip 10.1.40.0 0.0.0.255 10.1.200.0 0.0.0.255
+ 60 deny ip 10.1.40.0 0.0.0.255 10.1.44.0 0.0.0.255
+ 70 permit ip 10.1.40.0 0.0.0.255 any
+ip access-list extended GUEST-RESTRICT
+ 10 remark Block Guest to all internal subnets
+ 10 deny ip 10.1.44.0 0.0.0.255 10.1.0.0 0.0.255.255
+ 20 deny ip 10.1.44.0 0.0.0.255 10.2.0.0 0.0.255.255
+ 30 remark Allow Guest to reach internet (anything else)
+ 30 permit ip 10.1.44.0 0.0.0.255 any
+ip access-list extended P11-HTTP-TRAFFIC
+ 10 permit tcp host 10.1.100.194 host 10.1.40.10 eq www
+!
+ip prefix-list P07-DMZ-ONLY seq 5 permit 10.1.40.0/24
+ip sla 10
+ icmp-echo 10.0.0.2 source-ip 10.0.0.1
+  threshold 1000
+  timeout 1000
+  frequency 5
+ip sla schedule 10 life forever start-time now
+no logging btrace
+logging trap warnings
+logging source-interface Loopback0
+logging host 10.1.99.51
+ip access-list standard 10
+ 10 permit 10.1.99.0 0.0.0.255
+ 20 deny any log
+ipv6 router ospf 10
+ router-id 10.0.255.1
+!
+route-map P07-REDIST-DMZ permit 10
+ match ip address prefix-list P07-DMZ-ONLY
+!
+!
+snmp-server group P09-SNMPV3-GROUP v3 priv access ACL-SNMP-MANAGERS
+snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server trap-source Loopback0
+snmp-server location P09-CML-LAB
+snmp-server contact Leonel - Enterprise Network Labs
+snmp-server chassis-id P09-CML-ROUTER
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server host 10.1.99.51 version 2c [REDACTED]
+snmp-server host 10.1.99.51 version 3 [REDACTED] p09snmpv3
+snmp ifmib ifindex persist
+tacacs server HQ-TACACS
+ address ipv4 10.1.99.52
+ key 7 [REDACTED]
+!
+!
+!
+!
+control-plane
+!
+!
+banner motd ^C
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^C
+parser view NOC-VIEW
+secret 0 [REDACTED]
+ commands exec include all ping
+ commands exec include show lldp neighbors
+ commands exec include show lldp
+ commands exec include show ip route
+ commands exec include show ip interface brief
+ commands exec include show ip interface
+ commands exec include show ip
+ commands exec include show cdp neighbors
+ commands exec include show cdp
+ commands exec include show version
+ commands exec include show privilege
+ commands exec include show interfaces description
+ commands exec include show interfaces
+ commands exec include show
+!
+!
+line con 0
+ logging synchronous
+ login authentication CONSOLE
+line aux 0
+line vty 0 4
+ access-class 10 in
+ exec-timeout 15 0
+ logging synchronous
+ transport input ssh
+!
+
+ntp authenticate
+ntp trusted-key 9
+ntp source Loopback0
+ntp master 3
+!
+!
+event manager applet P09_EEM_LOOP99_DOWN
+ event syslog pattern "Line protocol on Interface Loopback99, changed state to down"
+ action 1.0 syslog priority warnings msg "P09_PHASE5_EEM_LINK_DOWN_DETECTED on HQ-RTR1 Loopback99"
+!
+end

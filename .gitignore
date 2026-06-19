@@ -1,3 +1,5 @@
 .env
+**/.env
 *.vault
+project-13-network-automation/outputs/
 project-13-network-automation/verification-outputs/private-raw-backups/

@@ -1,0 +1,25 @@
+---
+# Example only. Do not store live credentials in this repo.
+netlab_username_env: NETLAB_USERNAME
+netlab_password_env: NETLAB_PASSWORD
+netlab_secret_env: NETLAB_SECRET
+
+# Optional per-device overrides. Device names are uppercased and punctuation is
+# converted to underscores.
+wan_rtr1_username_env: NETLAB_WAN_RTR1_USERNAME
+wan_rtr1_password_env: NETLAB_WAN_RTR1_PASSWORD
+wan_rtr1_secret_env: NETLAB_WAN_RTR1_SECRET
+
+# Optional platform override for ASA.
+asa_username_env: NETLAB_ASA_USERNAME
+asa_password_env: NETLAB_ASA_PASSWORD
+asa_secret_env: NETLAB_ASA_SECRET
+
+standards:
+  syslog_server: 10.1.99.51
+  ntp_server: 10.0.255.1
+  snmp_ro_community_env: NETLAB_SNMP_RO_COMMUNITY
+
+safe_push:
+  marker_acl: P13-AUTOMATION-MARKER
+  apply_confirmation: APPLY_SAFE_CONFIG

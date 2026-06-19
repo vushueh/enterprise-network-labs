@@ -1,0 +1,113 @@
+---
+standards:
+  syslog_server: 10.1.99.51
+  ntp_server: 10.0.255.1
+  snmp_ro_community_env: NETLAB_SNMP_RO_COMMUNITY
+
+support_nodes:
+  automation:
+    name: AUTOMATION1
+    host: 10.1.99.54
+  dhcp_dns:
+    name: HQ-DHCP-DNS
+    host: 10.1.99.50
+  syslog:
+    name: SYSLOG
+    host: 10.1.99.51
+  tacacs:
+    name: HQ-TACACS
+    host: 10.1.99.52
+  radius:
+    name: HQ-RADIUS
+    host: 10.1.99.53
+
+devices:
+  - name: HQ-RTR1
+    host: 10.0.255.1
+    platform: cisco_ios
+    role: core_router
+    source_interface: Loopback0
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: BR-RTR1
+    host: 10.0.255.2
+    platform: cisco_ios
+    role: branch_router
+    source_interface: Loopback0
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: WAN-RTR1
+    host: 10.0.255.3
+    platform: cisco_ios
+    role: wan_router
+    source_interface: Loopback0
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: HQ-DSW1
+    host: 10.1.99.11
+    platform: cisco_ios
+    role: distribution_switch
+    source_interface: Vlan999
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: HQ-DSW2
+    host: 10.1.99.12
+    platform: cisco_ios
+    role: distribution_switch
+    source_interface: Vlan999
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: HQ-ASW1
+    host: 10.1.99.13
+    platform: cisco_ios
+    role: access_switch
+    source_interface: Vlan999
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: HQ-ASW2
+    host: 10.1.99.14
+    platform: cisco_ios
+    role: access_switch
+    source_interface: Vlan999
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: BR-DSW1
+    host: 10.2.99.2
+    platform: cisco_ios
+    role: branch_distribution_switch
+    source_interface: Vlan999
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: BR-ASW1
+    host: 10.2.99.3
+    platform: cisco_ios
+    role: branch_access_switch
+    source_interface: Vlan999
+    command_profile: ios
+    netmiko: true
+    ansible: true
+
+  - name: HQ-FW1
+    host: 10.0.0.14
+    platform: cisco_asa
+    role: firewall
+    source_interface: inside
+    command_profile: asa
+    netmiko: true
+    ansible: false

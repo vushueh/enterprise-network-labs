@@ -998,3 +998,43 @@ end
 SVI began routing immediately. Ping to 10.1.99.1 returned 5/5.
 
 **Lesson:** The first command on any IOL-L2 rebuild that needs inter-VLAN routing is `ip routing`. Check with `show ip route` — if the routing table shows `Default gateway is 10.1.99.1` instead of a full route table, ip routing is disabled.
+
+---
+
+## Project 13 - Network Automation
+
+### P13-T01: WAN-RTR1 SSH Reachable But Automation Authentication Fails
+
+**Symptom:** `AUTOMATION1` could reach `WAN-RTR1` on TCP/22, but Netmiko failed with `NetmikoAuthenticationException`. Console login attempts with the documented Project 10 credential paths also failed.
+
+**Investigation:** Verified routing from `AUTOMATION1` was correct and that SSH/22 was open. Connected to the CML console server and opened `/Enterprise-network-labs/WAN-RTR1/0`; the console prompted for username/password but rejected the documented accounts.
+
+**Root Cause:** `WAN-RTR1` has AAA/local-login drift relative to the Project 10 baseline. The device is reachable, but the management authentication state no longer matches the documented source of truth.
+
+**Fix:** Pending approval. Recover via console, verify or rebuild the local fallback user and AAA method lists, then rerun Project 13 Phase 3-5.
+
+**Lesson:** Reachability is not the same as manageability. Automation should distinguish network failure from authentication drift and report both clearly.
+
+### P13-T02: HQ-FW1 Reachable But TCP/22 Refused
+
+**Symptom:** `AUTOMATION1` could ping `HQ-FW1` at `10.0.0.14`, but Netmiko and `nc` reported TCP/22 refused.
+
+**Investigation:** Tested TCP/22 from `AUTOMATION1` to all in-scope devices. All IOS devices accepted TCP/22 except `HQ-FW1`, which refused the connection.
+
+**Root Cause:** ASA SSH management is not listening or not permitted on the tested path. This is separate from IOS Netmiko readiness because ASA uses different SSH and AAA syntax.
+
+**Fix:** Pending approval. Use the ASA console to verify `ssh version 2`, `ssh 10.1.99.0 255.255.255.0 inside`, local username/enable state, and any management-access requirements. Rerun Project 13 Phase 3-5 afterward.
+
+**Lesson:** Mixed-platform automation needs platform-specific readiness checks. ASA should be tracked as its own management plane, not forced into the IOS workflow.
+
+### P13-T03: Compliance Flags Missing Explicit SSHv2 Hardening
+
+**Symptom:** Project 13 compliance reported all 8 reachable IOS devices as non-compliant for missing explicit `ip ssh version 2`.
+
+**Investigation:** SSH access worked, but the running config did not include the explicit hardening line the compliance checker requires.
+
+**Root Cause:** The lab may be accepting SSH using platform defaults, but the standard requires explicit intent in configuration.
+
+**Fix:** Pending approval. Add `ip ssh version 2` to the IOS fleet after redacted backups are confirmed and rerun compliance.
+
+**Lesson:** A working protocol is not always a compliant protocol. Automation should verify standards as written, not just whether a connection succeeds.

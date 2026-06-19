@@ -1,0 +1,247 @@
+! Project 13 redacted running-config backup
+! Device: HQ-ASW1
+! Host: 10.1.99.13
+! Platform: cisco_ios
+! Collected UTC: 2026-06-19T06:01:54.619137+00:00
+!
+Building configuration...
+
+Current configuration : 5302 bytes
+!
+! Last configuration change at 22:26:22 UTC Thu Jun 18 2026
+!
+version 17.16
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service sequence-numbers
+!
+hostname HQ-ASW1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered 32768 informational
+logging console warnings
+logging monitor warnings
+aaa new-model
+!
+!
+aaa authentication login default group tacacs+ local
+aaa authentication login CONSOLE local
+aaa authorization exec default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+!
+!
+aaa session-id common
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip dhcp snooping vlan 100,200,300,999
+no ip dhcp snooping information option
+ip dhcp snooping
+ip audit notify log
+ip audit po max-events 100
+ip domain name lab.local
+ip cef
+ip arp inspection vlan 100,200,300,999
+ip arp inspection filter ARP-VLAN100 vlan  100
+ip arp inspection filter ARP-VLAN200 vlan  200
+ip arp inspection filter ARP-VLAN999 vlan  999
+login block-for 120 attempts 3 within 60
+login on-failure log
+login on-success log
+no ipv6 cef
+!
+!
+!
+!
+!
+!
+!
+vtp domain LAB
+vtp mode transparent
+!
+!
+!
+!
+archive
+ path unix:/P09-ARCHIVE-$h-
+ maximum 5
+ write-memory
+memory free low-watermark processor 79497
+!
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+errdisable recovery cause bpduguard
+errdisable recovery cause security-violation
+errdisable recovery cause psecure-violation
+errdisable recovery cause dhcp-rate-limit
+errdisable recovery cause arp-inspection
+!
+enable secret 9 [REDACTED]
+!
+secret 9 [REDACTED]
+!
+vlan internal allocation policy ascending
+!
+vlan 100
+ name Engineering
+!
+vlan 200
+ name Sales
+!
+vlan 300
+ name Guest
+!
+vlan 400
+ name Servers
+!
+vlan 999
+ name Management
+!
+vlan 1000
+ name NATIVE-UNUSED
+!
+lldp run
+!
+!
+!
+!
+interface Ethernet0/0
+ description TRUNK-TO-HQ-DSW1-E0/1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,999
+ switchport mode trunk
+ switchport nonegotiate
+ ip arp inspection trust
+ ip dhcp snooping trust
+!
+interface Ethernet0/1
+ description TRUNK-TO-HQ-DSW2-E0/1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 1000
+ switchport trunk allowed vlan 100,200,300,999
+ switchport mode trunk
+ switchport nonegotiate
+ ip arp inspection trust
+ ip dhcp snooping trust
+!
+interface Ethernet0/2
+ description ACCESS-PC-ENG1-VLAN100
+ switchport access vlan 100
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ switchport port-security mac-address sticky 5254.00d7.cbbc
+ switchport port-security
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ ip verify source mac-check
+ ip dhcp snooping limit rate 15
+!
+interface Ethernet0/3
+ description P09-SYSLOG-TEST-PORT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security mac-address sticky
+ switchport port-security mac-address sticky 5254.00b2.8d53
+ switchport port-security
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ ip verify source mac-check
+ ip dhcp snooping limit rate 15
+!
+interface Vlan999
+ ip address 10.1.99.13 255.255.255.0
+!
+ip default-gateway 10.1.99.1
+ip forward-protocol nd
+ip forward-protocol udp
+!
+!
+no ip http server
+no ip http secure-server
+ip tacacs source-interface Vlan999
+ip ssh bulk-mode 131072
+ip ssh time-out 60
+ip route 0.0.0.0 0.0.0.0 10.1.99.1
+!
+ip access-list standard ACL-SNMP-MANAGERS
+ 10 permit 10.1.99.51
+!
+ip source binding 5254.00B2.8D53 vlan 999 10.1.99.100 interface Et0/3
+ip source binding 5254.00D7.CBBC vlan 100 10.1.100.194 interface Et0/2
+no logging btrace
+logging source-interface Vlan999
+logging host 10.1.99.51
+ip access-list standard 10
+ 10 permit 10.1.99.0 0.0.0.255
+ 20 deny any log
+!
+arp access-list ARP-VLAN100
+ permit ip host 10.1.100.194 mac host 5254.00d7.cbbc
+ permit ip host 10.1.100.170 mac host 5254.0049.0158
+arp access-list ARP-VLAN200
+ permit ip host 10.1.200.142 mac host 5254.001e.faaf
+arp access-list ARP-VLAN999
+ permit ip host 10.1.99.100 mac host 5254.00b2.8d53
+snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server trap-source Vlan999
+snmp-server location P09-CML-LAB-ACCESS
+snmp-server contact Leonel - Enterprise Network Labs
+snmp-server chassis-id P09-CML-ASW
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server host 10.1.99.51 version 2c [REDACTED]
+!
+tacacs server HQ-TACACS
+ address ipv4 10.1.99.52
+ key 7 [REDACTED]
+!
+!
+!
+!
+control-plane
+!
+!
+banner motd ^C
+============================================
+AUTHORIZED ACCESS ONLY
+All access is logged and monitored
+============================================
+^C
+!
+line con 0
+ logging synchronous
+ login authentication CONSOLE
+line aux 0
+line vty 0 4
+ access-class 10 in
+ exec-timeout 15 0
+ logging synchronous
+ transport input ssh
+!
+
+ntp authenticate
+ntp trusted-key 9
+ntp source Vlan999
+ key [REDACTED]
+!
+end

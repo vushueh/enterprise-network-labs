@@ -1,0 +1,27 @@
+---
+- name: Project 13 Ansible read-only command collection
+  hosts: ios
+  gather_facts: false
+  tasks:
+    - name: Collect IOS operational commands
+      cisco.ios.ios_command:
+        commands:
+          - show cdp neighbors
+          - show ip interface brief
+          - show version
+      register: ios_show
+
+    - name: Store local command output
+      ansible.builtin.copy:
+        dest: "../outputs/ansible-read-only/{{ inventory_hostname }}.txt"
+        content: "{{ ios_show.stdout | join('\n\n---\n\n') }}"
+        mode: "0600"
+      delegate_to: localhost
+
+- name: Project 13 ASA exception check
+  hosts: asa
+  gather_facts: false
+  tasks:
+    - name: Document ASA SSH dependency
+      ansible.builtin.debug:
+        msg: "HQ-FW1 requires ASA SSH reachability before Ansible can collect from it."

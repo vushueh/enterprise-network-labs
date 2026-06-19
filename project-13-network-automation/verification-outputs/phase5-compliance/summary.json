@@ -1,0 +1,370 @@
+[
+  {
+    "name": "HQ-RTR1",
+    "host": "10.0.255.1",
+    "platform": "cisco_ios",
+    "status": "non_compliant",
+    "checks": [
+      {
+        "check": "hostname matches inventory",
+        "status": "pass",
+        "evidence": "expected hostname HQ-RTR1"
+      },
+      {
+        "check": "SSHv2 enabled",
+        "status": "fail",
+        "evidence": "requires `ip ssh version 2`"
+      },
+      {
+        "check": "syslog points to collector",
+        "status": "pass",
+        "evidence": "expected logging host 10.1.99.51"
+      },
+      {
+        "check": "NTP points to core time source",
+        "status": "fail",
+        "evidence": "expected ntp server 10.0.255.1"
+      },
+      {
+        "check": "SNMP read-only standard present",
+        "status": "pass",
+        "evidence": "expected standard read-only community; report stores only pass/fail"
+      },
+      {
+        "check": "config archive present",
+        "status": "pass",
+        "evidence": "expected IOS archive path for rollback evidence"
+      },
+      {
+        "check": "no obvious plaintext passwords",
+        "status": "pass",
+        "evidence": "checked for password type 0 and enable password"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "BR-RTR1",
+    "host": "10.0.255.2",
+    "platform": "cisco_ios",
+    "status": "non_compliant",
+    "checks": [
+      {
+        "check": "hostname matches inventory",
+        "status": "pass",
+        "evidence": "expected hostname BR-RTR1"
+      },
+      {
+        "check": "SSHv2 enabled",
+        "status": "fail",
+        "evidence": "requires `ip ssh version 2`"
+      },
+      {
+        "check": "syslog points to collector",
+        "status": "pass",
+        "evidence": "expected logging host 10.1.99.51"
+      },
+      {
+        "check": "NTP points to core time source",
+        "status": "pass",
+        "evidence": "expected ntp server 10.0.255.1"
+      },
+      {
+        "check": "SNMP read-only standard present",
+        "status": "pass",
+        "evidence": "expected standard read-only community; report stores only pass/fail"
+      },
+      {
+        "check": "config archive present",
+        "status": "pass",
+        "evidence": "expected IOS archive path for rollback evidence"
+      },
+      {
+        "check": "no obvious plaintext passwords",
+        "status": "pass",
+        "evidence": "checked for password type 0 and enable password"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "WAN-RTR1",
+    "host": "10.0.255.3",
+    "platform": "cisco_ios",
+    "status": "failed",
+    "checks": [],
+    "error": "NetmikoAuthenticationException: Authentication to device failed.\n\nCommon causes of this problem are:\n1. Invalid username and password\n2. Incorrect SSH-key file\n3. Connecting to the wrong device\n\nDevice settings: cisco_ios 10.0.255.3:22\n\n\nAuthentication failed."
+  },
+  {
+    "name": "HQ-DSW1",
+    "host": "10.1.99.11",
+    "platform": "cisco_ios",
+    "status": "non_compliant",
+    "checks": [
+      {
+        "check": "hostname matches inventory",
+        "status": "pass",
+        "evidence": "expected hostname HQ-DSW1"
+      },
+      {
+        "check": "SSHv2 enabled",
+        "status": "fail",
+        "evidence": "requires `ip ssh version 2`"
+      },
+      {
+        "check": "syslog points to collector",
+        "status": "pass",
+        "evidence": "expected logging host 10.1.99.51"
+      },
+      {
+        "check": "NTP points to core time source",
+        "status": "pass",
+        "evidence": "expected ntp server 10.0.255.1"
+      },
+      {
+        "check": "SNMP read-only standard present",
+        "status": "pass",
+        "evidence": "expected standard read-only community; report stores only pass/fail"
+      },
+      {
+        "check": "config archive present",
+        "status": "pass",
+        "evidence": "expected IOS archive path for rollback evidence"
+      },
+      {
+        "check": "no obvious plaintext passwords",
+        "status": "pass",
+        "evidence": "checked for password type 0 and enable password"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-DSW2",
+    "host": "10.1.99.12",
+    "platform": "cisco_ios",
+    "status": "non_compliant",
+    "checks": [
+      {
+        "check": "hostname matches inventory",
+        "status": "pass",
+        "evidence": "expected hostname HQ-DSW2"
+      },
+      {
+        "check": "SSHv2 enabled",
+        "status": "fail",
+        "evidence": "requires `ip ssh version 2`"
+      },
+      {
+        "check": "syslog points to collector",
+        "status": "pass",
+        "evidence": "expected logging host 10.1.99.51"
+      },
+      {
+        "check": "NTP points to core time source",
+        "status": "pass",
+        "evidence": "expected ntp server 10.0.255.1"
+      },
+      {
+        "check": "SNMP read-only standard present",
+        "status": "pass",
+        "evidence": "expected standard read-only community; report stores only pass/fail"
+      },
+      {
+        "check": "config archive present",
+        "status": "pass",
+        "evidence": "expected IOS archive path for rollback evidence"
+      },
+      {
+        "check": "no obvious plaintext passwords",
+        "status": "pass",
+        "evidence": "checked for password type 0 and enable password"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-ASW1",
+    "host": "10.1.99.13",
+    "platform": "cisco_ios",
+    "status": "non_compliant",
+    "checks": [
+      {
+        "check": "hostname matches inventory",
+        "status": "pass",
+        "evidence": "expected hostname HQ-ASW1"
+      },
+      {
+        "check": "SSHv2 enabled",
+        "status": "fail",
+        "evidence": "requires `ip ssh version 2`"
+      },
+      {
+        "check": "syslog points to collector",
+        "status": "pass",
+        "evidence": "expected logging host 10.1.99.51"
+      },
+      {
+        "check": "NTP points to core time source",
+        "status": "pass",
+        "evidence": "expected ntp server 10.0.255.1"
+      },
+      {
+        "check": "SNMP read-only standard present",
+        "status": "pass",
+        "evidence": "expected standard read-only community; report stores only pass/fail"
+      },
+      {
+        "check": "config archive present",
+        "status": "pass",
+        "evidence": "expected IOS archive path for rollback evidence"
+      },
+      {
+        "check": "no obvious plaintext passwords",
+        "status": "pass",
+        "evidence": "checked for password type 0 and enable password"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-ASW2",
+    "host": "10.1.99.14",
+    "platform": "cisco_ios",
+    "status": "non_compliant",
+    "checks": [
+      {
+        "check": "hostname matches inventory",
+        "status": "pass",
+        "evidence": "expected hostname HQ-ASW2"
+      },
+      {
+        "check": "SSHv2 enabled",
+        "status": "fail",
+        "evidence": "requires `ip ssh version 2`"
+      },
+      {
+        "check": "syslog points to collector",
+        "status": "pass",
+        "evidence": "expected logging host 10.1.99.51"
+      },
+      {
+        "check": "NTP points to core time source",
+        "status": "pass",
+        "evidence": "expected ntp server 10.0.255.1"
+      },
+      {
+        "check": "SNMP read-only standard present",
+        "status": "pass",
+        "evidence": "expected standard read-only community; report stores only pass/fail"
+      },
+      {
+        "check": "config archive present",
+        "status": "pass",
+        "evidence": "expected IOS archive path for rollback evidence"
+      },
+      {
+        "check": "no obvious plaintext passwords",
+        "status": "pass",
+        "evidence": "checked for password type 0 and enable password"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "BR-DSW1",
+    "host": "10.2.99.2",
+    "platform": "cisco_ios",
+    "status": "non_compliant",
+    "checks": [
+      {
+        "check": "hostname matches inventory",
+        "status": "pass",
+        "evidence": "expected hostname BR-DSW1"
+      },
+      {
+        "check": "SSHv2 enabled",
+        "status": "fail",
+        "evidence": "requires `ip ssh version 2`"
+      },
+      {
+        "check": "syslog points to collector",
+        "status": "pass",
+        "evidence": "expected logging host 10.1.99.51"
+      },
+      {
+        "check": "NTP points to core time source",
+        "status": "pass",
+        "evidence": "expected ntp server 10.0.255.1"
+      },
+      {
+        "check": "SNMP read-only standard present",
+        "status": "pass",
+        "evidence": "expected standard read-only community; report stores only pass/fail"
+      },
+      {
+        "check": "config archive present",
+        "status": "pass",
+        "evidence": "expected IOS archive path for rollback evidence"
+      },
+      {
+        "check": "no obvious plaintext passwords",
+        "status": "pass",
+        "evidence": "checked for password type 0 and enable password"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "BR-ASW1",
+    "host": "10.2.99.3",
+    "platform": "cisco_ios",
+    "status": "non_compliant",
+    "checks": [
+      {
+        "check": "hostname matches inventory",
+        "status": "pass",
+        "evidence": "expected hostname BR-ASW1"
+      },
+      {
+        "check": "SSHv2 enabled",
+        "status": "fail",
+        "evidence": "requires `ip ssh version 2`"
+      },
+      {
+        "check": "syslog points to collector",
+        "status": "pass",
+        "evidence": "expected logging host 10.1.99.51"
+      },
+      {
+        "check": "NTP points to core time source",
+        "status": "pass",
+        "evidence": "expected ntp server 10.0.255.1"
+      },
+      {
+        "check": "SNMP read-only standard present",
+        "status": "pass",
+        "evidence": "expected standard read-only community; report stores only pass/fail"
+      },
+      {
+        "check": "config archive present",
+        "status": "pass",
+        "evidence": "expected IOS archive path for rollback evidence"
+      },
+      {
+        "check": "no obvious plaintext passwords",
+        "status": "pass",
+        "evidence": "checked for password type 0 and enable password"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "HQ-FW1",
+    "host": "10.0.0.14",
+    "platform": "cisco_asa",
+    "status": "failed",
+    "checks": [],
+    "error": "NetmikoTimeoutException: TCP connection to device failed.\n\nCommon causes of this problem are:\n1. Incorrect hostname or IP address.\n2. Wrong TCP port.\n3. Intermediate firewall blocking access.\n\nDevice settings: cisco_asa 10.0.0.14:22\n\n"
+  }
+]

@@ -1,0 +1,20 @@
+---
+- name: Project 13 remove unused safe marker ACL
+  hosts: ios
+  gather_facts: false
+  tasks:
+    - name: Remove unused safe marker ACL
+      cisco.ios.ios_config:
+        lines:
+          - no ip access-list standard P13-AUTOMATION-MARKER
+        save_when: modified
+
+    - name: Confirm marker removed
+      cisco.ios.ios_command:
+        commands:
+          - show running-config | section P13-AUTOMATION-MARKER
+      register: marker_check
+
+    - name: Show marker check
+      ansible.builtin.debug:
+        var: marker_check.stdout_lines
