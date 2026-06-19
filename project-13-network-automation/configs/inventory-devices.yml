@@ -1,6 +1,7 @@
 ---
 standards:
   syslog_server: 10.1.99.51
+  wazuh_syslog_server: 192.168.10.156
   ntp_server: 10.0.255.1
   snmp_ro_community_env: NETLAB_SNMP_RO_COMMUNITY
 

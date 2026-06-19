@@ -14,7 +14,9 @@ The goal is not to create a new network. The goal is to show that I can:
 - check if devices follow my standards;
 - prepare safe config changes without blindly pushing them.
 
-No live device configs were changed during this first automation pass.
+The first automation pass was read-only/dry-run. After Wazuh was prepared to
+accept the CML source ranges, I used the same gated automation pattern to apply
+the Wazuh syslog target to the reachable IOS devices.
 
 ## What This Project Built
 
@@ -26,6 +28,7 @@ No live device configs were changed during this first automation pass.
 | Redacted backups | Python collects running configs and hides secrets before saving them. |
 | Compliance check | Python checks the network against standards like SSHv2, syslog, NTP, SNMP, and archive. |
 | Safe config push | Python generates a harmless dry-run config marker. It does not apply unless approved. |
+| Wazuh syslog push | Python can add Wazuh as a second syslog target after the Wazuh receiver allow-list is ready. |
 | Ansible comparison | Ansible files show how the same idea would look in a declarative tool. |
 
 ## Important Files
@@ -66,6 +69,7 @@ details for someone who wants to inspect the code or proof.
 | [backup_configs.py](scripts/backup_configs.py) | Collects running configs and redacts secrets before saving them. | Worked on 8 of 10 devices. |
 | [compliance_check.py](scripts/compliance_check.py) | Checks whether devices follow standards for SSHv2, syslog, NTP, SNMP, archive, and password safety. | Found real configuration drift. |
 | [push_safe_config.py](scripts/push_safe_config.py) | Creates a safe dry-run config push using an unused ACL marker. | Dry-run only. No live config changed. |
+| [push_wazuh_syslog.py](scripts/push_wazuh_syslog.py) | Adds Wazuh `192.168.10.156` as a syslog target on IOS devices while keeping the existing lab syslog server. | Dry-run ready. Apply only after Wazuh allows the CML source subnets. |
 | [render_report.py](scripts/render_report.py) | Builds a short final report from the automation results. | Created the final Project 13 report. |
 
 ## Live Results
@@ -78,6 +82,7 @@ details for someone who wants to inspect the code or proof.
 | Phase 4 - Redacted backups | [summary.md](verification-outputs/phase4-redacted-backups/summary.md) | 8 of 10 devices succeeded. |
 | Phase 5 - Compliance check | [summary.md](verification-outputs/phase5-compliance/summary.md) | 8 devices are reachable but non-compliant; 2 devices failed. |
 | Phase 6 - Safe config dry-run | [summary.md](verification-outputs/phase6-safe-config/summary.md) | Safe config was generated only. Nothing was applied. |
+| Wazuh syslog onboarding | [summary.md](verification-outputs/wazuh-syslog/summary.md) | 8 IOS devices now send syslog to Wazuh. |
 | Final report | [project13-final-report.md](verification-outputs/project13-final-report.md) | Final automation summary. |
 
 ## What The Automation Found
@@ -119,6 +124,7 @@ The next steps would change live configs, so they need approval first:
 4. Add the missing NTP config on `HQ-RTR1`.
 5. Apply the safe marker config to one pilot device.
 6. Run the SNMP break/fix pilot on one access switch.
+7. Build a dedicated CML-node Cisco dashboard filter after more lab-node logs accumulate.
 
 ## How To Run The Scripts
 
@@ -170,6 +176,24 @@ Generate the safe config dry-run:
 python scripts/push_safe_config.py \
   --inventory inventory/devices.yml \
   --output-dir outputs/phase6-safe-config
+```
+
+Generate the Wazuh syslog dry-run:
+
+```bash
+python scripts/push_wazuh_syslog.py \
+  --inventory inventory/devices.yml \
+  --output-dir outputs/wazuh-syslog-dry-run
+```
+
+Apply the Wazuh syslog config only after Wazuh allows the CML source ranges:
+
+```bash
+python scripts/push_wazuh_syslog.py \
+  --inventory inventory/devices.yml \
+  --output-dir outputs/wazuh-syslog-apply \
+  --apply \
+  --confirm APPLY_WAZUH_SYSLOG
 ```
 
 ## Simple Summary
