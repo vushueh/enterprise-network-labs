@@ -167,3 +167,11 @@ Save all CLI verification output — not just shown in chat.
 - **Codex sandbox**: no WSL/UNC access. Windows session folder + GitHub connector only.
 - **Claude Code**: has full WSL + GitHub access. Handles all project GitHub pushes.
 - **Project goes to GitHub only when all phases are complete** — Claude pushes, not Codex.
+
+## Master Program Selection
+
+This repo is completed reference material, not an active queue project. Invoke
+the local `/goal` wrapper or read `../docs/homelab-goals.yaml` before any use.
+The queue may read its topologies but cannot reopen or modify it implicitly.
+Any reopening requires an explicit program/repo decision and normal safety,
+review, closeout, commit, and push gates.

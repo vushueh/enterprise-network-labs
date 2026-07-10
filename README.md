@@ -67,3 +67,11 @@ The most important file in this repo: [TROUBLESHOOTING-LOG.md](TROUBLESHOOTING-L
 
 Every problem encountered during every project — what broke, what I checked, what
 the actual cause was, and what I learned. This is where the real engineering is.
+
+## Master Program Placement
+
+This completed repo remains a reference source for network and capstone
+topologies. It has no active queue item and is not reopened by the master
+program. The forced queue in `../docs/homelab-goals.yaml` may link to its
+evidence for N/C-track design, but changes require an explicit reopening
+decision and normal closeout rules.

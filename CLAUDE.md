@@ -40,3 +40,10 @@ material; reopening a project here requires Leonel's say-so.
   the route10 repo
 - freepbx F05 plans CML automation against the same controller — coordinate
   via review files if both become active
+
+## `/goal` Session Start
+
+Run `/goal next` before using this repo. The local wrapper loads the canonical
+skill; if unavailable, read the family root `docs/homelab-goals.yaml`. This
+repo is completed reference material; the queue may read it but may not reopen
+or modify it implicitly.

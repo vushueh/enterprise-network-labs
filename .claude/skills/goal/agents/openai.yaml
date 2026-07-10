@@ -1,0 +1,4 @@
+interface:
+  display_name: "Homelab Goal Tracker"
+  short_description: "Resume the one plan-selected homelab project"
+  default_prompt: "Use $goal to reconcile the canonical homelab program and return one next action."
