@@ -68,6 +68,16 @@ The most important file in this repo: [TROUBLESHOOTING-LOG.md](TROUBLESHOOTING-L
 Every problem encountered during every project — what broke, what I checked, what
 the actual cause was, and what I learned. This is where the real engineering is.
 
+## Related Families
+
+| Family | Repo | Connection |
+|--------|------|------------|
+| CCNA Physical Expansion | [Homelab_CCNA](https://github.com/vushueh/Homelab_CCNA) | Expands these CML labs onto physical gear — its P01 bridges CML to the homelab via CML-EDGE1 |
+| Route10 Network Core | [homelab-route10-network-core](https://github.com/vushueh/homelab-route10-network-core) | Owns the CML transit routing (VLAN 160, 192.168.160.0/30 → CML-EDGE1) |
+| Windows Server Labs | [windows-server-business-admin-labs](https://github.com/vushueh/windows-server-business-admin-labs) | Future P13 plans CML router authentication through Windows NPS/RADIUS |
+| FreePBX VoIP Labs | [freepbx-family-voip-labs](https://github.com/vushueh/freepbx-family-voip-labs) | Future F05 plans safe VoIP automation/observability work on the same CML controller |
+| **Master Hub** | [homelab-management](https://github.com/vushueh/homelab-management) | Navigation hub — see [cross-repo map](https://github.com/vushueh/homelab-management/blob/main/docs/CROSS-REPO-MAP.md) |
+
 ## Master Program Placement
 
 This completed repo remains a reference source for network and capstone
