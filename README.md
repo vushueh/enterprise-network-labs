@@ -85,3 +85,9 @@ topologies. It has no active queue item and is not reopened by the master
 program. The forced queue in `../docs/homelab-goals.yaml` may link to its
 evidence for N/C-track design, but changes require an explicit reopening
 decision and normal closeout rules.
+
+### Master Queue Status
+
+| Queue assignment | Clickable project list | Status |
+|---|---|---|
+| None — reference repository | [Projects 01-13](#the-series) | ✅ All 13 projects complete; no open master-queue project |
