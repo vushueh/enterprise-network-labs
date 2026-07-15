@@ -112,7 +112,7 @@ memory free low-watermark processor 79983
 !
 spanning-tree mode rapid-pvst
 !
-enable secret 9 [REDACTED]
+enable secret 9 <ENABLE-SECRET>
 !
 secret 9 [REDACTED]
 !
@@ -302,7 +302,7 @@ ipv6 router ospf 10
 !
 !
 snmp-server group P09-SNMPV3-GROUP v3 priv access ACL-SNMP-MANAGERS
-snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 snmp-server trap-source Loopback0
 snmp-server location P09-CML-LAB
 snmp-server contact Leonel - Enterprise Network Labs
@@ -312,7 +312,7 @@ snmp-server host 10.1.99.51 version 2c [REDACTED]
 snmp-server host 10.1.99.51 version 3 [REDACTED] p09snmpv3
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key 7 [REDACTED]
+ key <TACACS-SHARED-SECRET> [REDACTED]
 !
 !
 !
@@ -336,7 +336,7 @@ line vty 0 4
 ntp authenticate
 ntp trusted-key 9
 ntp source Loopback0
- key [REDACTED]
+ key <TACACS-SHARED-SECRET>
 !
 !
 !

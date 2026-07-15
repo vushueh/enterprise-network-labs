@@ -18,8 +18,8 @@ configure terminal
 hostname HQ-DSW1
 no ip domain-lookup
 ip routing
-username admin privilege 15 secret CMLlab2025!
-enable secret CMLenableP@ss!
+username admin privilege 15 secret <LOCAL-USER-PASSWORD>
+enable secret <LOCAL-USER-PASSWORD>
 crypto key generate rsa modulus 2048
 ip ssh version 2
 line vty 0 4
@@ -141,7 +141,7 @@ aaa new-model
 !
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key tacacs123
+ key <TACACS-SHARED-SECRET>
 !
 ip tacacs source-interface Vlan999
 !

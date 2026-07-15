@@ -71,7 +71,7 @@ configure terminal
 ! --- NTP authentication key ---
 ! WHY: Defines the shared MD5 key used by trusted NTP clients. This prevents an
 ! unauthorized or mistyped NTP source from being accepted as trusted time.
-ntp authentication-key 9 md5 P09NTPKey2026
+ntp authentication-key 9 md5 <NTP-AUTH-SECRET>
 
 ! --- Require authenticated NTP ---
 ! WHY: Enables NTP authentication globally. Without this, the key exists but is
@@ -122,7 +122,7 @@ configure terminal
 ! --- NTP authentication key ---
 ! WHY: Must match HQ-RTR1 key ID and secret so the router can authenticate the
 ! NTP master before trusting its time.
-ntp authentication-key 9 md5 P09NTPKey2026
+ntp authentication-key 9 md5 <NTP-AUTH-SECRET>
 
 ! --- Require authenticated NTP ---
 ! WHY: Enforces authenticated NTP instead of accepting unauthenticated time.
@@ -172,7 +172,7 @@ configure terminal
 ! --- NTP authentication key ---
 ! WHY: Uses the same key ID and secret as HQ-RTR1 so switch time cannot be set by
 ! an unauthenticated source.
-ntp authentication-key 9 md5 P09NTPKey2026
+ntp authentication-key 9 md5 <NTP-AUTH-SECRET>
 
 ! --- Require authenticated NTP ---
 ! WHY: Enables NTP authentication globally on the switch.
@@ -220,7 +220,7 @@ configure terminal
 ! --- NTP authentication key ---
 ! WHY: Edge/access logs must line up with core logs during incident correlation.
 ! Authenticated NTP prevents accepting time from an untrusted host.
-ntp authentication-key 9 md5 P09NTPKey2026
+ntp authentication-key 9 md5 <NTP-AUTH-SECRET>
 
 ! --- Require authenticated NTP ---
 ! WHY: Enables NTP authentication globally.
@@ -268,7 +268,7 @@ configure terminal
 
 ! --- NTP authentication key ---
 ! WHY: Uses the same authenticated time key as the routers/switches.
-ntp authentication-key 9 md5 P09NTPKey2026
+ntp authentication-key 9 md5 <NTP-AUTH-SECRET>
 
 ! --- Require authenticated NTP ---
 ! WHY: Enables authenticated NTP on the ASA.

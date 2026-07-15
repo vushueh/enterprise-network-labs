@@ -52,10 +52,10 @@ Encaps and decaps incrementing after ping test. Tunnel0 operational.
 At T+34:05:
 
 ```text
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 User was successfully authenticated.
 
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 User was successfully authenticated.
 ```
 

@@ -42,10 +42,7 @@ From `HQ-DSW1`, open a fresh SSH session to `HQ-RTR1`:
 ssh -l admin 10.0.255.1
 ```
 
-Password:
-
-```text
-chongong
+Password: <TACACS-USER-PASSWORD>
 ```
 
 Inside the SSH session on `HQ-RTR1`, run privileged read-only commands:

@@ -22,10 +22,10 @@ This explains why network devices cannot ARP or ping:
 
 `tac-plus.conf` has:
 
-- key: `tacacs123`
-- admin user: `tacadmin / admin123`
-- operator user: `tacoper / oper123`
-- enable password user: `$enab15$ / admin123`
+- key: `<TACACS-SHARED-SECRET>`
+- admin user: `tacadmin / <TACACS-USER-PASSWORD>`
+- operator user: `tacoper / <TACACS-USER-PASSWORD>`
+- enable password user: `$enab15$ / <TACACS-USER-PASSWORD>`
 
 This is enough to begin Phase 1 once IP reachability is fixed.
 

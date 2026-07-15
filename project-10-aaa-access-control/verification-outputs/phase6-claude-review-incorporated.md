@@ -5,7 +5,7 @@
 - Added the requested local-password pre-check command before introducing any fault:
 
 ```ios
-test aaa local auth default admin chongong
+test aaa local auth default admin <TACACS-USER-PASSWORD>
 ```
 
 - If this command is unsupported by the IOL image, the error will be captured and the previously verified `CONSOLE local` login will remain the local credential evidence.

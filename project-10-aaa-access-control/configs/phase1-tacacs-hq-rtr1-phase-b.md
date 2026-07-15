@@ -9,16 +9,16 @@ Phase B contains only `line vty 0 4` changes. Do not apply this file until Phase
 Run these on `HQ-RTR1` after Phase A and confirm both users authenticate:
 
 ```ios
-test aaa group tacacs+ tacadmin admin123 new-code
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 show tacacs
 show aaa servers
 ```
 
 Expected:
 
-- `tacadmin / admin123` authenticates successfully and should receive privilege level 15.
-- `tacoper / oper123` authenticates successfully and should receive privilege level 1.
+- `tacadmin / <TACACS-USER-PASSWORD>` authenticates successfully and should receive privilege level 15.
+- `tacoper / <TACACS-USER-PASSWORD>` authenticates successfully and should receive privilege level 1.
 - Keep the console session open before testing SSH.
 
 ## Phase B Configuration

@@ -12,10 +12,7 @@ Test from `HQ-RTR1`:
 ssh -l admin 10.1.99.11
 ```
 
-Password:
-
-```text
-chongong
+Password: <TACACS-USER-PASSWORD>
 ```
 
 Result:
@@ -34,10 +31,7 @@ Test from `HQ-RTR1`:
 ssh -l tacoper 10.1.99.11
 ```
 
-Password:
-
-```text
-oper123
+Password: <TACACS-USER-PASSWORD>
 ```
 
 Result:
@@ -59,7 +53,7 @@ HQ-DSW1>configure terminal
 
 Privilege separation is working:
 
-- `admin / chongong` receives privilege 15.
-- `tacoper / oper123` receives privilege 1.
+- `admin / <TACACS-USER-PASSWORD>` receives privilege 15.
+- `tacoper / <TACACS-USER-PASSWORD>` receives privilege 1.
 - `tacoper` cannot enter configuration mode.
 

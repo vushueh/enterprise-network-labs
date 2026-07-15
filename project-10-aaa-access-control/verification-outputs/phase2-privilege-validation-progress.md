@@ -7,8 +7,8 @@ Phase 2 validates that the preferred administrator account uses TACACS+ at privi
 ## Confirmed Accounts
 
 ```text
-admin / chongong     -> TACACS+ netadmin, privilege 15
-tacoper / oper123    -> TACACS+ netoper, privilege 1
+admin / <TACACS-USER-PASSWORD>     -> TACACS+ netadmin, privilege 15
+tacoper / <TACACS-USER-PASSWORD>    -> TACACS+ netoper, privilege 1
 ```
 
 ## Validation Results

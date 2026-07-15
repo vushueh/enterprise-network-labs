@@ -35,14 +35,14 @@ show running-config | include ^username|^aaa authentication|^aaa authorization|^
 show running-config | section line con
 show running-config | section tacacs
 show tacacs
-test aaa group tacacs+ admin chongong new-code
-test aaa local auth default admin chongong
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
+test aaa local auth default admin <TACACS-USER-PASSWORD>
 ```
 
 Expected:
 
 ```ios
-username admin privilege 15 secret ...
+username admin privilege 15 secret <LOCAL-USER-PASSWORD>
 aaa authentication login default group tacacs+ local
 aaa authentication login CONSOLE local
 aaa authorization exec default group tacacs+ local
@@ -61,10 +61,10 @@ Server Status: Alive
 The last command is an additional local-password pre-check suggested during review:
 
 ```ios
-test aaa local auth default admin chongong
+test aaa local auth default admin <TACACS-USER-PASSWORD>
 ```
 
-If `HQ-RTR1` rejects this command syntax, paste the error and do not treat that as a credential failure. In that case, the console login itself is the local-password proof, but only if the console login was performed using `admin / chongong` after applying:
+If `HQ-RTR1` rejects this command syntax, paste the error and do not treat that as a credential failure. In that case, the console login itself is the local-password proof, but only if the console login was performed using `admin / <TACACS-USER-PASSWORD>` after applying:
 
 ```ios
 aaa authentication login CONSOLE local
@@ -76,7 +76,7 @@ If a different local password was used at the console prompt, set the local fall
 
 ```ios
 configure terminal
-username admin privilege 15 secret chongong
+username admin privilege 15 secret <TACACS-USER-PASSWORD>
 end
 write memory
 ```
@@ -110,10 +110,7 @@ From `HQ-DSW1`, SSH to `HQ-RTR1` using the local `admin` account credentials:
 ssh -l admin 10.0.255.1
 ```
 
-Password:
-
-```text
-chongong
+Password: <TACACS-USER-PASSWORD>
 ```
 
 Inside `HQ-RTR1`, run:
@@ -152,10 +149,10 @@ configure terminal
 tacacs server HQ-TACACS
  no address ipv4 10.1.99.250
  address ipv4 10.1.99.52
- key tacacs123
+ key <TACACS-SHARED-SECRET>
  exit
 end
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 show tacacs
 ```
 
@@ -189,10 +186,10 @@ On `HQ-RTR1`:
 ```ios
 configure terminal
 tacacs server HQ-TACACS
- key P10-WRONG-KEY
+ key <TACACS-SHARED-SECRET>
  exit
 end
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 show tacacs
 ```
 
@@ -210,11 +207,11 @@ On the same console:
 ```ios
 configure terminal
 tacacs server HQ-TACACS
- key tacacs123
+ key <TACACS-SHARED-SECRET>
  exit
 end
 undebug all
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 show tacacs
 write memory
 ```
@@ -248,11 +245,11 @@ configure terminal
 tacacs server HQ-TACACS
  no address ipv4 10.1.99.250
  address ipv4 10.1.99.52
- key tacacs123
+ key <TACACS-SHARED-SECRET>
  exit
 end
 undebug all
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 show tacacs
 write memory
 ```

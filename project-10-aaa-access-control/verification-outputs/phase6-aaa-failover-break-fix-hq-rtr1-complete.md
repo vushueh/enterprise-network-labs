@@ -29,7 +29,7 @@ tacacs server HQ-TACACS
 
 The server address was temporarily changed to unused target `10.1.99.250`.
 
-While the unreachable address was configured, `HQ-DSW1` successfully opened an SSH session to `HQ-RTR1` using local `admin / chongong`:
+While the unreachable address was configured, `HQ-DSW1` successfully opened an SSH session to `HQ-RTR1` using local `admin / <TACACS-USER-PASSWORD>`:
 
 ```text
 HQ-RTR1#show privilege
@@ -48,13 +48,13 @@ The TACACS shared key was deliberately changed to an incorrect value:
 
 ```ios
 tacacs server HQ-TACACS
- key P10-WRONG-KEY
+ key <TACACS-SHARED-SECRET>
 ```
 
 Observed failure:
 
 ```ios
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 ```
 
 ```text
@@ -69,7 +69,7 @@ The correct shared key was restored:
 
 ```ios
 tacacs server HQ-TACACS
- key tacacs123
+ key <TACACS-SHARED-SECRET>
 ```
 
 Post-repair verification:

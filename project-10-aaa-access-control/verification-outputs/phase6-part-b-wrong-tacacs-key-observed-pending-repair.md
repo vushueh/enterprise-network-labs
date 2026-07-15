@@ -6,7 +6,7 @@ On `HQ-RTR1`, the TACACS shared key was temporarily changed while the local-prot
 
 ```ios
 tacacs server HQ-TACACS
- key P10-WRONG-KEY
+ key <TACACS-SHARED-SECRET>
 ```
 
 The fault has not been saved.
@@ -31,7 +31,7 @@ TACACS access control debugging is on
 With the wrong key configured:
 
 ```ios
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 ```
 
 ```text
@@ -57,7 +57,7 @@ The correct key was restored from the open protected console:
 ```ios
 configure terminal
 tacacs server HQ-TACACS
- key tacacs123
+ key <TACACS-SHARED-SECRET>
  exit
 end
 undebug all
@@ -72,7 +72,7 @@ All possible debugging has been turned off
 After repair, TACACS authentication passed:
 
 ```ios
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 ```
 
 ```text

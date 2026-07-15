@@ -2,8 +2,8 @@
 
 Phase 2 privilege separation was fully demonstrated on the pilot path:
 
-- `admin / chongong` received administrator access through TACACS+.
-- `tacoper / oper123` received privilege level 1.
+- `admin / <TACACS-USER-PASSWORD>` received administrator access through TACACS+.
+- `tacoper / <TACACS-USER-PASSWORD>` received privilege level 1.
 - `tacoper` could not enter configuration mode on `HQ-DSW1`.
 - `HQ-RTR1` operator behavior was also validated.
 

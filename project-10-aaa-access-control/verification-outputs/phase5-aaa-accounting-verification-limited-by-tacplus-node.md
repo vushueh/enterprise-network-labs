@@ -33,10 +33,10 @@ From `HQ-DSW1`, a fresh TACACS+ SSH session was opened to `HQ-RTR1`:
 ssh -l admin 10.0.255.1
 ```
 
-Password used:
+Password:
 
 ```text
-chongong
+<TACACS-USER-PASSWORD>
 ```
 
 The session received administrator privilege:

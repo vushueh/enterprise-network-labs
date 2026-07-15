@@ -1,415 +1,197 @@
-# Project 11 — QoS Traffic Management
+# P11 — QoS Traffic Management
 
-**Series:** Enterprise Network Labs — Project 11 of 13
-**Platform:** Cisco CML 2.9 — IOL routers, IOL-L2 switches
-**Build Date:** 2026-05-31
-**Status:** Complete ✅
+- **Status:** ✅ Complete — 2026-05-31
+- **Project ID:** `Enterprise-P11`
+- **Platform:** Cisco CML 2.9 with IOL and IOL-L2
+- **Scope:** HQ classification and WAN policy plus Branch voice-VLAN pilot
+- **Parent project:** [P10 — AAA And Network Access Control](../project-10-aaa-access-control/)
 
----
+## Why This Matters
 
-## STAR Summary
+Without QoS, voice, routing, web, and bulk traffic compete equally when a WAN
+link is congested. I built P11 to classify traffic, mark it consistently, and
+reserve bandwidth through a controlled 1 Mbps edge policy.
 
-**Situation:** The enterprise network built across Projects 01–10 had no QoS policy. All traffic — voice, control plane, bulk data, and background applications — competed equally for the 1 Mbps WAN link between HQ and the branch. Without classification or queuing, time-sensitive traffic like RTP audio could be delayed or dropped during congestion.
+## Portfolio Summary
 
-**Task:** Implement an end-to-end QoS framework using NBAR-based traffic classification, DSCP marking, MQC hierarchical queuing and shaping on the HQ-to-branch WAN edge, and Voice VLAN 500 provisioning on the branch access layer.
+**Situation:** The enterprise WAN had no traffic differentiation.
 
-**Action:**
-- Phase 0: Confirmed OSPF health, NBAR support, and clean QoS baseline on HQ-RTR1, BR-RTR1, and WAN-RTR1
-- Phase 1: Created four NBAR class-maps on HQ-RTR1 (RTP, SIP, OSPF/DNS, FTP/HTTP)
-- Phase 2: Built `P11-MARK-IN` policy-map and applied it inbound on Ethernet0/0.100 — DSCP EF, CS3, CS2, AF11
-- Phase 3: Built hierarchical WAN policy — 1 Mbps parent shaper (`P11-WAN-SHAPE-1M`) nesting LLQ child policy (`P11-WAN-QUEUE`) — applied outbound on Ethernet0/1
-- Phase 4: Full `show policy-map interface` verification of both policies — no drops, queueing strategy confirmed as class-based
-- Phase 5: Live HTTP traffic generated from PC-ENG1 — NBAR did not classify traffic on IOL, ACL-based fallback (`P11-BULK-DATA-ACL`) used and confirmed 54 packets marked DSCP AF11
-- Phase 6: Voice VLAN 500 added to branch access ports on BR-ASW1 — data VLANs unchanged
-- Phase 7: AutoQoS tested on BR-ASW1 Ethernet1/2 — `auto qos` command rejected on IOL-L2; documented as platform limitation
-- Break/Fix: Deliberately emptied `P11-BULK-DATA-ACL` class-map (`no match`), observed traffic falling to class-default, diagnosed with `show class-map`, restored and re-verified
+**Task:** Classify applications, mark DSCP, build hierarchical shaping and
+queuing, verify real packets, and prepare voice access at the Branch.
 
-**Result:** Working hierarchical QoS policy on HQ-RTR1 with live traffic evidence. DSCP AF11 marking confirmed on 54 real HTTP packets. WAN shaper operating at 1 Mbps with no drops. Voice VLAN 500 active at the branch. Platform limitations documented with working alternatives.
+**Action:** I created NBAR and ACL classes, applied inbound marking, nested an
+LLQ child under a 1 Mbps parent shaper, generated HTTP traffic, added voice VLAN
+500 on two ports, evaluated AutoQoS, and broke one class-map deliberately.
 
----
+**Result:** PASS. Fifty-four live HTTP packets were marked AF11, the hierarchical
+policy operated with no drops during verification, and the voice VLAN stayed
+separate from each port's data VLAN.
 
-## Topology
+## How To Read This Project
 
-Devices involved in this project:
+| Reader | Start here |
+|---|---|
+| Hiring manager or non-technical reader | [Portfolio Summary](#portfolio-summary), [What I Proved](#what-i-proved), and [Phase 5](#phase-5--live-traffic-and-fallback-classification) |
+| Technical reviewer | [Original technical record](technical-details.md), [configs](configs/), and [verification outputs](verification-outputs/) |
+| Future operator | [Decision log](decision-log.md) and [limitations and expansion](LIMITATIONS-AND-HOMELAB-EXPANSION.md) |
 
-```
-HQ-RTR1 (10.0.255.1)
- ├── Ethernet0/0.100  <- P11-MARK-IN (inbound DSCP marking, VLAN 100 pilot)
- └── Ethernet0/1      <- P11-WAN-SHAPE-1M (outbound shaping + queuing to BR-RTR1)
+## My Test Boundary
 
-BR-RTR1 (10.0.255.2)
- └── Ethernet0/0.500  <- Voice VLAN 500 gateway (10.2.50.1) — pre-existing
+| Item | Boundary |
+|---|---|
+| Pilot router | HQ-RTR1 |
+| Marking point | Ethernet0/0.100 inbound |
+| WAN policy | Ethernet0/1 outbound; 1 Mbps shaper |
+| Voice pilot | BR-ASW1 Et1/0 and Et1/1; VLAN 500 |
+| Fault | Remove one class-map match, then restore it |
+| Platform limit | AutoQoS unsupported on IOL-L2 |
 
-BR-DSW1
- └── Trunks carry VLAN 500 — pre-existing, no changes
+## Phase Status
 
-BR-ASW1
- ├── Ethernet1/0  <- switchport voice vlan 500 added (data: VLAN 100)
- └── Ethernet1/1  <- switchport voice vlan 500 added (data: VLAN 200)
+| Phase | Work | Status |
+|---:|---|---|
+| 0 | Readiness | Complete |
+| 1 | Classification | Complete |
+| 2 | DSCP Marking | Complete |
+| 3 | Hierarchical WAN Policy | Complete |
+| 4 | Policy Verification | Complete |
+| 5 | Live Traffic And Fallback Classification | Complete |
+| 6 | Voice VLAN Pilot | Complete |
+| 7 | AutoQoS Limitation | Deferred — unsupported on IOL-L2 |
+| 8 | Empty Class-Map Break/Fix | Complete |
 
-PC-ENG1 (10.1.100.194) — traffic source for Phase 5 testing
-Nginx server (10.1.40.10)  — HTTP target
-```
+## Phase 0 — Readiness
 
----
+I confirmed OSPF adjacencies, baseline latency, supported class-map syntax, and
+the absence of an existing service policy. That prevented an old policy or
+routing fault from contaminating the QoS result.
 
-## Phase 0 — QoS Readiness Check
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-**Goal:** Confirm topology health and NBAR support before any QoS configuration.
+## Phase 1 — Classification
 
-**OSPF:** All three pilot routers (HQ-RTR1, BR-RTR1, WAN-RTR1) show FULL adjacencies on all paths.
+I created classes for voice, signaling, network control, and bulk data. The IOL
+parser accepted the NBAR statements, so I could build the marking policy before
+attaching it to traffic.
 
-**NBAR precheck:** `match protocol http` accepted on all three routers. Temporary test class-maps removed cleanly.
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-**Baseline latency:**
+## Phase 2 — DSCP Marking
 
-```text
-HQ-RTR1 → BR-RTR1:  min/avg/max = 1/2/4 ms
-HQ-RTR1 → WAN-RTR1: min/avg/max = 1/1/2 ms
-```
+I applied `P11-MARK-IN` to Engineering traffic and mapped RTP to EF, SIP to CS3,
+OSPF/DNS to CS2, and bulk data to AF11. Initial class-default counters proved
+the policy was active even before application-specific traffic was generated.
 
-**Existing QoS:** None — no active policy-maps, only class-default.
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
----
+## Phase 3 — Hierarchical WAN Policy
 
-## Phase 1 — NBAR Classification (HQ-RTR1)
+I created a 1 Mbps parent shaper and nested the LLQ/bandwidth child policy beneath
+it. Voice received priority treatment, other classes received defined shares,
+and class-default used fair queueing. Post-change pings confirmed routing stayed
+healthy.
 
-**Goal:** Build class-maps that identify traffic types. No marking or queuing yet.
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-**Precheck:** `match protocol rtp` and `match protocol ospf` both accepted on IOL.
+## Phase 4 — Policy Verification
 
-**Class-maps applied:**
+I inspected both interfaces and the nested policy structure. The shaper and
+queues were active with zero drops during the verification window, establishing
+the correct framework before live application testing.
 
-```ios
-class-map match-any P11-VOICE-LIKE
- match protocol rtp
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-class-map match-any P11-SIGNALING
- match protocol sip
+## Phase 5 — Live Traffic And Fallback Classification
 
-class-map match-any P11-BULK-DATA
- match protocol ftp
- match protocol http
+I generated HTTP from PC-ENG1 to the Nginx server. IOL's NBAR PDL did not classify
+the live traffic, so I added a narrowly scoped ACL-based class rather than
+calling the test a failure. The counters showed 54 packets matched and marked
+AF11, proving the operational policy with a supported method.
 
-class-map match-any P11-NETWORK-CONTROL
- match protocol ospf
- match protocol dns
-```
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-**Verification:** `show class-map` confirmed all four class-maps present with correct match statements. No class-map empty.
+## Phase 6 — Voice VLAN Pilot
 
----
+The router gateway and trunks already carried VLAN 500, so I changed only the
+two Branch access ports to add `switchport voice vlan 500`. Their existing data
+VLANs remained unchanged, and switchport output proved the dual-role design.
 
-## Phase 2 — DSCP Marking (HQ-RTR1)
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-**Goal:** Apply inbound DSCP marking to VLAN 100 traffic on HQ-RTR1.
+## Phase 7 — AutoQoS Limitation
 
-**Policy applied to Ethernet0/0.100:**
+IOL-L2 rejected `auto qos` and its verification commands. I applied nothing and
+retained the manual MQC design as the working solution. The [limitations guide](LIMITATIONS-AND-HOMELAB-EXPANSION.md)
+defines how to repeat AutoQoS on a capable platform.
 
-```ios
-policy-map P11-MARK-IN
- class P11-VOICE-LIKE
-  set dscp ef
- class P11-SIGNALING
-  set dscp cs3
- class P11-NETWORK-CONTROL
-  set dscp cs2
- class P11-BULK-DATA
-  set dscp af11
-```
+## Phase 8 — Empty Class-Map Break/Fix
 
-**DSCP values selected:**
+I removed the ACL match from the bulk class, observed traffic fall into
+class-default, and diagnosed `Match none` with `show class-map`. Restoring the
+match returned 66 packets to the intended class and marking path.
 
-| Class | DSCP | Value | Reason |
-|---|---|---|---|
-| Voice-like RTP | EF | 46 | Expedited Forwarding — minimum latency/jitter |
-| SIP signaling | CS3 | 24 | Standard marking for call control |
-| OSPF/DNS | CS2 | 16 | Infrastructure traffic gets preferential identification |
-| FTP/HTTP bulk | AF11 | 10 | Low-priority assured forwarding |
-| Everything else | Unchanged | — | Avoid remarking unknown traffic during pilot |
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-**Verification:** Policy visible on Ethernet0/0.100. VLAN 100 hosts (10.1.100.170, 10.1.100.194) still reachable. class-default saw 16 packets confirming policy is active.
+## What I Proved
 
----
+- MQC can classify, mark, shape, and queue traffic in separate layers.
+- Hierarchical policy can enforce a WAN rate while preserving class treatment.
+- Live packet counters are stronger proof than accepted syntax.
+- ACL classification is a valid fallback when IOL NBAR cannot identify traffic.
+- A voice VLAN can coexist with an unchanged data VLAN on the same access port.
+- An empty class-map produces a clear, reversible failure signature.
 
-## Phase 3 — WAN Edge Queuing And Shaping (HQ-RTR1 Ethernet0/1)
+## Technical Evidence
 
-**Goal:** Apply hierarchical outbound QoS policy on the HQ-to-branch WAN link.
+- [Original detailed README](technical-details.md)
+- [Phase configurations](configs/)
+- [Verification outputs](verification-outputs/)
+- [Decision log](decision-log.md)
+- [Limitations and expansion guide](LIMITATIONS-AND-HOMELAB-EXPANSION.md)
+- [Codex session log](../CODEX-LOG.md)
 
-**Design — Hierarchical QoS (HQoS):**
+## How We Worked Together
 
-```
-P11-WAN-SHAPE-1M (parent — shape to 1 Mbps)
-  └── P11-WAN-QUEUE (child — LLQ priority queuing)
-        ├── P11-DSCP-VOICE        priority percent 30  (300 kbps)
-        ├── P11-DSCP-SIGNALING    bandwidth percent 10 (100 kbps)
-        ├── P11-DSCP-NETWORK-CONTROL bandwidth percent 5 (50 kbps)
-        ├── P11-DSCP-BULK         bandwidth percent 15 (150 kbps)
-        └── class-default         fair-queue
-```
+### My Input And How I Helped
 
-Bandwidth allocation: 60% committed (30+10+5+15), 40% best-effort to class-default.
+I applied each reviewed QoS phase in CML, generated HTTP traffic, returned the
+policy counters, added the voice-VLAN settings, and performed the break/fix.
 
-**Verification:**
+### What Codex Did And How
 
-```text
-show policy-map interface Ethernet0/1
+Codex designed the phased MQC policy, supplied the exact verification commands,
+recognized the NBAR traffic limitation, proposed the ACL fallback, and interpreted
+the returned counters. Codex also migrated this project page.
 
-Service-policy output: P11-WAN-SHAPE-1M
-  shape (average) cir 1000000
-  Service-policy : P11-WAN-QUEUE
-    P11-DSCP-VOICE priority 30% (300 kbps)
-    P11-DSCP-SIGNALING bandwidth 10% (100 kbps)
-    P11-DSCP-NETWORK-CONTROL bandwidth 5% (50 kbps)
-    P11-DSCP-BULK bandwidth 15% (150 kbps)
-    class-default Fair-queue
-```
+### What Claude Did And How
 
-Post-policy pings: 10/10 to both 10.0.255.2 and 10.0.255.3. No disruption.
+Claude served as the independent review gate under the repository workflow,
+checking the phase safety, platform syntax, and evidence before closeout. The
+retained files do not reproduce every review comment, so I do not claim more.
 
----
+### How We Communicated And Completed The Project
 
-## Phase 4 — Policy Map Verification
+Codex proposed a phase, Claude reviewed it, and I applied it and returned the
+show output. We used the same loop for the NBAR fallback, voice pilot, and
+break/fix, then closed only after counters proved the restored class.
 
-**Goal:** Full `show policy-map interface` deep read on both applied policies.
+### Pushback And How We Resolved It
 
-**Interface queue status:**
+NBAR accepted the configuration but did not classify live HTTP, and AutoQoS was
+absent. We relied on observed counters, adopted a narrow ACL fallback for live
+proof, and documented AutoQoS as a platform limitation rather than pretending
+the simulator supported it.
 
-```text
-show interfaces Ethernet0/1
-  Queueing strategy: Class-based queueing
-  Input queue drops: 0
-  Total output drops: 0
-```
+## Reproduce Or Re-Verify
 
-`Class-based queueing` confirms HQoS is active. Zero drops at test traffic levels. class-default counters on the WAN output: 1568 packets, 111544 bytes — normal unmatched traffic using the best-effort pool.
+1. Verify OSPF, latency, and an empty QoS baseline.
+2. Apply [configs](configs/) in order from classes to marking to nested WAN policy.
+3. Generate live traffic and verify class, mark, shaper, queue, and drop counters.
+4. Add voice VLAN 500 only after confirming the existing trunk and gateway.
+5. Back up the class-map before the bounded empty-match fault and prove restoration.
 
----
+## What Happens Next
 
-## Phase 5 — Traffic Generation And Testing
-
-**Goal:** Generate live traffic and observe QoS class counters move.
-
-**HTTP target found:** nginx server at 10.1.40.10. `wget -O - http://10.1.40.10` succeeded (Welcome to nginx! response).
-
-**NBAR classification result:** IOL accepted NBAR syntax but did NOT classify live HTTP or DNS traffic. `match protocol http` and `match protocol dns` counters stayed at zero despite confirmed traffic crossing the router (ACL hit counts confirmed). This is an IOL NBAR PDL limitation.
-
-**ACL fallback — working solution:**
-
-```ios
-ip access-list extended P11-HTTP-TRAFFIC
- permit tcp host 10.1.100.194 host 10.1.40.10 eq www
-
-class-map match-any P11-BULK-DATA-ACL
- match access-group name P11-HTTP-TRAFFIC
-
-policy-map P11-MARK-IN
- class P11-BULK-DATA-ACL
-  set dscp af11
-```
-
-**Evidence:**
-
-```text
-Class-map: P11-BULK-DATA-ACL
-  54 packets, 4410 bytes
-  Match: access-group name P11-HTTP-TRAFFIC  54 matches
-  QoS Set — dscp af11 — Packets marked: 54
-```
-
-54 real HTTP packets matched, marked AF11, and confirmed. Phase 5 pass condition met.
-
----
-
-## Phase 6 — Voice VLAN Branch Pilot (BR-ASW1)
-
-**Goal:** Add `switchport voice vlan 500` to branch access ports.
-
-**Precheck result:** No changes needed on BR-RTR1 or BR-DSW1 — VLAN 500 existed, trunks already carrying it, gateway (10.2.50.1) already up.
-
-**BR-ASW1 changes applied:**
-
-```ios
-interface Ethernet1/0
- switchport voice vlan 500   ! data: VLAN 100 unchanged
-
-interface Ethernet1/1
- switchport voice vlan 500   ! data: VLAN 200 unchanged
-```
-
-**Verification:**
-
-```text
-show interfaces Ethernet1/0 switchport
-  Access Mode VLAN: 100 (ENGINEERING)
-  Voice VLAN: 500 (VOICE)
-
-show vlan brief | include 500
-  500  VOICE  active  Et1/0, Et1/1
-```
-
----
-
-## Phase 7 — AutoQoS Review (BR-ASW1)
-
-**Goal:** Compare Cisco AutoQoS against the manual MQC design.
-
-**Result:** IOL-L2 rejects all AutoQoS commands (`auto qos`, `show auto qos`, `show mls qos` — all `% Invalid input`). Platform limitation. No configuration applied. Manual MQC from earlier phases remains the working design.
-
----
-
-## Break / Fix — Empty Class-Map
-
-**Fault injected:** `no match access-group name P11-HTTP-TRAFFIC` removed the match statement from `P11-BULK-DATA-ACL`, creating `Match none`.
-
-**Symptom observed:** HTTP traffic still crossed the router (ACL incremented) but the QoS class counter froze — traffic fell to class-default instead.
-
-**Diagnosis command:**
-
-```ios
-show class-map P11-BULK-DATA-ACL
-  Match none
-```
-
-`Match none` is visible immediately. Root cause identified without needing to look at the policy-map.
-
-**Fix:** `match access-group name P11-HTTP-TRAFFIC` restored. Post-fix: 66 packets in P11-BULK-DATA-ACL, 66 marked, class-default stayed flat.
-
-**Key lesson:** When traffic unexpectedly hits class-default, run `show class-map <name>` first. A policy-map reference to a class is valid even if the class has no match criteria — the class silently matches nothing.
-
----
-
-## Platform Limitations
-
-| # | Limitation | Evidence | Workaround |
-|---|---|---|---|
-| L-01 | NBAR syntax accepted but live HTTP traffic not classified by `match protocol http` on IOL | `show policy-map interface` counter stayed 0 despite confirmed HTTP traffic (ACL verified 83 hits) | ACL-based class `P11-BULK-DATA-ACL` with `match access-group name P11-HTTP-TRAFFIC` |
-| L-02 | `match protocol dns` accepted but live DNS traffic not classified on IOL | ACL confirmed 12 DNS packets, NBAR counter 0 | ACL-based class would work; lab accepted `class-default` for DNS in Phase 5 |
-| L-03 | AutoQoS not supported on IOL-L2 | `auto qos` → `% Invalid input` on BR-ASW1 | Manual MQC design from Project 11 |
-| L-04 | WAN output DSCP class counters (P11-DSCP-VOICE etc.) stayed at zero during testing | HTTP traffic toward 10.1.40.10 exits via firewall path, not Ethernet0/1 | Marking verified on ingress; egress WAN queuing requires traffic destined to BR-RTR1 (10.0.0.x) |
-
----
-
-## Troubleshooting
-
-### T-01 — NBAR Counters Stay At Zero (All NBAR Classes)
-
-**Symptom:** `show policy-map interface Ethernet0/0.100` shows `P11-BULK-DATA`, `P11-NETWORK-CONTROL`, `P11-VOICE-LIKE`, and `P11-SIGNALING` all at 0 packets even after generating DNS and HTTP traffic.
-
-**Check 1 — Confirm traffic is reaching the interface:**
-
-```ios
-show access-lists ACL-VLAN100-IN
-show ip arp | include 10.1.100
-```
-
-If ACL hit counts are increasing but QoS counters are not, the issue is classification, not reachability.
-
-**Check 2 — Confirm the policy is attached:**
-
-```ios
-show running-config interface Ethernet0/0.100 | include service-policy
-```
-
-Must show `service-policy input P11-MARK-IN`.
-
-**Check 3 — Check NBAR PDL support:**
-
-```ios
-show ip nbar protocol-discovery
-```
-
-On IOL, this may show limited protocol support.
-
-**Resolution:** On IOL, NBAR syntax is accepted but the PDL does not reliably classify real-time HTTP or DNS traffic. Use ACL-based classification as a fallback:
-
-```ios
-ip access-list extended P11-HTTP-TRAFFIC
- permit tcp <source-host> <destination> eq www
-class-map match-any P11-BULK-DATA-ACL
- match access-group name P11-HTTP-TRAFFIC
-```
-
----
-
-### T-02 — QoS Class Not Matching Traffic (General)
-
-**Symptom:** Traffic expected in a specific QoS class is going to class-default instead.
-
-**Step 1 — Check the class-map directly:**
-
-```ios
-show class-map <class-name>
-```
-
-If output shows `Match none`, the class-map has no match criteria. Restore the missing match statement.
-
-**Step 2 — Verify policy-map references the correct class name:**
-
-```ios
-show policy-map <policy-name>
-```
-
-A typo in the class name creates a new empty class rather than referencing the existing one.
-
-**Step 3 — Confirm traffic matches the criteria:**
-
-For ACL-based classes, check ACL counters:
-
-```ios
-show access-lists <acl-name>
-```
-
-For NBAR classes, NBAR may not classify the protocol on IOL — see T-01.
-
----
-
-### T-03 — WAN Output DSCP Class Counters Stay At Zero
-
-**Symptom:** `show policy-map interface Ethernet0/1` shows P11-DSCP-VOICE, P11-DSCP-BULK etc. all at zero, but class-default is increasing.
-
-**This is expected if:** Traffic is not exiting via Ethernet0/1. Check the routing:
-
-```ios
-show ip route <destination>
-```
-
-Traffic toward 10.1.40.0/24 (nginx) exits via the firewall (10.0.0.14), not toward BR-RTR1. Only traffic routed toward 10.0.0.2 (BR-RTR1 E0/1) will hit the WAN queue.
-
-**To test WAN output queue:** Ping or generate traffic to 10.0.255.2 (BR-RTR1 Loopback0) or 10.2.x.x (branch subnets) from HQ — that traffic exits via Ethernet0/1.
-
----
-
-### T-04 — Service-Policy Rejected On Interface
-
-**Symptom:** `service-policy output P11-WAN-SHAPE-1M` rejected when applied to Ethernet0/1.
-
-**Check 1 — Policy-map exists:**
-
-```ios
-show policy-map P11-WAN-SHAPE-1M
-show policy-map P11-WAN-QUEUE
-```
-
-**Check 2 — Remove existing policy first:**
-
-```ios
-interface Ethernet0/1
- no service-policy output <old-policy>
-```
-
-You cannot apply a second service-policy output on the same interface.
-
-**Check 3 — Child policy must exist before parent references it:**
-
-Apply `P11-WAN-QUEUE` first, then `P11-WAN-SHAPE-1M`. If the child doesn't exist when you configure `service-policy P11-WAN-QUEUE` inside the parent, IOS creates an empty placeholder — verify both exist before applying to interface.
-
----
-
-## Decision Log
-
-See [decision-log.md](decision-log.md) for architectural decisions and tradeoffs.
-
-## Platform Limitations — Homelab Expansion Path
-
-See [LIMITATIONS-AND-HOMELAB-EXPANSION.md](LIMITATIONS-AND-HOMELAB-EXPANSION.md) for homelab fix paths.
+P11 is closed. [P12](../project-12-disaster-recovery/) uses the accumulated
+project records to rebuild critical devices under a timer. P11 does not
+authorize that destructive exercise.

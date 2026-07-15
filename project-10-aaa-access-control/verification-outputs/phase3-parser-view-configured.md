@@ -22,7 +22,7 @@ The parser view configuration was accepted:
 
 ```ios
 parser view NOC-VIEW
- secret 0 NOCview2026
+ secret 0 <PARSER-VIEW-SECRET>
  commands exec include show privilege
  commands exec include show version
  commands exec include show ip interface brief

@@ -7,8 +7,8 @@ hostname ISP-RTR1
 no ip domain-lookup
 ip domain-name lab.local
 service password-encryption
-enable secret CMLenableP@ss!
-username admin privilege 15 secret CMLlab2025!
+enable secret <LOCAL-USER-PASSWORD>
+username admin privilege 15 secret <LOCAL-USER-PASSWORD>
 ip ssh version 2
 ip ssh time-out 60
 ip ssh authentication-retries 3

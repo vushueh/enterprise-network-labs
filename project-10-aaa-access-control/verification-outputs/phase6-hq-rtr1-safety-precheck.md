@@ -9,7 +9,7 @@ Phase 6 pre-check passed with one platform syntax limitation. No failover fault 
 The local privilege-15 safety user exists:
 
 ```ios
-username admin privilege 15 secret 9 ...
+username admin privilege 15 secret 9 <LOCAL-USER-PASSWORD>
 ```
 
 Console access is protected by a local-only AAA method list:
@@ -46,7 +46,7 @@ Server Status: Alive
 TACACS authentication succeeded:
 
 ```ios
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 ```
 
 ```text
@@ -58,14 +58,14 @@ User successfully authenticated
 The review-requested command is not supported on this IOL image:
 
 ```ios
-test aaa local auth default admin chongong
+test aaa local auth default admin <TACACS-USER-PASSWORD>
 ```
 
 ```text
 % Invalid input detected at '^' marker.
 ```
 
-This is a command-support limitation, not an authentication failure. Before the temporary TACACS outage test, confirm that the successful console login used the intended local credential `admin / chongong`, or explicitly reset the local `admin` secret to `chongong`.
+This is a command-support limitation, not an authentication failure. Before the temporary TACACS outage test, confirm that the successful console login used the intended local credential `admin / <TACACS-USER-PASSWORD>`, or explicitly reset the local `admin` secret to `<TACACS-USER-PASSWORD>`.
 
 ## Local Fallback Password Confirmed
 
@@ -73,7 +73,7 @@ The local safety credential was explicitly set on `HQ-RTR1` and saved:
 
 ```ios
 configure terminal
-username admin privilege 15 secret chongong
+username admin privilege 15 secret <TACACS-USER-PASSWORD>
 end
 write memory
 ```

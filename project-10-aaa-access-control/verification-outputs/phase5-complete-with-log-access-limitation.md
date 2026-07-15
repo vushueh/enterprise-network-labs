@@ -13,7 +13,7 @@ aaa accounting exec default start-stop group tacacs+
 aaa accounting commands 15 default start-stop group tacacs+
 ```
 
-- A fresh `admin / chongong` TACACS+ SSH session was generated from `HQ-DSW1` to `HQ-RTR1`.
+- A fresh `admin / <TACACS-USER-PASSWORD>` TACACS+ SSH session was generated from `HQ-DSW1` to `HQ-RTR1`.
 - The session received privilege level 15, executed read-only commands, and closed cleanly.
 - TACACS+ server-side output confirmed accepted authentication and exec authorization for `admin`.
 

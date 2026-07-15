@@ -15,7 +15,7 @@ The provided `tac-plus.conf` already has the required `service = exec` blocks wi
 ## Relevant Configuration Found
 
 ```text
-key = tacacs123
+key = <TACACS-SHARED-SECRET>
 accounting file = /var/log/tacplus-acct.log
 acl = default {
   permit = 0.0.0.0
@@ -36,14 +36,14 @@ group = netoper {
   }
 }
 user = $enab15$ {
-  login = cleartext admin123
+  login = cleartext <TACACS-USER-PASSWORD>
 }
 user = tacadmin {
-  login = cleartext admin123
+  login = cleartext <TACACS-USER-PASSWORD>
   member = netadmin
 }
 user = tacoper {
-  login = cleartext oper123
+  login = cleartext <TACACS-USER-PASSWORD>
   member = netoper
 }
 ```
@@ -52,15 +52,15 @@ user = tacoper {
 
 | User | Password | Group | Expected Privilege |
 | --- | --- | --- | --- |
-| `tacadmin` | `admin123` | `netadmin` | 15 |
-| `tacoper` | `oper123` | `netoper` | 1 |
-| `$enab15$` | `admin123` | built-in enable user | enable authentication |
+| `tacadmin` | `<TACACS-USER-PASSWORD>` | `netadmin` | 15 |
+| `tacoper` | `<TACACS-USER-PASSWORD>` | `netoper` | 1 |
+| `$enab15$` | `<TACACS-USER-PASSWORD>` | built-in enable user | enable authentication |
 
 ## Review Notes
 
 - `netadmin` has `default service = permit` and `service = exec { priv-lvl = 15 }`.
 - `netoper` has `default service = permit` and `service = exec { priv-lvl = 1 }`.
-- The shared key is `tacacs123`, which matches the proposed IOS TACACS+ key.
+- The shared key is `<TACACS-SHARED-SECRET>`, which matches the proposed IOS TACACS+ key.
 - The accounting file is configured as `/var/log/tacplus-acct.log`.
 
 ## Before / After

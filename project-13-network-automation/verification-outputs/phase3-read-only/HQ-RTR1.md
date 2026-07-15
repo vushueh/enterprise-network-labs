@@ -146,7 +146,7 @@ ip ssh bulk-mode 131072
 ip ssh time-out 60
 logging host 10.1.99.51
 snmp-server group P09-SNMPV3-GROUP v3 priv access ACL-SNMP-MANAGERS
-snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 snmp-server trap-source Loopback0
 snmp-server location P09-CML-LAB
 snmp-server contact Leonel - Enterprise Network Labs
@@ -155,9 +155,9 @@ snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
 snmp-server host 10.1.99.51 version 2c [REDACTED]
 snmp-server host 10.1.99.51 version 3 [REDACTED] p09snmpv3
 tacacs server HQ-TACACS
-key [REDACTED]
+key <TACACS-SHARED-SECRET>
 ntp authenticate
-key [REDACTED]
+key <TACACS-SHARED-SECRET>
 ntp source Loopback0
 ntp master 3
 ```

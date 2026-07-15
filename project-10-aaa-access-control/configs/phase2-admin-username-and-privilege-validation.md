@@ -27,7 +27,7 @@ Add this user to `tac-plus.conf` on `HQ-TACACS`:
 
 ```text
 user = admin {
-  login = cleartext admin123
+  login = cleartext <TACACS-USER-PASSWORD>
   member = netadmin
 }
 ```
@@ -50,17 +50,17 @@ Restart the TACACS+ service/node after editing the file.
 Run on `HQ-RTR1`:
 
 ```ios
-test aaa group tacacs+ admin admin123 new-code
-test aaa group tacacs+ tacadmin admin123 new-code
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 show tacacs
 ```
 
 Expected:
 
-- `admin / admin123` authenticates successfully
-- `tacadmin / admin123` authenticates successfully
-- `tacoper / oper123` authenticates successfully
+- `admin / <TACACS-USER-PASSWORD>` authenticates successfully
+- `tacadmin / <TACACS-USER-PASSWORD>` authenticates successfully
+- `tacoper / <TACACS-USER-PASSWORD>` authenticates successfully
 - TACACS+ server remains `Alive`
 
 ## SSH Test Admin Username
@@ -71,10 +71,7 @@ From `HQ-RTR1`, test a TACACS-enabled device:
 ssh -l admin 10.1.99.11
 ```
 
-Password:
-
-```text
-admin123
+Password: <TACACS-USER-PASSWORD>
 ```
 
 Then run:
@@ -96,9 +93,9 @@ Use these users:
 
 | User | Password | Expected Privilege | Purpose |
 |---|---|---:|---|
-| `admin` | `admin123` | 15 | Normal admin username |
-| `tacadmin` | `admin123` | 15 | TACACS admin test account |
-| `tacoper` | `oper123` | 1 | Operator test account |
+| `admin` | `<TACACS-USER-PASSWORD>` | 15 | Normal admin username |
+| `tacadmin` | `<TACACS-USER-PASSWORD>` | 15 | TACACS admin test account |
+| `tacoper` | `<TACACS-USER-PASSWORD>` | 1 | Operator test account |
 
 For each TACACS-enabled device, test:
 

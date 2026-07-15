@@ -1,174 +1,183 @@
-# Project 01 — Campus Foundation
+# P01 — Campus Foundation
 
-## Problem Statement
+- **Status:** ✅ Complete — 2026-04-03
+- **Project ID:** `Enterprise-P01`
+- **Platform:** Cisco CML 2.9 with IOL and IOL-L2
+- **Scope:** One HQ campus with segmented user and management networks
+- **Series:** [Enterprise Network Labs](../)
 
-Building a single-site campus network from scratch. Multiple departments need network
-segmentation, a dedicated management network for device access, and inter-VLAN routing
-so departments can communicate through controlled paths.
+## Why This Matters
 
-## STAR Summary
+An enterprise network needs a stable campus before it can add branches,
+security, or automation. I built P01 from a blank topology so I could prove the
+fundamentals work together: VLANs, trunks, STP, inter-VLAN routing, and protected
+device management.
 
-**Situation:** I was studying VLANs, trunking, and inter-VLAN routing as separate topics
-and realized I had never designed a complete campus network from a blank canvas.
+## Portfolio Summary
 
-**Task:** Design and build a fully segmented campus network from a written requirement —
-choosing the VLAN scheme, IP addressing, trunk design, STP priorities, and SSH hardening.
+**Situation:** I had studied the technologies separately but had not designed a
+complete campus from written requirements.
 
-**Action:** Built a multi-VLAN campus (VLANs 100/200/300/999) with proper trunk pruning,
-router-on-a-stick inter-VLAN routing, deliberate STP root election with backup roots,
-and SSH-only management access restricted to a dedicated management VLAN.
+**Task:** Segment Engineering, Sales, Guest, and Management; route between the
+approved networks; make STP deterministic; and restrict SSH to management.
 
-**Result:** Can design a multi-VLAN campus network from scratch, explain every design
-decision, and verify that VLANs, trunking, STP, inter-VLAN routing, and SSH are all
-working correctly together.
+**Action:** I created VLANs 100/200/300/999, hardened the native VLAN, pruned
+trunks, configured router-on-a-stick, split STP root roles, enabled edge
+protections, and limited VTY access to the management network.
 
----
+**Result:** PASS. The campus routed correctly, trunks carried only intended
+VLANs, STP selected the planned roots, and SSH succeeded from Management while
+failing from an unauthorized user VLAN.
 
-## Topology
+## How To Read This Project
 
-### CML Lab Topology
-![CML Topology](diagrams/cml-topology.png)
+| Reader | Start here |
+|---|---|
+| Hiring manager or non-technical reader | [Portfolio Summary](#portfolio-summary), [What I Proved](#what-i-proved), and [Phase 6](#phase-6--redundancy-breakfix) |
+| Technical reviewer | [Original technical record](technical-details.md), [device configurations](configs/), and [verification evidence](verification/) |
+| Future operator | [Requirement](requirement.md), [decision log](notes/decision-log.md), and [lab guide](docs/campus-foundation-lab-guide.pdf) |
 
-### Physical (draw.io)
-![Physical Topology](diagrams/physical-topology.png)
+## My Test Boundary
 
-### Logical (draw.io)
-![Logical Topology](diagrams/logical-topology.png)
+| Item | Boundary |
+|---|---|
+| Site | HQ campus only |
+| User VLANs | 100 Engineering, 200 Sales, 300 Guest |
+| Management | VLAN 999; SSH source restriction |
+| Native VLAN | Unused VLAN 1000 |
+| Routing | HQ-RTR1 router-on-a-stick |
+| Fault scope | VLAN 100 trunk allowance on redundant access uplinks |
 
----
+## Phase Status
 
-## Technologies Used
+| Phase | Work | Status |
+|---:|---|---|
+| 1 | VLAN Foundation | Complete |
+| 2 | Trunking | Complete |
+| 3 | Inter-VLAN Routing | Complete |
+| 4 | STP Hardening | Complete |
+| 5 | SSH Management | Complete |
+| 6 | Redundancy Break/Fix | Complete |
 
-- VLANs (100, 200, 300, 999, 1000)
-- 802.1Q Trunking with VLAN pruning
-- Native VLAN hardening (VLAN 1000)
-- Router-on-a-Stick inter-VLAN routing
-- Rapid-PVST+ with deliberate root bridge election
-- PortFast + BPDU Guard on access ports
-- SSH v2 with VTY ACL restricted to management VLAN
-- CDP neighbor verification
-- Interface descriptions on all links
+## Phase 1 — VLAN Foundation
 
----
+I created separate broadcast domains for Engineering, Sales, Guest, and
+Management, then placed endpoint ports in the correct access VLANs. The
+[requirements](requirement.md) and [addressing record](technical-details.md#ip-addressing)
+fixed the intended roles first. With local Layer 2 membership proven, I could
+connect the switches without accidentally extending every VLAN everywhere.
 
-## IP Addressing
+## Phase 2 — Trunking
 
-| Device | Interface | IP | Purpose |
-|--------|-----------|-----|---------|
-| HQ-RTR1 | E0/0.100 | 10.1.100.1/24 | Engineering gateway |
-| HQ-RTR1 | E0/0.200 | 10.1.200.1/24 | Sales gateway |
-| HQ-RTR1 | E0/0.300 | 10.1.44.1/24 | Guest gateway |
-| HQ-RTR1 | E0/0.999 | 10.1.99.1/24 | Management gateway |
-| HQ-RTR1 | Loopback0 | 10.0.255.1/32 | Router ID |
-| HQ-DSW1 | Vlan999 | 10.1.99.11/24 | Management |
-| HQ-DSW2 | Vlan999 | 10.1.99.12/24 | Management |
-| HQ-ASW1 | Vlan999 | 10.1.99.13/24 | Management |
-| HQ-ASW2 | Vlan999 | 10.1.99.14/24 | Management |
-| PC-ENG1 | eth0 | 10.1.100.10/24 | Engineering endpoint |
-| PC-SALES1 | eth0 | 10.1.200.10/24 | Sales endpoint |
-| PC-MGMT1 | eth0 | 10.1.99.100/24 | Management endpoint |
+I configured the inter-switch links as 802.1Q trunks, used VLAN 1000 as an
+unused native VLAN, and pruned the allowed list. `show interfaces trunk` and the
+[screenshots](verification/screenshots/) proved both ends agreed. Those clean
+trunks created the path required for routing and STP verification.
 
----
+## Phase 3 — Inter-VLAN Routing
 
-## Key Verification
+I configured HQ-RTR1 subinterfaces as the VLAN gateways and verified traffic
+between the approved networks. The saved [router configuration](configs/HQ-RTR1.txt)
+and [post-change evidence](verification/post-change/) show the routed boundary.
+Once Layer 3 worked, I hardened the redundant Layer 2 design.
 
-| Check | Command | Expected Result |
-|-------|---------|-----------------|
-| VLANs exist | `show vlan brief` | VLANs 100,200,300,999,1000 active |
-| Trunks up | `show interfaces trunk` | All uplinks trunking, native 1000 |
-| Inter-VLAN routing | `ping 10.1.200.10` from PC-ENG1 | Success |
-| STP root correct | `show spanning-tree root` | DSW1=root VLAN100/999, DSW2=root VLAN200/300 |
-| SSH restricted | `ssh` from PC-ENG1 | Denied (wrong VLAN) |
-| SSH working | `ssh` from PC-MGMT1 | Success |
+## Phase 4 — STP Hardening
 
----
+I assigned deliberate primary and secondary roots instead of accepting default
+bridge elections. PortFast and BPDU Guard protected host-facing ports, while
+the redundant distribution paths remained available. This made the forwarding
+topology predictable before remote management was enabled.
 
-## Screenshots
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-### Phase 1 — VLAN Configuration
+## Phase 5 — SSH Management
 
-**show vlan brief — HQ-ASW1**
-![show vlan brief ASW1](verification/screenshots/p01-ph1-show-vlan-brief-ASW1.png)
+I enabled SSHv2, generated the required keys, and restricted VTY access to VLAN
+999. A user-VLAN SSH attempt was denied while the management endpoint succeeded.
+That separation made the campus manageable without exposing device access to
+every department.
 
-**show vlan brief — HQ-ASW2**
-![show vlan brief ASW2](verification/screenshots/p01-ph1-show-vlan-brief-ASW2.png)
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
----
+## Phase 6 — Redundancy Break/Fix
 
-### Phase 2 — Trunking
+I first removed VLAN 100 from one trunk and expected an outage, but the redundant
+uplink carried the traffic. I then removed VLAN 100 from both HQ-ASW1 uplinks,
+observed Engineering fail while other VLANs stayed healthy, diagnosed the
+missing allowed VLAN with show commands, and restored both lists. The exercise
+proved redundancy and showed why one-link tests can hide inconsistent trunks.
 
-**show cdp neighbors — HQ-DSW1**
-![show cdp neighbors DSW1](verification/screenshots/p01-ph2-show-cdp-neighbors-DSW1.png)
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-**show interfaces trunk — HQ-DSW1**
-![show interfaces trunk DSW1](verification/screenshots/p01-ph2-show-interfaces-trunk-DSW1.png)
+## What I Proved
 
-**show interfaces trunk — HQ-DSW2**
-![show interfaces trunk DSW2](verification/screenshots/p01-ph2-show-interfaces-trunk-DSW2.png)
+- A campus can be segmented into functional user and management VLANs.
+- Pruned trunks and an unused native VLAN reduce unnecessary exposure.
+- Router-on-a-stick provides controlled inter-VLAN connectivity.
+- Deliberate STP roots make redundant forwarding predictable.
+- SSH can be limited to a dedicated management network.
+- Dual uplinks survive one fault and expose a full-path configuration error.
 
----
+## Technical Evidence
 
-### Phase 3 — Inter-VLAN Routing
+- [Original detailed README](technical-details.md)
+- [Written requirement](requirement.md)
+- [Device configurations](configs/)
+- [CML topology export](cml/campus-foundation.yaml)
+- [Topology diagrams](diagrams/)
+- [Verification outputs and screenshots](verification/)
+- [Decision log](notes/decision-log.md)
+- [Lab guide](docs/campus-foundation-lab-guide.pdf)
 
-**show ip interface brief — HQ-RTR1**
-![show ip interface brief RTR1](verification/screenshots/p01-ph3-show-ip-interface-brief-RTR1.png)
+## How We Worked Together
 
-**show ip route — HQ-RTR1**
-![show ip route RTR1](verification/screenshots/p01-ph3-show-ip-route-RTR1.png)
+### My Input And How I Helped
 
-**Cross-VLAN ping — PC-ENG1 to PC-SALES1**
-![cross vlan ping ENG1 to SALES1](verification/screenshots/p01-ph3-ping-cross-vlan-ENG1-to-SALES1.png)
+I designed the topology, applied the configurations in CML, returned the show
+outputs, performed the fault injection, and captured the screenshots. I also
+recognized that the first fault did not fail because the redundant path worked,
+then approved the bounded two-uplink test.
 
-**Ping to all gateways — PC-MGMT1**
-![ping MGMT1 to gateways](verification/screenshots/p01-ph3-ping-MGMT1-to-gateways.png)
+### What Codex Did And How
 
----
+The retained P01 files do not preserve a reliable agent-by-agent attribution
+for the original build, so Codex does not claim work that cannot be proved. For
+this migration, Codex preserved the full README as `technical-details.md` and
+wrote this evidence-linked phase narrative.
 
-### Phase 4 — STP Hardening
+### What Claude Did And How
 
-**show spanning-tree vlan 100 — HQ-DSW1 (root bridge)**
-![show spanning-tree vlan100 DSW1](verification/screenshots/p01-ph4-show-spanning-tree-vlan100-DSW1.png)
+The retained P01 files likewise do not document a distinct Claude contribution
+to the original build. During the documentation migration, Claude independently
+reviewed the new summary for factual accuracy, role claims, and link integrity.
 
-**show spanning-tree root — HQ-ASW1**
-![show spanning-tree root ASW1](verification/screenshots/p01-ph4-show-spanning-tree-root-ASW1.png)
+### How We Communicated And Completed The Project
 
----
+I supplied the CML results and kept the configs, diagrams, and troubleshooting
+evidence in the repository. For the later migration, I set the documentation
+standard, Codex reorganized the entry page, and Claude reviewed it. The original
+technical record remains the detailed source.
 
-### Phase 5 — SSH Hardening
+### Pushback And How We Resolved It
 
-**SSH login success — PC-MGMT1 (management VLAN allowed)**
-![ssh login success MGMT1](verification/screenshots/p01-ph5-ssh-login-success-MGMT1.png)
+The first break test did not create the expected outage because redundancy did
+exactly what it should. I did not call that a failed lab; I documented the path
+shift, expanded the fault only to both VLAN 100 uplinks, and proved the repair
+without disturbing other VLANs.
 
-**SSH denied — PC-ENG1 (wrong VLAN, ACL blocks)**
-![ssh denied ENG1](verification/screenshots/p01-ph5-ssh-denied-ENG1.png)
+## Reproduce Or Re-Verify
 
----
+1. Build the topology from the [CML export](cml/campus-foundation.yaml) or
+   [diagrams](diagrams/).
+2. Apply the saved [device configurations](configs/) in phase order.
+3. Verify VLANs, trunks, gateways, STP roots, and SSH from both authorized and
+   unauthorized sources.
+4. Back up the state, remove VLAN 100 from one uplink, observe redundancy, then
+   test the bounded two-uplink fault and restore both lists.
+5. Compare the result with [verification](verification/) before closing.
 
-### Break/Fix Challenge — VLAN 100 Removed from Trunk
+## What Happens Next
 
-**Before break — PC-ENG1 ping working**
-![ping working before break](verification/screenshots/p01-breakfix-ping-working-ENG1-before.png)
-
-**Trunk broken — VLAN 100 missing from allowed list**
-![trunk broken vlan100 missing](verification/screenshots/p01-breakfix-trunk-broken-vlan100-missing.png)
-
-**PC-ENG1 ping failing — no path to router**
-![ping failing ENG1](verification/screenshots/p01-breakfix-ping-failing-ENG1.png)
-
-**Trunk fixed — VLAN 100 restored to allowed list**
-![trunk fixed vlan100 restored](verification/screenshots/p01-breakfix-trunk-fixed-vlan100-restored.png)
-
-**PC-ENG1 ping restored — connectivity confirmed**
-![ping restored ENG1](verification/screenshots/p01-breakfix-ping-restored-ENG1.png)
-
----
-
-## Files
-
-- `configs/` — Running configurations for all devices
-- `diagrams/` — Physical and logical topology (draw.io + PNG)
-- `verification/baseline/` — Show command outputs before changes
-- `verification/post-change/` — Show command outputs after each phase
-- `verification/screenshots/` — Key screenshots
-- `notes/decision-log.md` — Design decisions and rationale
-- `cml/` — CML topology YAML export
+P01 is closed. [P02](../project-02-multi-site-dhcp/) extends this campus to a
+branch with centralized DHCP, DNS, and IPv6. P01 does not authorize that next
+project or any new live CML change.

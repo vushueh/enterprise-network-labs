@@ -21,7 +21,7 @@ aaa session-id common
 ip tacacs source-interface Loopback0
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key tacacs123
+ key <TACACS-SHARED-SECRET>
 ```
 
 Note: `HQ-RTR1` rejected `source-interface Loopback0` inside the `tacacs server` block. The accepted syntax is the global command `ip tacacs source-interface Loopback0`.
@@ -52,7 +52,7 @@ The running config does not display `login authentication default` or `authoriza
 `tacadmin` test:
 
 ```ios
-test aaa group tacacs+ tacadmin admin123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
 ```
 
 Result:
@@ -70,7 +70,7 @@ reply-message        0   "Password: "
 `tacoper` test:
 
 ```ios
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 ```
 
 Result:
@@ -141,15 +141,15 @@ Current privilege level is 1
 
 | User | Password | TACACS+ Group | Expected Privilege | Verified Privilege |
 |---|---|---|---|---|
-| `tacadmin` | `admin123` | `netadmin` | 15 | 15 |
-| `tacoper` | `oper123` | `netoper` | 1 | 1 |
+| `tacadmin` | `<TACACS-USER-PASSWORD>` | `netadmin` | 15 | 15 |
+| `tacoper` | `<TACACS-USER-PASSWORD>` | `netoper` | 1 | 1 |
 
 ## Local Fallback
 
 Local fallback exists as a safety net:
 
 ```ios
-username admin privilege 15 secret 9 ...
+username admin privilege 15 secret 9 <LOCAL-USER-PASSWORD>
 ```
 
 The active login method list is:

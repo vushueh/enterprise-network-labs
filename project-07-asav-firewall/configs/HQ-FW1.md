@@ -23,8 +23,8 @@ configure terminal
 ! WHY: Hostname makes logs, prompts, and screenshots readable.
 hostname HQ-FW1
 domain-name lab.local
-enable password CMLenableP@ss!
-username admin password CMLenableP@ss! privilege 15
+enable password <LOCAL-USER-PASSWORD>
+username admin password <LOCAL-USER-PASSWORD> privilege 15
 
 ! --- Inside interface (security-level 100 = most trusted) ---
 ! WHY: Inside faces the campus. Security level 100 = highest trust.

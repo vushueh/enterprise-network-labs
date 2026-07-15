@@ -19,7 +19,7 @@ Do not run this until the user explicitly approves a live break/fix.
 ```ios
 configure terminal
 no snmp-server community <STANDARD_SNMP_RO_COMMUNITY> RO ACL-SNMP-MANAGERS
-snmp-server community P13_WRONG_COMMUNITY RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 end
 write memory
 ```

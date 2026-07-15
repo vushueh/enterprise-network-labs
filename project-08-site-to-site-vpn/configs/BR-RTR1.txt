@@ -20,7 +20,7 @@ interface Tunnel0
  ip ospf network point-to-point
  ! WHY: Point-to-point suppresses DR/BDR election on a two-router tunnel — faster adjacency.
  ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ! WHY: MD5 authentication on the tunnel interface prevents rogue OSPF injection
  ! through the GRE tunnel.
  ip ospf cost 5
@@ -59,8 +59,8 @@ crypto ikev2 policy 10
 crypto ikev2 keyring P08-IKEV2-KEYRING
  peer HQ-RTR1
   address 10.0.0.1
-  pre-shared-key local P08IKEV2LabKey2026
-  pre-shared-key remote P08IKEV2LabKey2026
+  pre-shared-key local <IPSEC-PRESHARED-KEY>
+  pre-shared-key remote <IPSEC-PRESHARED-KEY>
 
 ! --- IKEv2 Profile ---
 ! WHY: Binds peer identity matching, authentication method, keyring, and DPD

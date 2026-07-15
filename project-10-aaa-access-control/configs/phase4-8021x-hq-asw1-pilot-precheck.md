@@ -80,7 +80,7 @@ In the `HQ-RADIUS` `clients.conf` file, confirm or add:
 ```text
 client HQ-ASW1 {
     ipaddr = 10.1.99.13
-    secret = radius123
+    secret = <TACACS-SHARED-SECRET>
     require_message_authenticator = no
     nas_type = cisco
 }
@@ -106,7 +106,7 @@ Proposed on `HQ-ASW1`:
 configure terminal
 radius server HQ-RADIUS
  address ipv4 10.1.99.53 auth-port 1812 acct-port 1813
- key radius123
+ key <TACACS-SHARED-SECRET>
  exit
 ip radius source-interface Vlan999
 aaa authentication dot1x default group radius

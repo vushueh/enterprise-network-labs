@@ -37,7 +37,7 @@ interface Ethernet0/1
  delay 1000
  ip address 10.0.0.1 255.255.255.252
  ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf network point-to-point
  ip ospf cost 100
  ip ospf bfd
@@ -51,7 +51,7 @@ interface Ethernet0/2
  description WAN-TO-WAN-RTR1-E0/1
  ip address 10.0.0.5 255.255.255.252
  ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf network point-to-point
  ip ospf cost 10
  ip ospf bfd

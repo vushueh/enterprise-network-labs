@@ -81,7 +81,7 @@ errdisable recovery cause security-violation
 errdisable recovery cause psecure-violation
 errdisable recovery cause dhcp-rate-limit
 errdisable recovery cause arp-inspection
-enable secret 9 [REDACTED]
+enable secret 9 <ENABLE-SECRET>
 !
 secret 9 [REDACTED]
 !
@@ -191,7 +191,7 @@ arp access-list ARP-VLAN200
  permit ip host 10.1.200.142 mac host 5254.001e.faaf
 arp access-list ARP-VLAN999
  permit ip host 10.1.99.100 mac host 5254.00b2.8d53
-snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 snmp-server trap-source Vlan999
 snmp-server location P09-CML-LAB-ACCESS
 snmp-server contact Leonel - Enterprise Network Labs
@@ -226,6 +226,6 @@ line vty 0 4
 ntp authenticate
 ntp trusted-key 9
 ntp source Vlan999
- key [REDACTED]
+ key <TACACS-SHARED-SECRET>
 !
 end

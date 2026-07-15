@@ -9,7 +9,7 @@ Date: 2026-05-22
 ## Configuration Proof
 
 ```text
-username admin privilege 15 secret 9 ...
+username admin privilege 15 secret 9 <LOCAL-USER-PASSWORD>
 line vty 0 4
  login local
 ```

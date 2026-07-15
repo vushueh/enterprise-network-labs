@@ -55,10 +55,10 @@ IKEv2 SA READY. Encaps/decaps both incrementing.
 ## Check 4 — TACACS+ AAA ✅
 
 ```text
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 User was successfully authenticated.
 
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 User was successfully authenticated.
 ```
 

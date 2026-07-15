@@ -6,8 +6,8 @@ no service config
 no ip domain-lookup
 ip domain-name lab.local
 ip routing
-username cisco privilege 15 secret ccna
-enable secret jeremysitlab
+username cisco privilege 15 secret <LOCAL-USER-PASSWORD>
+enable secret <ENABLE-SECRET>
 crypto key generate rsa modulus 2048
 ip ssh version 2
 ip ssh time-out 60

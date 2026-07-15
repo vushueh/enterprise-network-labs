@@ -89,7 +89,7 @@ vtp mode transparent
 
 ! --- SSH Hardening ---
 ip domain-name lab.local
-username admin privilege 15 secret CMLlab2025!
+username admin privilege 15 secret <LOCAL-USER-PASSWORD>
 ip ssh version 2
 ip ssh time-out 60
 ip ssh authentication-retries 3
@@ -117,7 +117,7 @@ All access is logged and monitored
 ^
 
 service password-encryption
-enable secret CMLenableP@ss!
+enable secret <LOCAL-USER-PASSWORD>
 
 end
 write memory

@@ -6,6 +6,54 @@ Claude reads this to understand what Codex did without parsing the full session 
 
 ---
 
+## 2026-07-14 — Current-tip credential remediation
+
+**What was done:**
+
+- I scanned the tracked enterprise lab material for credential-bearing network
+  configuration and documentation patterns without printing the discovered values.
+- I replaced exposed lab values in the current working tree with typed placeholders
+  for TACACS+, local accounts, enable and line access, SNMP, NTP, OSPF, IPsec,
+  parser views, VTP, and automation credentials.
+- I repaired protocol words affected by the first broad replacement pass and ran
+  follow-up context and placeholder-boundary checks.
+- I added a supervised rotation and history-response guide in
+  [`docs/credential-exposure-remediation-2026-07-14.md`](docs/credential-exposure-remediation-2026-07-14.md).
+
+**What this does not complete:** Old Git commits may still contain the retired
+values. I did not rewrite history or force-push, and I did not access CML or rotate
+live credentials. Leonel must perform the live rotation through console-safe,
+device-by-device change windows before the credentials can be considered retired.
+
+**Tool limitation:** Gitleaks was not installed, so I used redacted exact-value,
+network-context, and high-confidence token-pattern checks. The remediation guide
+requires a supported secret scanner before any separate history-cleanup decision.
+
+**Review:** Claude's bounded read-only review found one missed VTP credential in
+the preserved P04 technical record. I redacted both occurrences, added VTP to the
+scanner and rotation guide, and reran the exact-value, context, placeholder,
+token-pattern, link, structure, and whitespace checks with no remaining finding.
+
+## 2026-07-14 — Completed-series README migration
+
+**What was done:**
+
+- Reopened the completed reference repository only for Leonel's explicitly
+  approved documentation migration.
+- Rewrote all 13 project entry pages with the canonical first-person phase story,
+  evidence, collaboration, pushback, reproduction, and linked next-project sections.
+- Preserved each original README as `technical-details.md`; no configuration,
+  verification output, screenshot, or troubleshooting history was discarded.
+- Kept deferred and platform-limited work explicit, including P05/P07 fault
+  demonstrations, P10 802.1X, P11 AutoQoS, and P13 ASA/hardening follow-ups.
+
+**Safety:** Documentation only. No CML node, configuration, controller, route,
+firewall, account, automation target, or live network was accessed or changed.
+
+**Review:** Claude independently reviewed the migration and found the README
+structure, evidence boundaries, collaboration record, and linked phase stories
+ready after the credential-remediation correction recorded above.
+
 ## 2026-05-09 — Project 8 planning and bridge setup session
 
 **What was done:**
@@ -49,7 +97,7 @@ interface Tunnel0
  ip ospf 1 area 0
  ip ospf network point-to-point
  ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf cost 5
  tunnel source Ethernet0/1
  tunnel destination 10.0.0.2
@@ -70,7 +118,7 @@ interface Tunnel0
  ip ospf 1 area 0
  ip ospf network point-to-point
  ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf cost 5
  tunnel source Ethernet0/1
  tunnel destination 10.0.0.1
@@ -542,7 +590,7 @@ Enrolled 7/9 IOS/IOL devices with TACACS+ (HQ-ASW2 and BR-ASW1 deferred). Phase 
 
 Session: 2026-05-22
 
-Added `admin` user to tac-plus.conf (member of netadmin, priv 15, password: chongong). All three users (admin, tacadmin, tacoper) authenticate via TACACS. SSH privilege separation confirmed on HQ-RTR1 and HQ-DSW1 — admin gets priv 15, tacoper gets priv 1 and is denied `configure terminal`. Per-device tacoper retest on remaining 5 devices deferred — server-side group config is the same for all.
+Added `admin` user to tac-plus.conf (member of netadmin, priv 15, password: <TACACS-USER-PASSWORD>). All three users (admin, tacadmin, tacoper) authenticate via TACACS. SSH privilege separation confirmed on HQ-RTR1 and HQ-DSW1 — admin gets priv 15, tacoper gets priv 1 and is denied `configure terminal`. Per-device tacoper retest on remaining 5 devices deferred — server-side group config is the same for all.
 
 ## Project 10 — Phase 3: Parser Views
 

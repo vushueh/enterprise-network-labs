@@ -33,7 +33,7 @@ ip tacacs source-interface Loopback0
 Both TACACS+ users authenticated successfully:
 
 ```ios
-test aaa group tacacs+ tacadmin admin123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
 ```
 
 Result:
@@ -44,7 +44,7 @@ username 0 "tacadmin"
 ```
 
 ```ios
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 ```
 
 Result:

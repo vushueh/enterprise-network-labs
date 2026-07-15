@@ -11,8 +11,8 @@ Create a limited `NOC-VIEW` on `HQ-RTR1` that allows operational visibility comm
 This first pilot does not modify TACACS+ user assignment. The current working logins remain:
 
 ```text
-admin / chongong    -> TACACS+ administrator
-tacoper / oper123   -> TACACS+ privilege 1 operator
+admin / <TACACS-USER-PASSWORD>    -> TACACS+ administrator
+tacoper / <TACACS-USER-PASSWORD>   -> TACACS+ privilege 1 operator
 ```
 
 ## Pre-Check
@@ -51,7 +51,7 @@ From root view on `HQ-RTR1`:
 ```ios
 configure terminal
 parser view NOC-VIEW
- secret 0 NOCview2026
+ secret 0 <PARSER-VIEW-SECRET>
  commands exec include show privilege
  commands exec include show version
  commands exec include show ip interface brief
@@ -81,10 +81,8 @@ From the open `HQ-RTR1` console:
 enable view NOC-VIEW
 ```
 
-Password:
-
-```text
-NOCview2026
+Password: <TACACS-USER-PASSWORD>
+<PARSER-VIEW-SECRET>
 ```
 
 Run permitted commands:

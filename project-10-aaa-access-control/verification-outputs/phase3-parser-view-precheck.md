@@ -12,7 +12,7 @@ Result:
 
 ```text
 aaa new-model
-enable secret 9 ...
+enable secret 9 <ENABLE-SECRET>
 ```
 
 Privilege before entering root view:
@@ -31,8 +31,7 @@ Root view entry succeeded:
 
 ```ios
 enable view
-Password:
-HQ-RTR1#
+Password: <TACACS-USER-PASSWORD>
 ```
 
 ## Review Adjustment

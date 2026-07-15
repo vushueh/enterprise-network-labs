@@ -7,8 +7,8 @@ hostname HQ-RTR1
 no ip domain-lookup
 ip domain-name lab.local
 service password-encryption
-enable secret CMLenableP@ss!
-username admin privilege 15 secret CMLlab2025!
+enable secret <LOCAL-USER-PASSWORD>
+username admin privilege 15 secret <LOCAL-USER-PASSWORD>
 ip ssh version 2
 ip ssh time-out 60
 ip ssh authentication-retries 3
@@ -70,7 +70,7 @@ interface Ethernet0/1
  ip address 10.0.0.1 255.255.255.252
  ip nat inside
  ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf network point-to-point
  ip ospf cost 100
  ip ospf bfd
@@ -86,7 +86,7 @@ interface Ethernet0/2
  ip address 10.0.0.5 255.255.255.252
  ip nat inside
  ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf network point-to-point
  ip ospf cost 10
  ip ospf bfd

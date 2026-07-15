@@ -18,8 +18,8 @@ configure terminal
 hostname HQ-RTR1
 no ip domain-lookup
 ip domain-name lab.local
-username admin privilege 15 secret CMLlab2025!
-enable secret CMLenableP@ss!
+username admin privilege 15 secret <LOCAL-USER-PASSWORD>
+enable secret <LOCAL-USER-PASSWORD>
 crypto key generate rsa modulus 2048
 ip ssh version 2
 line vty 0 4
@@ -77,7 +77,7 @@ interface Tunnel0
  tunnel destination 10.0.0.2
  ip mtu 1400
  ip tcp adjust-mss 1360
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf cost 5
  no shutdown
 !
@@ -104,11 +104,11 @@ router ospf 1
  network 10.1.200.0 0.0.0.255 area 0
 !
 interface Ethernet0/1
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf cost 100
 !
 interface Ethernet0/2
- ip ospf message-digest-key 1 md5 OSPF-WAN-KEY
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  ip ospf cost 10
 !
 end
@@ -129,8 +129,8 @@ crypto ikev2 policy 10
 crypto ikev2 keyring P08-KEYRING
  peer BR-RTR1
   address 10.0.0.2
-  pre-shared-key local VPNpsk2025!
-  pre-shared-key remote VPNpsk2025!
+  pre-shared-key local <IPSEC-PRESHARED-KEY>
+  pre-shared-key remote <IPSEC-PRESHARED-KEY>
 !
 crypto ikev2 profile P08-IKEv2-PROFILE
  match identity remote address 10.0.0.2 255.255.255.255
@@ -160,7 +160,7 @@ aaa new-model
 !
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key tacacs123
+ key <TACACS-SHARED-SECRET>
 !
 ip tacacs source-interface Loopback0
 !
@@ -270,7 +270,7 @@ write memory
 ```ios
 configure terminal
 !
-snmp-server community P09-RO-COMM ro
+snmp-server community <SNMP-COMMUNITY> ro
 snmp-server host 10.1.99.11 traps version 2c P09-RO-COMM
 !
 logging host 10.1.99.11

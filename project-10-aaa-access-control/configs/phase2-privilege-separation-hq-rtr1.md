@@ -42,10 +42,7 @@ Run from `HQ-DSW1`:
 ssh -l tacadmin 10.0.255.1
 ```
 
-Password:
-
-```text
-admin123
+Password: <TACACS-USER-PASSWORD>
 ```
 
 Then run:
@@ -73,10 +70,7 @@ Run from `HQ-DSW1`:
 ssh -l tacoper 10.0.255.1
 ```
 
-Password:
-
-```text
-oper123
+Password: <TACACS-USER-PASSWORD>
 ```
 
 Then run:

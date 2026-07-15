@@ -46,11 +46,11 @@ Encaps and decaps both incrementing — VPN active.
 From `HQ-RTR1`:
 
 ```text
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 Attempting authentication test to server-group tacacs+ using tacacs+
 User was successfully authenticated.
 
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 User was successfully authenticated.
 ```
 

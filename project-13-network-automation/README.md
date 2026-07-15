@@ -1,222 +1,206 @@
-# Project 13 - Network Automation
+# P13 — Network Automation
 
-## Goal
-
-I built Projects 1-12 by hand. Project 13 proves I can now use automation to
-manage that same network.
-
-The goal is not to create a new network. The goal is to show that I can:
-
-- keep a clean device inventory;
-- log into routers and switches automatically;
-- collect show commands from many devices at once;
-- back up running configs safely;
-- check if devices follow my standards;
-- prepare safe config changes without blindly pushing them.
-
-The first automation pass was read-only/dry-run. After Wazuh was prepared to
-accept the CML source ranges, I used the same gated automation pattern to apply
-the Wazuh syslog target to the reachable IOS devices. I later fixed the two
-remaining IOS gaps, `WAN-RTR1` and `CML-EDGE1`, from the CML console.
-
-## What This Project Built
-
-| Area | What It Means |
-|------|---------------|
-| Automation workstation | `AUTOMATION1` is the Linux node inside CML that runs Python/Netmiko. |
-| Inventory | A YAML file lists the devices, IPs, platforms, and roles. No passwords are stored in it. |
-| Read-only collection | Python logs into devices and collects show-command evidence. |
-| Redacted backups | Python collects running configs and hides secrets before saving them. |
-| Compliance check | Python checks the network against standards like SSHv2, syslog, NTP, SNMP, and archive. |
-| Safe config push | Python generates a harmless dry-run config marker. It does not apply unless approved. |
-| Wazuh syslog push | Python can add Wazuh as a second syslog target after the Wazuh receiver allow-list is ready. |
-| Ansible comparison | Ansible files show how the same idea would look in a declarative tool. |
-
-## Current Live Status
-
-As of June 19, 2026, all 10 in-scope CML IOS devices have direct syslog evidence
-in Wazuh:
-
-`HQ-RTR1`, `BR-RTR1`, `WAN-RTR1`, `HQ-DSW1`, `HQ-DSW2`, `HQ-ASW1`, `HQ-ASW2`,
-`BR-DSW1`, `BR-ASW1`, and `CML-EDGE1`.
-
-`HQ-FW1` is still separate because it is ASA, not IOS. It needs an ASA-specific
-SSH/syslog procedure. `ISP-RTR1` is also separate by design because Project 09
-treated it as the outside/ISP side; I should only onboard it through a deliberate
-out-of-band management or firewall/NAT design.
-
-## Important Files
-
-| File Or Folder | Purpose |
-|----------------|---------|
-| [configs/inventory-devices.yml](configs/inventory-devices.yml) | Source-of-truth inventory for the lab devices. |
-| [scripts/](scripts/) | Python automation scripts. |
-| [ansible/playbooks/](ansible/playbooks/) | Ansible comparison playbooks. |
-| [verification-outputs/](verification-outputs/) | Proof from the live lab runs. |
-| [decision-log.md](decision-log.md) | Why I made the main design choices. |
-| [requirements.md](requirements.md) | What Project 13 needed to prove. |
-
-## If You Want The Details
-
-The README stays simple on purpose. These links point to the deeper technical
-details for someone who wants to inspect the code or proof.
-
-| Question | Link |
-|----------|------|
-| What Python code did I write? | [scripts/](scripts/) |
-| What does each script do? | [Automation Scripts](#automation-scripts) |
-| What devices are automated? | [configs/inventory-devices.yml](configs/inventory-devices.yml) |
-| How are credentials kept out of Git? | [configs/.env.example](configs/.env.example) |
-| What did the live lab prove? | [verification-outputs/](verification-outputs/) |
-| What did the compliance check find? | [Phase 5 compliance summary](verification-outputs/phase5-compliance/summary.md) |
-| What configs were backed up safely? | [Phase 4 redacted backups](verification-outputs/phase4-redacted-backups/) |
-| What is the safe config push? | [configs/safe-standard-config-template.md](configs/safe-standard-config-template.md) |
-| What would the break/fix look like? | [configs/snmp-breakfix-pilot.md](configs/snmp-breakfix-pilot.md) |
-| How would Ansible do this? | [ansible/playbooks/](ansible/playbooks/) |
-| Why did I make these choices? | [decision-log.md](decision-log.md) |
-
-## Automation Scripts
-
-| Script | What It Does | Live Outcome |
-|--------|--------------|--------------|
-| [collect_baseline.py](scripts/collect_baseline.py) | Logs into devices and runs read-only commands like `show cdp neighbors`, `show ip interface brief`, and `show version`. | Worked on 8 of 10 devices. |
-| [backup_configs.py](scripts/backup_configs.py) | Collects running configs and redacts secrets before saving them. | Worked on 8 of 10 devices. |
-| [compliance_check.py](scripts/compliance_check.py) | Checks whether devices follow standards for SSHv2, syslog, NTP, SNMP, archive, and password safety. | Found real configuration drift. |
-| [push_safe_config.py](scripts/push_safe_config.py) | Creates a safe dry-run config push using an unused ACL marker. | Dry-run only. No live config changed. |
-| [push_wazuh_syslog.py](scripts/push_wazuh_syslog.py) | Adds Wazuh `192.168.10.156` as a syslog target on IOS devices while keeping the existing lab syslog server. | 10 in-scope IOS devices now have direct Wazuh syslog proof. |
-| [render_report.py](scripts/render_report.py) | Builds a short final report from the automation results. | Created the final Project 13 report. |
-
-## Live Results
-
-| Phase | Evidence | Result |
-|-------|----------|--------|
-| Phase 1 - Workstation routing | [phase1-automation1-routing.md](verification-outputs/phase1-automation1-routing.md) | `AUTOMATION1` has the correct internal and internet routing. |
-| Phase 2 - Inventory validation | [phase2-inventory-validation.md](verification-outputs/phase2-inventory-validation.md) | 10 devices are listed in the inventory. |
-| Phase 3 - Read-only collection | [summary.md](verification-outputs/phase3-read-only/summary.md) | 8 of 10 devices succeeded. |
-| Phase 4 - Redacted backups | [summary.md](verification-outputs/phase4-redacted-backups/summary.md) | 8 of 10 devices succeeded. |
-| Phase 5 - Compliance check | [summary.md](verification-outputs/phase5-compliance/summary.md) | 8 devices are reachable but non-compliant; 2 devices failed. |
-| Phase 6 - Safe config dry-run | [summary.md](verification-outputs/phase6-safe-config/summary.md) | Safe config was generated only. Nothing was applied. |
-| Wazuh syslog onboarding | [summary.md](verification-outputs/wazuh-syslog/summary.md) and [2026-06-19 update](verification-outputs/wazuh-syslog/2026-06-19-wan-cml-edge-update.md) | 10 in-scope IOS devices now send direct syslog to Wazuh. |
-| Final report | [project13-final-report.md](verification-outputs/project13-final-report.md) | Final automation summary. |
-
-## What The Automation Found
-
-The automation worked, and it also found problems that need fixing.
-
-1. `WAN-RTR1` originally failed automation login.
-   - Current state: fixed from CML console on June 19, 2026. Its local fallback was reset, Wazuh syslog was added, and Wazuh indexed a fresh config-change alert.
-
-2. `HQ-FW1` is reachable by ping, but SSH port 22 is refused.
-   - Meaning: the ASA firewall needs a separate SSH management fix.
-
-3. The original 8 reachable IOS devices were missing explicit `ip ssh version 2`.
-   - Meaning: SSH works, but the config does not clearly show the hardening standard.
-
-4. `HQ-RTR1` is missing the expected NTP line.
-   - Meaning: time configuration needs cleanup on that router.
+- **Status:** ✅ Complete — 2026-06-19
+- **Project ID:** `Enterprise-P13`
+- **Platform:** Python, Netmiko, Ansible, CML, IOS/IOL, and Wazuh
+- **Scope:** Inventory-driven automation of the completed enterprise lab
+- **Parent project:** [P12 — Disaster Recovery](../project-12-disaster-recovery/)
 
 ## Why This Matters
 
-This project shows that I can use automation like a network engineer:
+Projects P01-P12 prove I can build and recover a network by hand. P13 proves I
+can turn that same network into a repeatable, auditable automation target without
+hardcoding credentials or allowing a script to make broad unreviewed changes.
 
-- I did not hardcode device logins into scripts.
-- I did not store passwords in Git.
-- I did not push changes before collecting evidence.
-- I let automation report failures honestly.
-- I separated read-only checks from live config changes.
+## Portfolio Summary
 
-That is the real DevNet lesson: automation should make network operations safer,
-more repeatable, and easier to audit.
+**Situation:** Ten IOS devices had accumulated configuration drift and required
+device-by-device collection and backup.
 
-## Completed After The First Automation Pass
+**Task:** Build an inventory, collect evidence at scale, redact backups, measure
+compliance, gate configuration changes, compare Ansible, and onboard direct Wazuh
+syslog safely.
 
-- `WAN-RTR1` AAA/local login is fixed.
-- `WAN-RTR1` direct Wazuh syslog is proven.
-- `CML-EDGE1` SSH and direct Wazuh syslog are proven.
+**Action:** I built `AUTOMATION1`, inventory and Netmiko scripts, redacted output,
+a compliance checker, dry-run-first push logic, Ansible examples, and a separately
+confirmed Wazuh syslog workflow. I repaired two remaining IOS access gaps by console.
 
-## What Needs Approval Before Changing More Devices
+**Result:** PASS with documented exceptions. The first pass collected and backed
+up 8 of 10 devices, found real drift, kept the generic push dry-run only, and
+later produced direct Wazuh syslog evidence for all 10 in-scope IOS devices.
 
-The next steps would change live configs, so they need approval first:
+## How To Read This Project
 
-1. Fix `HQ-FW1` ASA SSH management.
-2. Add explicit `ip ssh version 2` to the IOS devices that still lack it.
-3. Add the missing NTP config on `HQ-RTR1`.
-4. Apply the safe marker config to one pilot device.
-5. Run the SNMP break/fix pilot on one access switch.
-6. Add Wazuh logging for support/service nodes such as `AUTOMATION1`, `HQ-TACACS`, `HQ-RADIUS`, `HQ-DHCP-DNS`, and `HQ-SYSLOG`.
+| Reader | Start here |
+|---|---|
+| Hiring manager or non-technical reader | [Portfolio Summary](#portfolio-summary), [What I Proved](#what-i-proved), and [Phase 5](#phase-5--compliance-findings) |
+| Technical reviewer | [Original technical record](technical-details.md), [scripts](scripts/), and [final report](verification-outputs/project13-final-report.md) |
+| Future operator | [Requirements](requirements.md), [decision log](decision-log.md), and [inventory](configs/inventory-devices.yml) |
 
-## How To Run The Scripts
+## My Test Boundary
 
-Run from `AUTOMATION1`:
+| Item | Boundary |
+|---|---|
+| Workstation | `AUTOMATION1` inside CML |
+| Inventory | Ten in-scope IOS/IOL devices; no plaintext passwords |
+| Generic push | Dry-run unless exact confirmation token and approval exist |
+| Applied change | Wazuh syslog target only after receiver allow-list readiness |
+| Exceptions | HQ-FW1 ASA and ISP-RTR1 remain separate workflows |
+| Deferred | ASA SSH, fleet SSHv2/NTP cleanup, generic marker, and SNMP fault pilot |
 
-```bash
-cd ~/netauto
-source .venv/bin/activate
+## Phase Status
 
-export NETLAB_USERNAME='<username>'
-export NETLAB_PASSWORD='<password>'
-export NETLAB_SECRET='<enable-secret>'
-export NETLAB_SNMP_RO_COMMUNITY='<standard-snmp-community>'
-```
+| Phase | Work | Status |
+|---:|---|---|
+| 1 | Automation Workstation | Complete |
+| 2 | Inventory | Complete |
+| 3 | Read-Only Collection | Complete — 8/10 on first pass |
+| 4 | Redacted Backups | Complete — 8/10 on first pass |
+| 5 | Compliance Findings | Complete — real drift found |
+| 6 | Safe Config Dry Run | Complete — no generic config applied |
+| 7 | Ansible Comparison | Complete |
+| 8 | Wazuh Syslog Onboarding | Complete — 10 IOS devices proven |
+| 9 | Deferred Exceptions | Deferred — separate approval required |
 
-Validate the inventory:
+## Phase 1 — Automation Workstation
 
-```bash
-python scripts/collect_baseline.py --inventory inventory/devices.yml --check-inventory-only
-```
+I built `AUTOMATION1`, installed the Python dependencies, and verified both lab
+routing and controlled internet access. The [workstation evidence](verification-outputs/phase1-automation1-routing.md)
+established the execution boundary before any device login was attempted.
 
-Collect read-only evidence:
+## Phase 2 — Inventory
 
-```bash
-python scripts/collect_baseline.py \
-  --inventory inventory/devices.yml \
-  --output-dir outputs/phase3-read-only
-```
+I created a YAML inventory with addresses, platform types, roles, and groups for
+ten devices. Credentials remained in environment variables, and the committed
+`.env.example` contains names only. The [inventory validation](verification-outputs/phase2-inventory-validation.md)
+proved the structure before parallel collection.
 
-Back up redacted configs:
+## Phase 3 — Read-Only Collection
 
-```bash
-python scripts/backup_configs.py \
-  --inventory inventory/devices.yml \
-  --output-dir outputs/phase4-redacted-backups
-```
+The Netmiko collector gathered interface, neighbor, routing, and version output
+from 8 of 10 devices. WAN-RTR1 rejected the documented login, and HQ-FW1 refused
+SSH. I preserved both failures in the [summary](verification-outputs/phase3-read-only/summary.md)
+instead of deleting unreachable devices from the report.
 
-Run compliance:
+## Phase 4 — Redacted Backups
 
-```bash
-python scripts/compliance_check.py \
-  --inventory inventory/devices.yml \
-  --output-dir outputs/phase5-compliance
-```
+The backup script collected running configs from the same eight reachable IOS
+devices and removed known secret patterns before saving them. The
+[backup summary](verification-outputs/phase4-redacted-backups/summary.md) and
+committed redacted files prove both coverage and the two exceptions.
 
-Generate the safe config dry-run:
+## Phase 5 — Compliance Findings
 
-```bash
-python scripts/push_safe_config.py \
-  --inventory inventory/devices.yml \
-  --output-dir outputs/phase6-safe-config
-```
+The checker evaluated SSHv2, syslog, NTP, SNMP, archive, and password-safety
+standards. All eight reachable devices showed at least one gap; two failed
+connection. This was a successful finding, not a failed project, because the
+automation measured real drift and produced an actionable [summary](verification-outputs/phase5-compliance/summary.md).
 
-Generate the Wazuh syslog dry-run:
+## Phase 6 — Safe Config Dry Run
 
-```bash
-python scripts/push_wazuh_syslog.py \
-  --inventory inventory/devices.yml \
-  --output-dir outputs/wazuh-syslog-dry-run
-```
+I built a harmless marker template and a script that defaults to generation
+only. The [dry-run summary](verification-outputs/phase6-safe-config/summary.md)
+shows `applied=False`. No generic fleet change or SNMP fault was applied merely
+to demonstrate that the code could push.
 
-Apply the Wazuh syslog config only after Wazuh allows the CML source ranges:
+## Phase 7 — Ansible Comparison
 
-```bash
-python scripts/push_wazuh_syslog.py \
-  --inventory inventory/devices.yml \
-  --output-dir outputs/wazuh-syslog-apply \
-  --apply \
-  --confirm APPLY_WAZUH_SYSLOG
-```
+I created Ansible inventory and collect, deploy, and rollback playbooks that
+mirror the Python safety model. They provide a declarative comparison while the
+live evidence remains tied to the tested Netmiko workflow.
 
-## Simple Summary
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
 
-Project 13 proves I can automate my enterprise CML network with Python and
-Netmiko, compare that approach with Ansible, collect evidence from the live lab,
-find real configuration drift, and avoid unsafe config pushes.
+## Phase 8 — Wazuh Syslog Onboarding
+
+After Wazuh was ready to accept the CML source ranges, I used a separately gated
+script to add Wazuh as a second target while retaining the existing lab syslog.
+Console repairs closed the WAN-RTR1 and CML-EDGE1 IOS gaps. The
+[Wazuh summary](verification-outputs/wazuh-syslog/summary.md) and
+[final update](verification-outputs/wazuh-syslog/2026-06-19-wan-cml-edge-update.md)
+prove direct events from all ten in-scope IOS devices.
+
+## Phase 9 — Deferred Exceptions
+
+HQ-FW1 needs an ASA-specific SSH and logging workflow; ISP-RTR1 remains outside
+the inside-management scope. Explicit IOS SSHv2 declarations, HQ-RTR1 NTP cleanup,
+the safe marker, and the SNMP pilot also require separate approvals. They remain
+future work and do not change the completed automation framework result.
+
+The [full technical record](technical-details.md) preserves the detailed commands and evidence for this phase.
+
+## What I Proved
+
+- A structured inventory can drive repeatable collection across a device fleet.
+- Credentials and SNMP values can remain outside committed files.
+- Running configs can be collected and redacted before publication.
+- Compliance automation can expose real drift and connection exceptions honestly.
+- Configuration scripts can default to dry-run and require explicit apply gates.
+- Python/Netmiko and Ansible can express the same guarded workflow.
+- A narrowly approved automation change produced Wazuh evidence from ten IOS devices.
+
+## Technical Evidence
+
+- [Original detailed README](technical-details.md)
+- [Requirements](requirements.md)
+- [Codex-to-Claude implementation handoff](CODEX-PROJECT13-CLAUDE-HANDOFF.md)
+- [Inventory and safety templates](configs/)
+- [Python automation](scripts/)
+- [Ansible playbooks](ansible/playbooks/)
+- [Verification outputs](verification-outputs/)
+- [Final report](verification-outputs/project13-final-report.md)
+- [Decision log](decision-log.md)
+
+## How We Worked Together
+
+### My Input And How I Helped
+
+I defined automation as the capstone, provided the CML workstation and approved
+scope, kept credentials outside Git, authorized the bounded Wazuh update, and
+performed console repairs where automation could not authenticate safely.
+
+### What Codex Did And How
+
+Codex translated the project reference into a detailed implementation handoff,
+corrected inventory and syslog facts, defined the dry-run and secret-safety gates,
+and specified the scripts, evidence, retry logic, and stop conditions. Codex
+also migrated this README after completion.
+
+### What Claude Did And How
+
+Claude used the reviewed handoff to implement and structure the repository
+package, checked it against earlier projects, recorded live findings and
+exceptions, and maintained the final evidence boundary. Claude did not turn the
+generic dry run or SNMP pilot into an unapproved live push.
+
+### How We Communicated And Completed The Project
+
+Codex prepared one bounded implementation handoff, Claude implemented and
+reviewed the package, and I supplied approvals and console actions at the live
+boundaries. Results moved through committed summaries rather than secrets or
+unnecessary transcripts. The project closed with explicit exceptions.
+
+### Pushback And How We Resolved It
+
+WAN-RTR1 rejected automation credentials, HQ-FW1 refused SSH, and compliance
+found the reachable fleet non-compliant. We did not weaken authentication or
+hide the failures. I repaired IOS gaps through console, kept ASA as a separate
+workflow, used a narrowly confirmed Wazuh change, and left the broad hardening
+and fault pilots approval-gated.
+
+## Reproduce Or Re-Verify
+
+1. Build `AUTOMATION1` from [the setup guide](configs/automation1-workstation-setup.md).
+2. Export credentials only into the current shell and validate the
+   [inventory](configs/inventory-devices.yml).
+3. Run read-only collection, redacted backup, and compliance before any dry run.
+4. Inspect generated changes and require both approval and the exact confirmation
+   token before an apply-capable script runs.
+5. Treat ASA, ISP, and fault pilots as separate workflows with their own evidence.
+
+## What Happens Next
+
+P13 closes the 13-project enterprise series. The related
+[Homelab_CCNA physical expansion](https://github.com/vushueh/Homelab_CCNA)
+reuses these ideas on physical gear. This closeout does not authorize another
+CML change or reopen any completed project.

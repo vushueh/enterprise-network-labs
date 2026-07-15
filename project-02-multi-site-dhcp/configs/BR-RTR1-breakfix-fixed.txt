@@ -55,9 +55,9 @@ memory free low-watermark processor 79983
 !
 spanning-tree mode rapid-pvst
 !
-enable secret 9 $9$RcsBtunxTLZrz.$9Q166JUx/6QfNiF9w5NV6VEcMNBFCw9i6Lz9pQXtsF2
+enable secret 9 <ENABLE-SECRET>
 !
-username admin privilege 15 secret 9 $9$CIxkph/cZI04Bk$QT7AMdTPv42UY2WA1zyl.3jRP1Pny.88Oeo0w4iaqzU
+username admin privilege 15 secret 9 <LOCAL-USER-PASSWORD>
 !
 !
 !

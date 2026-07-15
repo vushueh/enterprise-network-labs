@@ -201,7 +201,7 @@ show running-config | include ^username
 
 ! If no local user exists, add one:
 configure terminal
-username p10admin privilege 15 secret P10LocalFallback2026
+username p10admin privilege 15 secret <LOCAL-USER-PASSWORD>
 end
 write memory
 ```
@@ -253,7 +253,7 @@ aaa new-model
 
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key tacacs123
+ key <TACACS-SHARED-SECRET>
  source-interface Loopback0
  exit
 
@@ -267,8 +267,8 @@ end
 
 **Gate test — run before Phase B:**
 ```
-test aaa group tacacs+ tacadmin admin123 new-code
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 ```
 
 Both must return `User was successfully authenticated` before continuing.
@@ -335,7 +335,7 @@ show running-config | include ^username
 ```
 Must show at least one `username X privilege 15 secret Y`. WAN-RTR1 was confirmed (P10 session files). HQ-RTR1 is unconfirmed.
 
-If missing: `username p10admin privilege 15 secret P10LocalFallback2026`
+If missing: `username p10admin privilege 15 secret <LOCAL-USER-PASSWORD>`
 
 **B — tac-plus.conf exec authorization block:**
 Confirm tac-plus.conf has `service = exec { priv-lvl = X }` inside each group. The `test aaa group tacacs+` output will reveal this — `User was not successfully authorized` (not authentication) means the exec service block is missing or returning FAIL.
@@ -414,7 +414,7 @@ If no `enable secret` is shown, configure one before proceeding:
 
 ```ios
 configure terminal
-enable secret P10Enable2026
+enable secret <ENABLE-SECRET>
 end
 write memory
 ```
@@ -497,12 +497,12 @@ Some tac_plus builds use a different path or filename. Identify the actual file 
 
 ### OPEN Item P10-19 — Confirm local `admin` password before Part A
 
-Part A uses `ssh -l admin / chongong` as the fallback test. The local `username admin privilege 15 secret ...` was set before Phase 1 — the local plaintext may differ from the TACACS password. If it differs, fallback appears broken when it is not.
+Part A uses `ssh -l admin / <TACACS-USER-PASSWORD>` as the fallback test. The local `username admin privilege 15 secret ...` was set before Phase 1 — the local plaintext may differ from the TACACS password. If it differs, fallback appears broken when it is not.
 
 Run this from the HQ-RTR1 console before introducing any fault:
 
 ```ios
-test aaa local auth default admin chongong
+test aaa local auth default admin <TACACS-USER-PASSWORD>
 ```
 
 If this returns `User successfully authenticated`, proceed. If it fails, identify the correct local password first and update the Part A test credentials accordingly.

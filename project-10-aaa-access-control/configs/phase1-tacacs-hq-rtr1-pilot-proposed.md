@@ -13,11 +13,11 @@ Start with `HQ-RTR1` only. Do not apply to the other devices until `HQ-RTR1` pas
 
 - Server name: `HQ-TACACS`
 - IP: `10.1.99.52`
-- TACACS+ key: `tacacs123`
+- TACACS+ key: `<TACACS-SHARED-SECRET>`
 - Test admin user: `tacadmin`
-- Test admin password: `admin123`
+- Test admin password: `<TACACS-USER-PASSWORD>`
 - Test operator user: `tacoper`
-- Test operator password: `oper123`
+- Test operator password: `<TACACS-USER-PASSWORD>`
 
 ## Why Local Fallback Matters
 
@@ -70,7 +70,7 @@ aaa new-model
 ! makes TACACS traffic come from HQ-RTR1 Loopback0 for stable identity.
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key tacacs123
+ key <TACACS-SHARED-SECRET>
  exit
 
 ip tacacs source-interface Loopback0
@@ -111,8 +111,8 @@ write memory
 Run from `HQ-RTR1`:
 
 ```text
-test aaa group tacacs+ tacadmin admin123 new-code
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 show tacacs
 show aaa servers
 show running-config | include ^aaa|^tacacs|ip tacacs|line vty|authorization|accounting
@@ -130,7 +130,7 @@ Open a new SSH session to `HQ-RTR1` from a management host if available.
 
 Test:
 
-- `tacadmin / admin123` should receive privilege 15.
+- `tacadmin / <TACACS-USER-PASSWORD>` should receive privilege 15.
 - Local `admin` should still work if TACACS is unreachable later.
 
 Keep the console session open while testing.

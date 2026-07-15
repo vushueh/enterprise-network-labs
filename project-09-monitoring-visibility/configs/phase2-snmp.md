@@ -89,7 +89,7 @@ snmp-server ifindex persist
 ! --- SNMPv2c read-only baseline ---
 ! WHY: SNMPv2c is widely supported and useful for basic polling, but it is not
 ! encrypted. We use read-only access and restrict it with ACL-SNMP-MANAGERS.
-snmp-server community P09V2CRO2026 RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 
 ! --- SNMP trap source and trap receiver ---
 ! WHY: Trap source Loopback0 gives the collector a stable source identity even if
@@ -106,7 +106,7 @@ snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
 ! WHY: SNMPv3 authPriv authenticates the manager and encrypts SNMP payloads.
 ! This is the secure model for production polling, unlike SNMPv2c community strings.
 snmp-server group P09-SNMPV3-GROUP v3 priv access ACL-SNMP-MANAGERS
-snmp-server user p09snmpv3 P09-SNMPV3-GROUP v3 auth sha P09AuthKey2026 priv aes 128 P09PrivKey2026
+snmp-server user p09snmpv3 P09-SNMPV3-GROUP v3 auth sha <SNMP-AUTH-SECRET> priv aes 128 <SNMP-PRIV-SECRET>
 snmp-server host 10.1.99.51 version 3 priv p09snmpv3
 
 end
@@ -153,7 +153,7 @@ snmp-server ifindex persist
 ! --- SNMPv2c read-only baseline ---
 ! WHY: Distribution switches use SNMPv2c in this phase as the transition baseline.
 ! The community is read-only and protected by ACL-SNMP-MANAGERS.
-snmp-server community P09V2CRO2026 RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 
 ! --- SNMP trap source and receiver ---
 ! WHY: Vlan999 is the stable management SVI for switch monitoring.
@@ -208,7 +208,7 @@ snmp-server ifindex persist
 ! --- SNMPv2c read-only baseline ---
 ! WHY: Access layer stays on SNMPv2c for the transition baseline. Read-only plus
 ! manager ACL keeps the blast radius low while showing the v2c security model.
-snmp-server community P09V2CRO2026 RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 
 ! --- SNMP trap source and receiver ---
 ! WHY: Vlan999 is the management SVI and keeps trap source identity stable.

@@ -25,10 +25,10 @@ WAN-RTR1 pre-check passed:
 WAN-RTR1 TACACS+ tests passed:
 
 ```text
-test aaa group tacacs+ tacadmin admin123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
 User successfully authenticated
 
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 User successfully authenticated
 ```
 
@@ -113,10 +113,10 @@ BR-RTR1 pre-check passed:
 BR-RTR1 TACACS+ tests passed:
 
 ```text
-test aaa group tacacs+ tacadmin admin123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
 User successfully authenticated
 
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 User successfully authenticated
 ```
 
@@ -164,10 +164,10 @@ HQ-DSW1 pre-check passed:
 HQ-DSW1 TACACS+ tests passed:
 
 ```text
-test aaa group tacacs+ tacadmin admin123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
 User successfully authenticated
 
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 User successfully authenticated
 ```
 

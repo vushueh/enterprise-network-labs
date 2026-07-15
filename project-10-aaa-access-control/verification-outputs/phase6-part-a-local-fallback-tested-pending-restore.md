@@ -7,7 +7,7 @@ On `HQ-RTR1`, only the TACACS server address was temporarily changed. The faulty
 ```ios
 tacacs server HQ-TACACS
  address ipv4 10.1.99.250
- key 7 ...
+ key <TACACS-SHARED-SECRET> ...
 ```
 
 The target `10.1.99.250` was confirmed unused before this test.
@@ -59,13 +59,13 @@ The TACACS server address and shared key were restored on `HQ-RTR1`:
 ```ios
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key 7 ...
+ key <TACACS-SHARED-SECRET> ...
 ```
 
 TACACS authentication was verified after restoration:
 
 ```ios
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 ```
 
 ```text

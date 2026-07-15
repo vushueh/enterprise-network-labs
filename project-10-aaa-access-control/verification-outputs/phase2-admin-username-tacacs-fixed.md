@@ -2,7 +2,7 @@
 
 ## Status
 
-The normal username `admin` is now active in TACACS+ and authenticates successfully with password `chongong`.
+The normal username `admin` is now active in TACACS+ and authenticates successfully with password `<TACACS-USER-PASSWORD>`.
 
 ## TACACS+ User Added
 
@@ -10,7 +10,7 @@ The normal username `admin` is now active in TACACS+ and authenticates successfu
 
 ```text
 user = admin {
-  login = cleartext chongong
+  login = cleartext <TACACS-USER-PASSWORD>
   member = netadmin
 }
 ```
@@ -47,7 +47,7 @@ Internet  10.1.99.52  0  5254.004f.6105  ARPA  Ethernet0/0.999
 ## Final HQ-RTR1 TACACS+ Tests
 
 ```ios
-test aaa group tacacs+ admin chongong new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
 ```
 
 Result:
@@ -63,7 +63,7 @@ reply-message        0   "Password: "
 ```
 
 ```ios
-test aaa group tacacs+ tacadmin admin123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
 ```
 
 Result:
@@ -79,7 +79,7 @@ reply-message        0   "Password: "
 ```
 
 ```ios
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 ```
 
 Result:
@@ -114,7 +114,7 @@ Phase 2 can continue using:
 
 ```text
 Username: admin
-Password: chongong
+Password: <TACACS-USER-PASSWORD>
 ```
 
 Expected privilege level: 15.

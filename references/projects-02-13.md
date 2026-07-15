@@ -426,7 +426,7 @@ TacPlus → HQ-TACACS at 10.1.99.52. Radius → HQ-RADIUS at 10.1.99.53.
 
 ## Phases
 
-1. **TACACS+ for device administration** — AAA new-model, authentication/authorization/accounting via TACACS+ with local fallback. **Test AAA first:** Use `test aaa group tacacs+ [user] [pass] new-code` to verify server reachability before locking yourself out. Command accounting — log every command every admin types.
+1. **TACACS+ for device administration** — AAA new-model, authentication/authorization/accounting via TACACS+ with local fallback. **Test AAA first:** Use `test aaa group tacacs+ [user] <TACACS-USER-PASSWORD> new-code` to verify server reachability before locking yourself out. Command accounting — log every command every admin types.
 2. **Privilege level separation** — Level 15 (full admin), Level 7 (NOC read-only), Level 1 (basic). Configure custom privilege levels with specific commands allowed.
 3. **Parser views (role-based CLI)** — Beyond privilege levels, create actual CLI views where a NOC operator can only see `show` commands and nothing else. `parser view NOC-VIEW` with explicit command inclusion.
 4. **802.1X port authentication** — Radius config, dot1x on access switch ports, test authorized/unauthorized. Verify with `show dot1x all` and `show authentication sessions`.

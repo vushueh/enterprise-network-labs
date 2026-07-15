@@ -120,7 +120,7 @@ IOS still prints "Clock is unsynchronized" while the loop filter is in `FREQ` dr
 HQ-FW1 NTP configuration applied:
 
 ```text
-ntp authentication-key 9 md5 *****
+ntp authentication-key 9 md5 <NTP-AUTH-SECRET>
 ntp authenticate
 ntp trusted-key 9
 ntp server 10.0.255.1 key 9 source inside

@@ -114,7 +114,7 @@ spanning-tree mode rapid-pvst
 spanning-tree extend system-id
 spanning-tree vlan 100,200,300,500,999-1000 priority 4096
 !
-enable secret 9 [REDACTED]
+enable secret 9 <ENABLE-SECRET>
 !
 secret 9 [REDACTED]
 !
@@ -169,7 +169,7 @@ no logging btrace
 logging trap warnings
 logging source-interface Vlan999
 logging host 10.1.99.51
-snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 snmp-server trap-source Vlan999
 snmp-server location P09-CML-LAB-DISTRIBUTION
 snmp-server contact Leonel - Enterprise Network Labs
@@ -179,7 +179,7 @@ snmp-server host 10.1.99.51 version 2c [REDACTED]
 !
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key 7 [REDACTED]
+ key <TACACS-SHARED-SECRET> [REDACTED]
 !
 !
 !
@@ -205,6 +205,6 @@ line vty 0 4
 ntp authenticate
 ntp trusted-key 9
 ntp source Vlan999
- key [REDACTED]
+ key <TACACS-SHARED-SECRET>
 !
 end

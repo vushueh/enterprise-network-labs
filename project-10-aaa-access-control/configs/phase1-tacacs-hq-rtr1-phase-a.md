@@ -28,7 +28,7 @@ aaa new-model
 !
 tacacs server HQ-TACACS
  address ipv4 10.1.99.52
- key tacacs123
+ key <TACACS-SHARED-SECRET>
  exit
 !
 ip tacacs source-interface Loopback0
@@ -48,8 +48,8 @@ Note: On `HQ-RTR1`, IOS rejected `source-interface Loopback0` inside the `tacacs
 Run these on `HQ-RTR1` after Phase A:
 
 ```ios
-test aaa group tacacs+ tacadmin admin123 new-code
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ tacadmin <TACACS-USER-PASSWORD> new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 show tacacs
 show aaa servers
 ```

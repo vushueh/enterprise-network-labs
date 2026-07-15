@@ -101,7 +101,7 @@ memory free low-watermark processor 79497
 !
 spanning-tree mode rapid-pvst
 spanning-tree extend system-id
-enable secret 9 [REDACTED]
+enable secret 9 <ENABLE-SECRET>
 !
 secret 9 [REDACTED]
 !
@@ -177,7 +177,7 @@ ip access-list standard ACL-SNMP-MANAGERS
 no logging btrace
 logging source-interface Vlan999
 logging host 10.1.99.51
-snmp-server community [REDACTED] RO ACL-SNMP-MANAGERS
+snmp-server community <SNMP-COMMUNITY> RO ACL-SNMP-MANAGERS
 snmp-server trap-source Vlan999
 snmp-server location P09-CML-LAB-ACCESS
 snmp-server contact Leonel - Enterprise Network Labs
@@ -209,6 +209,6 @@ line vty 0 4
 ntp authenticate
 ntp trusted-key 9
 ntp source Vlan999
- key [REDACTED]
+ key <TACACS-SHARED-SECRET>
 !
 end

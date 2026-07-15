@@ -57,8 +57,8 @@ IPsec SA: encaps incrementing, decaps incrementing
 From `HQ-RTR1`:
 
 ```ios
-test aaa group tacacs+ admin chongong new-code
-test aaa group tacacs+ tacoper oper123 new-code
+test aaa group tacacs+ admin <TACACS-USER-PASSWORD> new-code
+test aaa group tacacs+ tacoper <TACACS-USER-PASSWORD> new-code
 ```
 
 Both must return `User was successfully authenticated`.

@@ -12,7 +12,7 @@ Create and verify a restricted CLI parser view named `NOC-VIEW` that allows oper
 
 ```ios
 aaa new-model
-enable secret 9 ...
+enable secret 9 <ENABLE-SECRET>
 ```
 
 Root view access succeeded:
@@ -32,7 +32,7 @@ Current view is 'root'
 
 ```ios
 parser view NOC-VIEW
- secret 0 NOCview2026
+ secret 0 <PARSER-VIEW-SECRET>
  commands exec include show privilege
  commands exec include show version
  commands exec include show ip interface brief

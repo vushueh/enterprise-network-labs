@@ -22,7 +22,7 @@ interface Ethernet0/0
  ip address 10.0.1.2 255.255.255.252
  ip ospf network point-to-point
  ip ospf 1 area 0
- ip ospf message-digest-key 1 md5 OSPF-SECRET
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  no shutdown
 
 ! --- Link to R-CORE2 (Area 0) ---
@@ -31,7 +31,7 @@ interface Ethernet0/1
  ip address 10.0.3.2 255.255.255.252
  ip ospf network point-to-point
  ip ospf 1 area 0
- ip ospf message-digest-key 1 md5 OSPF-SECRET
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  no shutdown
 
 ! --- Link to R-CAMPUS1 (Area 1 - Standard) ---
@@ -40,7 +40,7 @@ interface Ethernet0/2
  ip address 10.1.0.1 255.255.255.252
  ip ospf network point-to-point
  ip ospf 1 area 1
- ip ospf message-digest-key 1 md5 OSPF-SECRET
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  no shutdown
 
 ! --- Link to R-BRANCH1 (Area 2 - Totally Stubby) ---
@@ -49,7 +49,7 @@ interface Ethernet0/3
  ip address 10.2.0.1 255.255.255.252
  ip ospf network point-to-point
  ip ospf 1 area 2
- ip ospf message-digest-key 1 md5 OSPF-SECRET
+ ip ospf message-digest-key 1 md5 <OSPF-AUTH-SECRET>
  no shutdown
 
 ! --- OSPF Process ---
