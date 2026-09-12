@@ -1,7 +1,11 @@
+> Shared AGENTS and its Git/GitHub rule supersede legacy agent-only push
+> roles and automatic commit examples below. Publish the authorized scope with
+> either operating agent; live execution restrictions remain unchanged.
+
 # Enterprise Network Labs — Complete Workflow Reference
 
 **Repo:** `vushueh/enterprise-network-labs` | **Branch:** `main`
-**WSL path:** `/home/leonel/code/enterprise-network-labs/`
+**WSL path:** `/mnt/e/Homelab-Repos/family-projects/enterprise-network-labs/`
 **Last updated:** 2026-05-10
 
 > **Both Codex and Claude Code read this file at the start of every session.**
@@ -34,7 +38,7 @@ Claude reviews final push for structure/accuracy
 
 | Tool | Primary Role | GitHub access |
 |------|-------------|---------------|
-| **Codex Desktop** | Proposes configs, writes lab docs, saves to session folder | Yes — can push. Preference: Claude pushes final project for structure accuracy |
+| **Codex Desktop** | Proposes configs, writes lab docs, saves to session folder | Yes — publish the authorized package after scoped verification |
 | **Claude Code** | Reviews configs before CML, final project push + structure check | Yes — full access |
 | **VS Code (Remote-WSL)** | File editing, git operations, launching Claude Code CLI | Yes — full access |
 | **WSL Terminal** | Git operations, direct file access | Yes — full access |
@@ -126,12 +130,12 @@ Step B — Tell Claude: "Project 8 complete. Codex session folder:
 
 Step C — Claude reads all configs + verification outputs from the session folder
 Step D — Claude reviews for correctness and structure
-Step E — Claude pushes to GitHub, marks project ✅ in README.md
-Step F — Claude clears CLAUDE-REVIEW.md and adds separator to CODEX-LOG.md for next project
+Step E — The authorized operating agent publishes to GitHub, marks project ✅ in README.md
+Step F — Resolve applicable review items with dated notes; preserve all review/log history
 ```
 
 **Projects push to GitHub when fully complete — not after individual phases.**
-**Codex CAN push to GitHub. For final project structure, Claude handles it to ensure accuracy.**
+**Either agent can publish the authorized package after verifying the project structure.**
 
 ---
 
@@ -250,8 +254,8 @@ Tell me: what is the current project status and where did Codex leave off?
 1. In VS Code, open WSL terminal (`Ctrl + ``)
 2. Navigate to the repo:
    ```bash
-   cd /home/leonel/code/enterprise-network-labs
-   git pull origin main
+   cd /mnt/e/Homelab-Repos/family-projects/enterprise-network-labs
+   git status --short --branch  # fetch/fast-forward only when needed and safe
    ```
 3. Launch Claude Code CLI from that directory:
    ```bash
@@ -268,8 +272,8 @@ Tell me: what is the current project status and where did Codex leave off?
 1. Open WSL terminal (Windows Terminal → Ubuntu, or `Win+R → wsl`)
 2. Navigate and launch:
    ```bash
-   cd /home/leonel/code/enterprise-network-labs
-   git pull origin main
+   cd /mnt/e/Homelab-Repos/family-projects/enterprise-network-labs
+   git status --short --branch  # fetch/fast-forward only when needed and safe
    claude
    ```
 3. Same startup prompt as above
@@ -280,16 +284,16 @@ Tell me: what is the current project status and where did Codex leave off?
 
 1. Open VS Code
 2. Connect to WSL: click green `><` button (bottom-left) → **Connect to WSL**
-3. Open the repo folder: File → Open Folder → `/home/leonel/code/enterprise-network-labs`
+3. Open the repo folder: File → Open Folder → `/mnt/e/Homelab-Repos/family-projects/enterprise-network-labs`
 4. Open terminal: `Ctrl + `` ` → sync:
    ```bash
-   git pull origin main
+   git status --short --branch  # fetch/fast-forward only when needed and safe
    git log --oneline -5
    ```
 5. **To launch Claude Code from here:** in the terminal, run `claude`
 6. **To push changes:**
    ```bash
-   git add .
+   git add -- <reviewed-paths>
    git commit -m "your message"
    git push origin main
    ```
@@ -302,15 +306,15 @@ Tell me: what is the current project status and where did Codex leave off?
 1. Windows Terminal → Ubuntu tab, OR `Win+R → wsl`
 2. Sync and check:
    ```bash
-   cd /home/leonel/code/enterprise-network-labs
-   git pull origin main
+   cd /mnt/e/Homelab-Repos/family-projects/enterprise-network-labs
+   git status --short --branch  # fetch/fast-forward only when needed and safe
    git log --oneline -5
    git status
    ```
 3. **To launch Claude Code from here:** run `claude`
 4. **To push:**
    ```bash
-   git add .
+   git add -- <reviewed-paths>
    git commit -m "message"
    git push origin main
    ```
@@ -332,8 +336,8 @@ Tell me: what is the current project status and where did Codex leave off?
 1. Tell Codex: `"Update CODEX-LOG.md on GitHub with current status"`
 2. In VS Code/WSL terminal:
    ```bash
-   cd /home/leonel/code/enterprise-network-labs
-   git pull origin main
+   cd /mnt/e/Homelab-Repos/family-projects/enterprise-network-labs
+   git status --short --branch  # fetch/fast-forward only when needed and safe
    ```
 3. Codex's session files are at:
    - Windows: `C:\Users\CHONGONG\Documents\Codex\[date]\[session]\`
@@ -343,13 +347,13 @@ Tell me: what is the current project status and where did Codex leave off?
 
 1. Push any changes:
    ```bash
-   git add . && git commit -m "message" && git push origin main
+   git add -- <reviewed-paths> && git commit -m "message" && git push origin main
    ```
 2. Open Codex with the standard startup prompt — it reads GitHub and picks up your push
 
 ### Claude Code → Codex
 
-1. Claude commits and pushes whatever it worked on
+1. The operating agent commits reviewed paths and publishes only the authorized scope
 2. Open Codex with the standard startup prompt — fully in sync
 
 ### VS Code ↔ WSL Terminal
@@ -412,8 +416,8 @@ Check what Codex did — read CODEX-LOG.md and tell me status.
 
 | What | Path |
 |------|------|
-| Git repo (WSL) | `/home/leonel/code/enterprise-network-labs/` |
-| Git repo (Windows UNC) | `\\wsl.localhost\Ubuntu\home\leonel\code\enterprise-network-labs\` |
+| Git repo (WSL) | `/mnt/e/Homelab-Repos/family-projects/enterprise-network-labs/` |
+| Git repo (Windows UNC) | `\\wsl.localhost\Ubuntu\mnt\e\Homelab-Repos\family-projects\enterprise-network-labs\` |
 | Codex session output | `C:\Users\CHONGONG\Documents\Codex\[date]\[session]\` |
 | Codex session output (from WSL) | `/mnt/c/Users/CHONGONG/Documents/Codex/[date]/[session]/` |
 | Codex chat history (raw JSONL) | `C:\Users\CHONGONG\.codex\sessions\YYYY\MM\DD\` |
@@ -446,12 +450,12 @@ Check what Codex did — read CODEX-LOG.md and tell me status.
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REPO:     vushueh/enterprise-network-labs (main)
-WSL:      /home/leonel/code/enterprise-network-labs/
+WSL:      /mnt/e/Homelab-Repos/family-projects/enterprise-network-labs/
 WORKFLOW: github.com/vushueh/enterprise-network-labs/blob/main/WORKFLOW-REFERENCE.md
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 SYNC (every tool, every session):
-  git pull origin main
+  git status --short --branch  # fetch/fast-forward only when needed and safe
 
 CODEX SESSION START (paste this every time):
   "Read WORKFLOW-REFERENCE.md, AGENTS.md, CLAUDE-REVIEW.md,
@@ -459,8 +463,8 @@ CODEX SESSION START (paste this every time):
    Any OPEN items? Where did we leave off? What's next?"
 
 LAUNCH CLAUDE CODE (from VS Code terminal or WSL):
-  cd /home/leonel/code/enterprise-network-labs
-  git pull origin main
+  cd /mnt/e/Homelab-Repos/family-projects/enterprise-network-labs
+  git status --short --branch  # fetch/fast-forward only when needed and safe
   claude
 
 BEFORE ANY CONFIG GOES ON A CML DEVICE:

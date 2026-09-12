@@ -1,26 +1,29 @@
+## Shared workflow
+
+Read `E:/Homelab-Repos/family-projects/AGENTS.md` once per session
+(`/mnt/e/Homelab-Repos/family-projects/AGENTS.md` in WSL). If working outside
+this workspace, fetch the shared contract from
+`vushueh/family-projects-ai-playbook` before homelab operations.
+It owns task-scoped reads and publication authority; this repo owns technical
+constraints. For a named file task, read target files and related OPEN items.
+For project selection/status/resume, use the shared goal skill and freshness
+checks; preserve the active item, dependencies, queue order and WIP limits.
+Either operating agent may publish the authorized package. Use explicit paths
+and relevant checks, preserve dirty work and intentionally unpublished overlays.
+
 # Codex Standing Orders — Enterprise Network Labs
 
 You are working on Leonel's enterprise network lab series built in Cisco CML 2.9.
 GitHub repo: `vushueh/enterprise-network-labs` (main branch)
-WSL repo (local): `/home/leonel/code/enterprise-network-labs/`
+Canonical WSL view: `/mnt/e/Homelab-Repos/family-projects/enterprise-network-labs/`
 
 ---
 
-## At the START of every session — do these first
+## Task context
 
-Read these files from GitHub before doing anything else:
-
-1. `WORKFLOW-REFERENCE.md` — full working instructions for this entire setup
-2. `CLAUDE-REVIEW.md` — check for OPEN items from Claude. Resolve them before new work.
-3. `TROUBLESHOOTING-LOG.md` — review past issues. Do not repeat known mistakes.
-4. `README.md` — confirm which project is current and which are complete.
-
-After reading, tell Leonel:
-- Any OPEN items from Claude that need resolving first
-- Current project and phase — exactly where we left off
-- What the next step is
-
----
+Read the target files and relevant OPEN items. For project status/selection use
+the shared goal skill; this completed series is reference material. Read matching
+troubleshooting history and WORKFLOW-REFERENCE only when the task needs them.
 
 ## Your role in the workflow
 
@@ -47,45 +50,16 @@ Move to next phase
 
 ## Where to save your work
 
-Codex Desktop sandbox cannot write to WSL or GitHub directly for project files.
-Save all configs and outputs to your **Windows session folder**:
+Use the canonical shared E:/Homelab-Repos/family-projects/enterprise-network-labs
+checkout (WSL /mnt/e/ view). If sandbox restrictions prevent a write, prepare the
+exact patch in the session workspace and use the supported approval path.
+Preserve the documented project layout and all evidence; no blanket staging.
 
-```
-C:\Users\CHONGONG\Documents\Codex\[date]\[session-name]\project-XX\
-    configs\
-        DEVICE-phaseN.txt      ← full running config for that device at end of phase
-    verification-outputs\
-        phaseN-DEVICE-verify.txt  ← CLI output Leonel pastes back after verifying
-    decision-log.md
-    requirements.md
-```
+## Publication
 
-Claude can read these files from the Windows path when it's time to push.
-**Do not save project files to GitHub** — Claude handles all GitHub pushes at project completion.
-
----
-
-## What you push to GitHub
-
-**Always push via GitHub connector at end of every session:**
-`CODEX-LOG.md` — your session summary (required every session)
-
-**You CAN push project files to GitHub** if needed, but the preference is for
-Claude to handle the final structured project push — Claude knows the exact folder
-structure and will catch any inconsistencies before the project goes to GitHub.
-
-**Always push CODEX-LOG.md at session end:**
-
-```
-## [DATE] — [what was worked on]
-**Project:** P0X — [name]
-**Phases proposed this session:** [list]
-**Claude reviewed:** yes / pending
-**Configs saved to Windows session folder:** [full path]
-**Left off at:** [exactly where to resume]
-```
-
----
+Publish only the user-authorized package after scoped verification. Either
+operating agent may commit, push and merge through available tools. Record the
+changed paths and synchronization result; no automatic session-end push.
 
 ## How to present configurations to Claude for review
 
@@ -141,7 +115,7 @@ Items marked `OPEN` must be resolved before starting new phase work.
 
 ---
 
-## Project structure (what Claude will push to GitHub on completion)
+## Project structure
 
 ```
 project-XX-name/
@@ -163,10 +137,8 @@ Save all CLI verification output — not just shown in chat.
 
 ## Environment facts
 
-- **CML 2.9** (licensed) — IOL routers (`Ethernet0/x`, `Ethernet1/x`), IOL-L2 switches, ASAv
-- **Codex sandbox**: no WSL/UNC access. Windows session folder + GitHub connector only.
-- **Claude Code**: has full WSL + GitHub access. Handles all project GitHub pushes.
-- **Project goes to GitHub only when all phases are complete** — Claude pushes, not Codex.
+Read current owner documentation for CML version and topology. Determine tool
+capabilities from the current session rather than historical sandbox assumptions.
 
 ## Master Program Selection
 
