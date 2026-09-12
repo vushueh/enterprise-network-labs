@@ -1,3 +1,16 @@
+## Shared workflow
+
+Read `E:/Homelab-Repos/family-projects/AGENTS.md` once per session
+(`/mnt/e/Homelab-Repos/family-projects/AGENTS.md` in WSL). If working outside
+this workspace, fetch the shared contract from
+`vushueh/family-projects-ai-playbook` before homelab operations.
+It owns task-scoped reads and publication authority; this repo owns technical
+constraints. For a named file task, read target files and related OPEN items.
+For project selection/status/resume, use the shared goal skill and freshness
+checks; preserve the active item, dependencies, queue order and WIP limits.
+Either operating agent may publish the authorized package. Use explicit paths
+and relevant checks, preserve dirty work and intentionally unpublished overlays.
+
 # CLAUDE.md — enterprise-network-labs
 
 Shared rules: [../AGENTS.md](../AGENTS.md) ·

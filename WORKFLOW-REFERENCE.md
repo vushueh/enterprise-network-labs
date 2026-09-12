@@ -1,3 +1,7 @@
+> Shared AGENTS and its Git/GitHub rule supersede legacy agent-only push
+> roles and automatic commit examples below. Publish the authorized scope with
+> either operating agent; live execution restrictions remain unchanged.
+
 # Enterprise Network Labs — Complete Workflow Reference
 
 **Repo:** `vushueh/enterprise-network-labs` | **Branch:** `main`
