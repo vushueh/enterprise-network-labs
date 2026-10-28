@@ -1,7 +1,7 @@
 # Enterprise Network Labs
 
 A 13-project progressive series building a complete enterprise network from scratch
-in Cisco CML 2.9. Each project adds one layer of complexity — by the end, the network
+originally in Cisco CML 2.9. Each project adds one layer of complexity — by the end, the network
 includes multi-area OSPF, NAT, ASAv firewall, IPsec VPN, TACACS+/Radius AAA, SNMP/Syslog/NetFlow
 monitoring, QoS traffic management, full disaster recovery testing, and network automation
 with Python/Netmiko and Ansible.
@@ -35,7 +35,10 @@ Each project follows the **Build → Verify → Break → Fix** method — every
 
 ## Lab Platform
 
-- **CML 2.9** (licensed) — IOL routers, IOL-L2 switches, ASAv firewall
+- **Current controller:** CML **2.10.1 build 21**, observed 28 October 2026 (licensed). The series was originally built on CML 2.9.
+- **Platform runbook:** [Breakout/Wireshark quick start, MCP security and custom icons](docs/cml-platform-operations.md).
+- **Platform history:** [Existing VM, recovery backup, upgrade and image-import evidence](docs/cml-platform-history-2026-10-28.md), including unverified restore and runtime limits.
+- **Network nodes:** IOL routers, IOL-L2 switches, ASAv firewall
 - **Supporting nodes:** Dnsmasq, Radius, TacPlus, Syslog, Nginx, ThousandEyes
 - **16+ simultaneous nodes**
 - **Interface naming:** IOL/IOL-L2 use `Ethernet0/x` and `Ethernet1/x` format

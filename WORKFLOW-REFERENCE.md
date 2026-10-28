@@ -1,3 +1,9 @@
+> Current platform operations and dated upgrade evidence (28 October 2026):
+> [Breakout, Wireshark, MCP security and icons](docs/cml-platform-operations.md) ·
+> [VM history, recovery and 2.10.1 upgrade](docs/cml-platform-history-2026-10-28.md).
+> CML 2.9 references below describe the original series; use the dated record
+> for the observed controller version and its verification limits.
+
 > Shared AGENTS and its Git/GitHub rule supersede legacy agent-only push
 > roles and automatic commit examples below. Publish the authorized scope with
 > either operating agent; live execution restrictions remain unchanged.
