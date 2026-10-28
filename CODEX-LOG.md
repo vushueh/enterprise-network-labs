@@ -833,3 +833,36 @@ sudo /usr/local/sbin/cml-stale-container-guard --username leonel --fix
 3. Apply explicit IOS SSHv2 hardening and `HQ-RTR1` NTP correction.
 4. Apply and roll back the safe marker ACL on one pilot device.
 5. Run the SNMP break/fix pilot on one access switch.
+
+
+## 2026-10-28 - CML platform history and daily operations documentation
+
+Leonel explicitly requested documentation, commit, merge and push for the CML
+platform work. I used an isolated `docs/cml-platform-2026-10-28` worktree from
+fresh `origin/main`; the canonical checkout was clean. I added the
+[daily operations guide](docs/cml-platform-operations.md) and
+[dated history/evidence record](docs/cml-platform-history-2026-10-28.md), then
+linked both from the root README and workflow reference.
+
+The package records the existing VM rather than inventing its original install,
+the completed PBS task and untested restore boundary, signed 2.10.1 upgrade,
+reference-image preservation checks and runtime gaps, MCP/client security,
+PowerShell 7 Breakout launch, actual capture UI, icon sources/licenses and
+verification limits. It distinguishes directly re-read local files from
+sanitized recovered observations and user reports. Historical stricter client
+prompts and Desktop guard state are separate from the latest conversation rule.
+
+At Leonel's additional request, 65 Affinity SVGs (43 naked, 22 circle-blue)
+were saved outside Git in Downloads/CML-Network-Icons with license, pinned
+source revision, local/upstream hash inventory, instructions and preview.
+Standard external DTD declarations were removed; SVG static checks passed.
+No third-party icons, credential files, encrypted credential blobs, private
+keys, raw configs or screenshots were added to Git. This retrospective uses
+sanitized text under an explicit DOC-only screenshot exception.
+
+Scope: documentation publication and requested local icon download only.
+No live controller, VM, lab, packet capture, account, credential or client-policy
+change, and no MCP tool invocation. Projects 01-13 and queue status unchanged.
+Validation: changed-path link/anchor, whitespace and high-confidence secret
+pattern checks; publication gates and final synchronization recorded by the
+GitHub PR and the publication response, without a follow-up narration commit.
